@@ -21,6 +21,7 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation project(':HDCMD')
+	implementation group: 'org.apache.tika', name: 'tika-core', version: '2.1.0'
 }
 
 test {
