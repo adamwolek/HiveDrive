@@ -57,6 +57,24 @@ public class AsymetricEncryptionService {
 	    	throw new EncryptionFailedException(e);
 		}
 	}
+	
+	public void encryptAnyway(File inputFile, File outputFile) {
+		try {
+	        cipher.init(Cipher.ENCRYPT_MODE, key);
+	        try (FileInputStream fis = new FileInputStream(inputFile);
+	        		FileOutputStream stream = new FileOutputStream(outputFile)){
+	        	while(fis.available() > 0) {
+	        		byte[] sourceBytes = fis.readNBytes(240);
+	        		byte[] encryptedFileBytes = cipher.doFinal(sourceBytes);
+	        		stream.write(encryptedFileBytes);
+	        	}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+	    } catch (Exception e) {
+	    	throw new EncryptionFailedException(e);
+		}
+	}
 
 	public void decrypt(File inputFile, File outputFile) {
 		try {

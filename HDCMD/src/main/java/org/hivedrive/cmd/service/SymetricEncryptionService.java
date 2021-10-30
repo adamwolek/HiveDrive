@@ -78,9 +78,10 @@ public class SymetricEncryptionService {
 			try (FileInputStream fis = new FileInputStream(inputFile);
 					FileOutputStream fileOut = new FileOutputStream(outputFile); 
 					CipherOutputStream cipherOut = new CipherOutputStream(fileOut, cipher)) {
+				//we put IV on begin of file, because we will need this during decryption
+				fileOut.write(iv); 
 				while(fis.available() > 0) {
 					byte[] bytes = fis.readNBytes(1024);
-					fileOut.write(iv);
 					cipherOut.write(bytes);
 				}
 			}
@@ -88,6 +89,9 @@ public class SymetricEncryptionService {
 			throw new EncryptionFailedException(e);
 		}
 	}
+	
+
+
 	
 	public void decrypt(File inputFile, File outputFile) {
 	    try (FileInputStream fileIn = new FileInputStream(inputFile)) {
@@ -106,33 +110,5 @@ public class SymetricEncryptionService {
 		}
 	}
 	
-//	public String decrypt(File inputFile) {
-//		try {
-//			String content;
-//		    try (FileInputStream fileIn = new FileInputStream(inputFile)) {
-//		        byte[] fileIv = new byte[16];
-//		        fileIn.read(fileIv);
-//		        cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(fileIv));
-//
-//		        try (
-//		                CipherInputStream cipherIn = new CipherInputStream(fileIn, cipher);
-//		                InputStreamReader inputReader = new InputStreamReader(cipherIn);
-//		                BufferedReader reader = new BufferedReader(inputReader)
-//		            ) {
-//
-//		            StringBuilder sb = new StringBuilder();
-//		            String line;
-//		            while ((line = reader.readLine()) != null) {
-//		                sb.append(line);
-//		            }
-//		            content = sb.toString();
-//		            return content;
-//		        }
-//
-//		    }
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//	    return "";
-//	}
+
 }
