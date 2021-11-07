@@ -3,17 +3,46 @@ plugins {
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
 	id 'eclipse'
-	id 'com.github.johnrengelman.shadow' version '7.1.0'
+	//id 'com.github.johnrengelman.shadow' version '7.1.0'
 }
 
 group = 'org.hivedrive.server'
-version = '0.0.1-SNAPSHOT'
+version = ''
 sourceCompatibility = '11'
+
+
 
 repositories {
 	mavenCentral()
 	
 }
+
+
+
+/*
+shadowJar {
+	manifest {
+        attributes 'Main-Class': 'org.hivedrive.server.HiveDriveServerApplication'
+    }
+    //archiveBaseName.set('hivedrive')
+    //archiveClassifier.set('')
+   	//archiveVersion.set('')
+}
+*/
+
+
+task finalize(type: Copy) {
+    from 'build/libs/HDServer.jar'
+    into 'installation/'
+    doLast {
+        //Read write 'into.txt'
+    }
+}
+
+
+
+build.finalizedBy(finalize)
+
 
 dependencies {
 	
