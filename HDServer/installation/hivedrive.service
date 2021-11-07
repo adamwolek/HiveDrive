@@ -1,0 +1,12 @@
+[Unit]
+Description=HiveDrive
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=adam
+ExecStart=/bin/bash /home/adam/temp/updateHiveDrive.sh
+
+[Install]
+WantedBy=multi-user.target
