@@ -16,6 +16,9 @@ public class PartEntity {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
 	
+	/**
+	 * Owner
+	 */
 	@ManyToOne
 	private NodeEntity node;
 	
@@ -27,7 +30,6 @@ public class PartEntity {
 	private String repository;
 	private String groupId;
 	private int orderInGroup;
-	private String ownerId;
 	
 	
 }

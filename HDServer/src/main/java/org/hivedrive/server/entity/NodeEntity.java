@@ -12,7 +12,6 @@ public class NodeEntity {
 	 @GeneratedValue(strategy=GenerationType.IDENTITY)
 	 private Long id;
 	 
-	 
 	 private String publicKey;
 
 	 private String status;
