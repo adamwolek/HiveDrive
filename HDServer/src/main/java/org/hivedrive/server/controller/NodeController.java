@@ -2,7 +2,10 @@ package org.hivedrive.server.controller;
 
 import java.util.List;
 
+import org.hivedrive.server.mappers.NodeMapper;
+import org.hivedrive.server.service.NodeService;
 import org.hivedrive.server.to.NodeTO;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,9 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/node")
 public class NodeController {
 
+	@Autowired
+	private NodeService service;
+	
+	@Autowired
+	private NodeMapper mapper;
+	
 	@PostMapping
 	void post(@RequestBody NodeTO node) {
-		
 	}
 	
 	@PutMapping

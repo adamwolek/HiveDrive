@@ -22,7 +22,12 @@ public class PartEntity {
 	
 	private File pathToPart;
 	private LocalDateTime createDate;
-	
+	private String status;
+	private String globalId;
+	private String repository;
+	private String groupId;
+	private int orderInGroup;
+	private String ownerId;
 	
 	
 }

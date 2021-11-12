@@ -20,7 +20,7 @@ public class CryptographicNodeService {
 		File keysFolder = new File(configFolder + "/keys");
 		System.out.println(keysFolder.getAbsolutePath());
 		File[] files = keysFolder.listFiles();
-		if(files.length == 1) {
+		if(files != null && files.length == 1) {
 			keys = UserKeys.load(files[0]);
 		}
     }

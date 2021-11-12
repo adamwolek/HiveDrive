@@ -15,7 +15,9 @@ public class NodeEntity {
 	 
 	 private String publicKey;
 
-	 private String nickname;
+	 private String status;
+	 
+	 private String ipAddress;
 
 	public Long getId() {
 		return id;
@@ -34,6 +36,26 @@ public class NodeEntity {
 
 	public void setPublicKey(String publicKey) {
 		this.publicKey = publicKey;
+	}
+
+
+	public String getNickname() {
+		return status;
+	}
+
+
+	public void setNickname(String nickname) {
+		this.status = nickname;
+	}
+
+
+	public String getIpAddress() {
+		return ipAddress;
+	}
+
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
 	}
 
 

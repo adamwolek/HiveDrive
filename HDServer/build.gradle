@@ -44,10 +44,12 @@ dependencies {
 	implementation project(':HDCMD')
 	implementation group: 'org.apache.tika', name: 'tika-core', version: '2.1.0'
 	implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
-	implementation group: 'io.springfox', name: 'springfox-swagger2', version: '2.9.2'
-	implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.9.2'
-	
-	
+	implementation group: 'io.springfox', name: 'springfox-swagger2', version: '3.0.0'
+	implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '3.0.0'
+	implementation group: 'io.springfox', name: 'springfox-spring-web', version: '3.0.0'
+	implementation group: 'io.springfox', name: 'springfox-oas', version: '3.0.0'
+	implementation group: 'io.springfox', name: 'swagger-annotations', version: '1.5.21'
+	implementation group: 'io.springfox', name: 'swagger-models', version: '1.5.21'
 	//implementation group: 'org.fourthline.cling', name: 'cling-support', version: '2.1.2'
 	//implementation group: 'org.fourthline.cling', name: 'cling-core', version: '2.1.2'
 	
