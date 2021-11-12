@@ -19,23 +19,11 @@ repositories {
 
 
 
-/*
-shadowJar {
-	manifest {
-        attributes 'Main-Class': 'org.hivedrive.server.HiveDriveServerApplication'
-    }
-    //archiveBaseName.set('hivedrive')
-    //archiveClassifier.set('')
-   	//archiveVersion.set('')
-}
-*/
-
-
 task finalize(type: Copy) {
     from 'build/libs/HDServer.jar'
     into 'installation/'
     doLast {
-        //Read write 'into.txt'
+        //
     }
 }
 
@@ -55,6 +43,14 @@ dependencies {
 	testImplementation 'org.mockito:mockito-core:3.+'
 	implementation project(':HDCMD')
 	implementation group: 'org.apache.tika', name: 'tika-core', version: '2.1.0'
+	implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
+	implementation group: 'io.springfox', name: 'springfox-swagger2', version: '2.9.2'
+	implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.9.2'
+	
+	
+	//implementation group: 'org.fourthline.cling', name: 'cling-support', version: '2.1.2'
+	//implementation group: 'org.fourthline.cling', name: 'cling-core', version: '2.1.2'
+	
 }
 
 test {

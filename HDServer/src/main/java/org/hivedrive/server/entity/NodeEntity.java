@@ -6,7 +6,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 @Entity
-public class Node {
+public class NodeEntity {
 
 	 @Id
 	 @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -15,6 +15,7 @@ public class Node {
 	 
 	 private String publicKey;
 
+	 private String nickname;
 
 	public Long getId() {
 		return id;

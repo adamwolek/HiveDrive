@@ -1,8 +1,10 @@
 package org.hivedrive.server;
 
 import org.hivedrive.cmd.model.UserKeys;
+
 import org.hivedrive.cmd.service.AsymetricEncryptionService;
-import org.hivedrive.server.entity.Node;
+import org.hivedrive.server.entity.NodeEntity;
+import org.hivedrive.server.repository.NodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,11 +21,11 @@ public class TestController {
 	@GetMapping("/part")
 	  public ResponseEntity<String> part() {
 		
-		Node node = new Node();
+		NodeEntity node = new NodeEntity();
 		node.setPublicKey("test" + System.currentTimeMillis());
 		repository.save(node);
 		
-		Iterable<Node> findAll = repository.findAll();
+		Iterable<NodeEntity> findAll = repository.findAll();
 	    return ResponseEntity.ok().body("test2");
 	  }
 	
