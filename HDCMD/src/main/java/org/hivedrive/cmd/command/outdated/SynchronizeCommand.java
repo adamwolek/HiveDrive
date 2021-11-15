@@ -1,4 +1,4 @@
-package org.hivedrive.cmd;
+package org.hivedrive.cmd.command.outdated;
 
 import picocli.CommandLine;
 
@@ -22,29 +22,54 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.hivedrive.cmd.model.FileMetadata;
+import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.service.FileCompresssingService;
 import org.hivedrive.cmd.service.FileSplittingService;
 import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.SymetricEncryptionService;
+import org.hivedrive.cmd.service.UserKeysService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 @Command(name = "synchronize", mixinStandardHelpOptions = true, version = "0.1",
          description = "Prints the checksum (MD5 by default) of a file to STDOUT.")
 class SynchronizeCommand implements Runnable {
 
     @Parameters(index = "0", description = "The directory which will be synchronized.")
-    private File directoryToSynchronize;
+    private String task;
 
+    @Option(names = {"-dir", "--directoryToSynchronize"}, description = "")
+    private File directoryToSynchronize;
+    
     @Option(names = {"-rId", "--repositoryId"}, description = "")
     private String repositoryId = "main";
     
     @Option(names = {"-k", "--key"}, description = "")
     private File key;
+    
+    @Autowired
+    private SymetricEncryptionService encryptionService;
 
+    @Autowired
+	private FileSplittingService fileSplittingService;
+
+    @Autowired
+	private FileCompresssingService fileComporessingService;
+
+    @Autowired
+	private SignatureService signatureService;
+
+    @Autowired
+    private UserKeysService userKeysService;
+
+	private StopWatch stopWatch;
     
     @Override
 	public void run() {
-    	UserKeys keys = UserKeys.generateNewKeys();
+    	UserKeys keys = userKeysService.generateNewKeys();
 		SecretKey key = keys.getPrivateSymetricKey();
     	
 		if(directoryToSynchronize.exists()) {
@@ -56,19 +81,15 @@ class SynchronizeCommand implements Runnable {
 			int sentFiles = 0;
 			List<PartInfo> parts = new ArrayList<>();
 			for (File sourceFile : allFiles) {
-				StopWatch stopWatch = StopWatch.createStarted();
+				stopWatch = StopWatch.createStarted();
 				sentFiles++;
 				double currentPercentage = 100 * sentFiles / (double)allFiles.size();
 				log(currentPercentage + "%");
-				log(stopWatch.formatTime() + " - Packing");
 				File packedFile = packFile(sourceFile);
-				log(stopWatch.formatTime() + " - Encrypting");
 				File encryptedFile = encryptFile(packedFile, key);
 				packedFile.delete();
-				log(stopWatch.formatTime() + " - Splitting");
 				File directoryWithSplittedFiles = splitFiles(encryptedFile);
 				encryptedFile.delete();
-				log(stopWatch.formatTime() + " - Signing");
 				parts.addAll(generatePartsInfo(directoryWithSplittedFiles, sourceFile, keys));
 				log(stopWatch.formatTime() + " - End");
 				
@@ -79,6 +100,7 @@ class SynchronizeCommand implements Runnable {
 
     private List<PartInfo> generatePartsInfo(File directoryWithSplittedFiles, 
     		File sourceFile, UserKeys keys) {
+    	log(stopWatch.formatTime() + " - Signing");
     	List<PartInfo> parts = new ArrayList<>();
     	String fileId = directoryToSynchronize.toURI()
     			.relativize(sourceFile.toURI()).getPath();
@@ -89,14 +111,12 @@ class SynchronizeCommand implements Runnable {
     		partInfo.setPart(part);
     		partInfo.setOwnerPublicKey(keys.getPublicAsymetricKeyAsString());
     		
-    		SignatureService signatureService 
-    			= new SignatureService(keys.getPrivateAsymetricKey());
+    		signatureService.init(keys.getPrivateAsymetricKey());
     		String fileSign = signatureService.sign(part);
     		partInfo.setFileSign(fileSign);
     		
     		FileMetadata metadata = createFileMetadata(fileId, part);
     		partInfo.setFileMetadata(metadata);
-    		SymetricEncryptionService encryptionService = new SymetricEncryptionService(keys.getPrivateSymetricKey());
     		String encrypedFileMetadata = encryptionService.encrypt(metadata.toJSON());
     		partInfo.setEncryptedFileMetadata(encrypedFileMetadata);
     		
@@ -117,18 +137,18 @@ class SynchronizeCommand implements Runnable {
 	}
 
 	private File splitFiles(File encryptedFile) {
+		log(stopWatch.formatTime() + " - Splitting");
     	File directory = encryptedFile.getParentFile();
     	File directoryToSplit = new File(directory.getAbsolutePath() + "/parts");
     	directoryToSplit.mkdir();
-    	FileSplittingService service = new FileSplittingService();
-		service.splitFileIntoDirectory(encryptedFile, directoryToSplit);
+		fileSplittingService.splitFileIntoDirectory(encryptedFile, directoryToSplit);
 		return directoryToSplit;
 	}
 
 	private File packFile(File file) {
+		log(stopWatch.formatTime() + " - Packing");
 		File zip = new File(StringUtils.substringBefore(file.getAbsolutePath(), ".") + ".zip");
-		FileCompresssingService service = new FileCompresssingService();
-		service.compressFile(file, zip);
+		fileComporessingService.compressFile(file, zip);
 		return zip;
 	}
 
@@ -136,8 +156,7 @@ class SynchronizeCommand implements Runnable {
     	try {
 			File decryptedFile = new File(
 					StringUtils.substringBefore(encryptedFile.getAbsolutePath(), ".") + ".dec");
-			SymetricEncryptionService encryptingService = new SymetricEncryptionService(key);
-			encryptingService.decrypt(encryptedFile, decryptedFile);
+			encryptionService.decrypt(encryptedFile, decryptedFile);
 			return decryptedFile;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -146,10 +165,10 @@ class SynchronizeCommand implements Runnable {
 	}
 
 	private File encryptFile(File file, SecretKey key) {
+		log(stopWatch.formatTime() + " - Encrypting");
 		try {
 			File encryptedFile = new File(file.getAbsolutePath() + ".enc");
-			SymetricEncryptionService encryptingService = new SymetricEncryptionService(key);
-			encryptingService.encrypt(file, encryptedFile);
+			encryptionService.encrypt(file, encryptedFile);
 			return encryptedFile;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -169,9 +188,5 @@ class SynchronizeCommand implements Runnable {
     }
     
     
-	public static void main(String... args) {
-        int exitCode = new CommandLine(new SynchronizeCommand()).execute(args);
-        System.exit(exitCode);
-    }
 
 }

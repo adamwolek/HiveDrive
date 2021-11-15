@@ -9,7 +9,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FileCompresssingService {
 
 	public void compressFile(File inputFile, File outputFile) {

@@ -7,6 +7,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Key;
+
+import javax.annotation.PostConstruct;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -17,35 +19,44 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hivedrive.cmd.exception.DecryptionFailedException;
 import org.hivedrive.cmd.exception.EncryptionFailedException;
+import org.hivedrive.cmd.model.UserKeys;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
+@Service
 public class AsymetricEncryptionService {
 
+	@Autowired 
+	UserKeysService userKeysService;
+	
 	private PrivateKey privateAsymetricKey;
 	private PublicKey publicAsymetricKey;
-	private Key key;
 	private Cipher cipher;
 
-	public AsymetricEncryptionService(PrivateKey privateAsymetricKey) {
-		this();
-		this.key = privateAsymetricKey;
-		this.privateAsymetricKey = privateAsymetricKey;
-	}
-
-	public AsymetricEncryptionService(PublicKey publicAsymetricKey) {
-		this();
-		this.key = publicAsymetricKey;
-		this.publicAsymetricKey = publicAsymetricKey;
-	}
-
-	private AsymetricEncryptionService() {
-		try {
-			this.cipher = Cipher.getInstance("RSA");
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-			throw new RuntimeException(e);
+	@PostConstruct
+	public void init() {
+		UserKeys keys = userKeysService.getKeys();
+		if(keys != null) {
+			this.privateAsymetricKey = keys.getPrivateAsymetricKey();
+			this.publicAsymetricKey = keys.getPublicAsymetricKey();
+			try {
+				this.cipher = Cipher.getInstance("RSA");
+			} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
-	public void encrypt(File inputFile, File outputFile) {
+	public void encryptWithPrivateKey(File inputFile, File outputFile) {
+		encrypt(inputFile, outputFile, privateAsymetricKey);
+	}
+	
+	public void encryptWithPublicKey(File inputFile, File outputFile) {
+		encrypt(inputFile, outputFile, publicAsymetricKey);
+	}
+	
+	public void encrypt(File inputFile, File outputFile, Key key) {
 		try {
 	        cipher.init(Cipher.ENCRYPT_MODE, key);
 	        byte[] sourceFileBytes = FileUtils.readFileToByteArray(inputFile);
@@ -58,9 +69,9 @@ public class AsymetricEncryptionService {
 		}
 	}
 	
-	public void encryptAnyway(File inputFile, File outputFile) {
+	public void encryptAnywayWithPrivateKey(File inputFile, File outputFile) {
 		try {
-	        cipher.init(Cipher.ENCRYPT_MODE, key);
+	        cipher.init(Cipher.ENCRYPT_MODE, this.privateAsymetricKey);
 	        try (FileInputStream fis = new FileInputStream(inputFile);
 	        		FileOutputStream stream = new FileOutputStream(outputFile)){
 	        	while(fis.available() > 0) {
@@ -76,7 +87,15 @@ public class AsymetricEncryptionService {
 		}
 	}
 
-	public void decrypt(File inputFile, File outputFile) {
+	public void decryptWithPrivateKey(File inputFile, File outputFile) {
+		decrypt(inputFile, outputFile, privateAsymetricKey);
+	}
+	
+	public void decryptWithPublicKey(File inputFile, File outputFile) {
+		decrypt(inputFile, outputFile, publicAsymetricKey);
+	}
+	
+	public void decrypt(File inputFile, File outputFile, Key key) {
 		try {
 	        cipher.init(Cipher.DECRYPT_MODE, key);
 	        byte[] encryptedFileBytes = FileUtils.readFileToByteArray(inputFile);
@@ -89,5 +108,6 @@ public class AsymetricEncryptionService {
 		}
 		
 	}
+
 
 }

@@ -1,4 +1,4 @@
-package org.hivedrive.cmd;
+package org.hivedrive.cmd.model;
 
 import java.io.File;
 

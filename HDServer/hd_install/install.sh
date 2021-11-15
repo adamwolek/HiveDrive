@@ -11,7 +11,7 @@ fi
 #Copying to installation folder
 rm -rf /usr/share/hivedrive
 mkdir /usr/share/hivedrive
-cp -r installation/* /usr/share/hivedrive
+cp -r install_resources/* /usr/share/hivedrive
 chmod +x /usr/share/hivedrive/updateHiveDrive.sh
 
 #Creating service

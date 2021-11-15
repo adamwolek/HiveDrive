@@ -10,6 +10,9 @@ import java.util.Base64;
 
 import javax.crypto.Cipher;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public class SignatureService {
 
 	private PrivateKey privateAsymetricKey;
@@ -17,12 +20,12 @@ public class SignatureService {
 	private Key key;
 	private Cipher cipher;
 
-	public SignatureService(PrivateKey privateAsymetricKey) {
+	public void init(PrivateKey privateAsymetricKey) {
 		this.key = privateAsymetricKey;
 		this.privateAsymetricKey = privateAsymetricKey;
 	}
-
-	public SignatureService(PublicKey publicAsymetricKey) {
+	
+	public void init(PublicKey publicAsymetricKey) {
 		this.key = publicAsymetricKey;
 		this.publicAsymetricKey = publicAsymetricKey;
 	}
@@ -59,5 +62,6 @@ public class SignatureService {
 			throw new RuntimeException(e);
 		}
 	}
+
 	
 }

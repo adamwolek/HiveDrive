@@ -11,6 +11,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -21,24 +22,34 @@ import javax.crypto.spec.IvParameterSpec;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hivedrive.cmd.exception.EncryptionFailedException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Streams;
 
+@Service
 public class SymetricEncryptionService {
 	
 	private SecretKey secretKey;
 	private Cipher cipher;
 //	private IvParameterSpec iv = generateIv();
 
+	@Autowired 
+	UserKeysService userKeysService;
 
-	public SymetricEncryptionService(SecretKey secretKey) {
-	    this.secretKey = secretKey;
+	@PostConstruct
+	public void init() {
+	    this.secretKey = userKeysService.getKeys().getPrivateSymetricKey();
 	    try {
 			this.cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	
+	
 	
 	public static IvParameterSpec generateIv() {
 	    byte[] iv = new byte[16];
