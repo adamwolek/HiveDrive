@@ -1,5 +1,7 @@
 package org.hivedrive.server.to;
 
+import com.google.gson.Gson;
+
 public class NodeTO {
 
 	private String publicKey;
@@ -16,12 +18,12 @@ public class NodeTO {
 		this.publicKey = publicKey;
 	}
 
-	public String getNickname() {
+	public String getStatus() {
 		return status;
 	}
 
-	public void setNickname(String nickname) {
-		this.status = nickname;
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 	public String getIpAddress() {
@@ -31,4 +33,5 @@ public class NodeTO {
 	public void setIpAddress(String ipAddress) {
 		this.ipAddress = ipAddress;
 	}
+	
 }

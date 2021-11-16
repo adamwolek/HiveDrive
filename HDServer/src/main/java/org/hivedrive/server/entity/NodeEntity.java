@@ -5,6 +5,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import org.apache.commons.collections4.Get;
+
 @Entity
 public class NodeEntity {
 
@@ -13,21 +15,15 @@ public class NodeEntity {
 	 private Long id;
 	 
 	 private String publicKey;
-
+	
 	 private String status;
 	 
 	 private String ipAddress;
 
-	public Long getId() {
-		return id;
-	}
-
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-
+	 public Long getId() {
+		 return id;
+	 }
+	 
 	public String getPublicKey() {
 		return publicKey;
 	}
@@ -38,13 +34,13 @@ public class NodeEntity {
 	}
 
 
-	public String getNickname() {
+	public String getStatus() {
 		return status;
 	}
 
 
-	public void setNickname(String nickname) {
-		this.status = nickname;
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 
@@ -56,9 +52,5 @@ public class NodeEntity {
 	public void setIpAddress(String ipAddress) {
 		this.ipAddress = ipAddress;
 	}
-
-
-	 
-	 
 	 
 }
