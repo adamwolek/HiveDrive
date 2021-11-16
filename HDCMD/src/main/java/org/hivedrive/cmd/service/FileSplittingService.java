@@ -11,7 +11,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.hivedrive.cmd.tool.PartFileNameGenerator;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FileSplittingService {
 
 	public static int MAX_SIZE_IN_BYTES = 10 * 1024 * 1024; // 10MB

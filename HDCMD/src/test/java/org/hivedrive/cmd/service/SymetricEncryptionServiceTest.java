@@ -4,11 +4,16 @@ import static org.hivedrive.cmd.service.CryptographicTestHelper.*;
 
 
 import org.apache.commons.io.FileUtils;
-
+import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.google.common.base.Stopwatch;
 
@@ -20,6 +25,8 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = TestConfig.class)
 public class SymetricEncryptionServiceTest {
 	
 		private final String sourceText = "abcdefghijklmnoprstuwxyz0123456789";
@@ -27,6 +34,17 @@ public class SymetricEncryptionServiceTest {
 		@TempDir
 		public File tempFolder;
 	   
+		@Autowired
+		private SymetricEncryptionService encryptionService;
+		
+		@Autowired
+		private UserKeysService userKeysService;
+		
+//		@BeforeEach
+//		private void beforeTest() {
+//			userKeysService.setKeys(userKeysService.generateNewKeys());
+//		}
+		
 		@Tag("TimeTesting")
 		@Test
 		public void testEncryption() throws IOException {
@@ -36,16 +54,14 @@ public class SymetricEncryptionServiceTest {
 			
 			fillSourceFileByRandomContent(sourceFile);
 			
-			UserKeys userKeys = UserKeys.generateNewKeys();
-			SymetricEncryptionService service 
-				= new SymetricEncryptionService(userKeys.getPrivateSymetricKey());
+			UserKeys userKeys = userKeysService.generateNewKeys();
 			
 			Stopwatch stopwatch = Stopwatch.createStarted();
-			service.encrypt(sourceFile, encryptedFile);
+			encryptionService.encrypt(sourceFile, encryptedFile);
 			System.out.println("Szyfrowanie symetryczne: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
 			
 			stopwatch.reset().start();
-			service.decrypt(encryptedFile, decryptedFile);
+			encryptionService.decrypt(encryptedFile, decryptedFile);
 			System.out.println("Deszyfrowanie symetryczne: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
 			
 			assertEquals(hash(sourceFile), hash(decryptedFile));
@@ -55,12 +71,10 @@ public class SymetricEncryptionServiceTest {
 		@Test
 		public void testTextEncryption() throws IOException {
 			
-			UserKeys userKeys = UserKeys.generateNewKeys();
-			SymetricEncryptionService service 
-				= new SymetricEncryptionService(userKeys.getPrivateSymetricKey());
-			String encrypted = service.encrypt(sourceText);
+			UserKeys userKeys = userKeysService.generateNewKeys();
+			String encrypted = encryptionService.encrypt(sourceText);
 			
-			String decrypted = service.decrypt(encrypted);
+			String decrypted = encryptionService.decrypt(encrypted);
    
 			assertEquals(decrypted, sourceText);
 		}

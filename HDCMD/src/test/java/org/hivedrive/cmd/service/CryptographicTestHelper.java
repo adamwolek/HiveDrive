@@ -11,7 +11,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 public class CryptographicTestHelper {
 	
-	private static final int sizeOfSourceFileInMB = 100;
+	private static final int sizeOfSourceFileInMB = 1;
 	
 	public static void fillSourceFileByRandomContent(File sourceFile) {
 		try (FileOutputStream fos = new FileOutputStream(sourceFile)){

@@ -21,7 +21,7 @@ repositories {
 
 task finalize(type: Copy) {
     from 'build/libs/HDServer.jar'
-    into 'installation/'
+    into 'hd_install/install_resources/'
     doLast {
         //
     }
