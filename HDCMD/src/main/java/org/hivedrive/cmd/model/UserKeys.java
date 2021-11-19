@@ -83,6 +83,14 @@ public class UserKeys {
 		return publicAsymetricKey;
 	}
 	
-	
+	public static UserKeys load(File clientKeys) {
+		try {
+			String json = FileUtils.readFileToString(clientKeys, "UTF-8");
+			UserKeys keys = new Gson().fromJson(json, UserKeys.class);
+			return keys;
+		} catch (Exception e) {
+			throw new LoadingKeysError(e);
+		}
+	}
 	
 }
