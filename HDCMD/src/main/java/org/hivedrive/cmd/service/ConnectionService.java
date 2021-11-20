@@ -1,13 +1,21 @@
 package org.hivedrive.cmd.service;
 
 import java.io.IOException;
-
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
@@ -18,7 +26,6 @@ import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -30,16 +37,46 @@ public class ConnectionService {
 	
 	private List<Node> knownNodes = new ArrayList<>();
 	
+	private Executor executor = Executors.newFixedThreadPool(5);
 	
 	@PostConstruct
-	public void init() {
-		metadata = downloadMetadata();
+	public void init() throws URISyntaxException, IOException, InterruptedException {
+//		this.metadata = downloadMetadata();
+//		this.knownNodes = extractInitialKnownNodes(metadata);
+//		meetMoreNodes();
+		
+		meetNode("");
 	}
 
-	public void meetMoreNodes() {
+	private List<Node> extractInitialKnownNodes(CentralServerMetadata metadata) {
+		return metadata.getActiveNodes().stream()
+		.map(ip -> registerNodeByIp(ip))
+		.collect(Collectors.toList());
+	}
+
+	private Node registerNodeByIp(String ip) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private void meetMoreNodes() throws URISyntaxException, IOException, InterruptedException {
 		for (String activeNodeIp : metadata.getActiveNodes()) {
-			
+			meetNode(activeNodeIp);
 		}
+	}
+
+	private void meetNode(String ip) throws URISyntaxException, IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder()
+//					  .uri(new URI(activeNodeIp + "/"))
+				  .uri(new URI("https://httpbin.org/get"))
+				  .GET()
+				  .build();
+		HttpResponse<String> response = HttpClient
+				  .newBuilder()
+				  .build()
+				  .send(request, BodyHandlers.ofString());
+		String body = response.body();
+		System.out.println(body);
 	}
 	
 	private CentralServerMetadata downloadMetadata() {
@@ -57,7 +94,7 @@ public class ConnectionService {
 
 
 	public void send(PartInfo part) {
-		// TODO Auto-generated method stub
+		
 		
 	}
 	

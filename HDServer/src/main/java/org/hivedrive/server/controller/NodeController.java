@@ -29,29 +29,38 @@ public class NodeController {
 
 	@PostMapping
 	public ResponseEntity<Void> post(@RequestBody NodeTO node) {
-		NodeEntity entity = service.post(node);
-		if (entity != null) {
-			return new ResponseEntity<>(HttpStatus.CREATED);
-		} else {
-			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		if (service.isAbleToAdd(node)) {
+			NodeEntity entity = service.post(node);
+			if (entity != null) {
+				return new ResponseEntity<>(HttpStatus.CREATED);
+			}
 		}
+		return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 	}
 	
 	@PutMapping
-	void put(@RequestBody NodeTO node) {
-		
+	public ResponseEntity<Void> put(@RequestBody NodeTO node) {
+		if (service.isAbleToUpdate(node)) {
+			NodeEntity entity = service.put(node);
+			if (entity != null) {
+				return new ResponseEntity<>(HttpStatus.OK);
+			}
+		}
+		return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 	}
 	
 	@GetMapping
 	NodeTO get() {
-		
+		//service.get();
 		return new NodeTO();
 	}
-	
+	/**
+	 * 
+	 * @return all nodes which are known by this unit
+	 */
 	@GetMapping("/all")
 	List<NodeTO> getAll() {
-		
-		return null;
+		return service.getAll();
 	}
 	
 }
