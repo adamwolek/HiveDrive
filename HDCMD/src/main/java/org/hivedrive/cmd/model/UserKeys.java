@@ -35,10 +35,6 @@ import com.google.gson.GsonBuilder;
 
 public class UserKeys {
 	
-	
-	
-	
-	
 	private String privateSymetricKey;
 	private String privateAsymetricKey;
 	private String publicAsymetricKey;

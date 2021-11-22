@@ -48,13 +48,13 @@ public class SymetricEncryptionServiceTest {
 		@Tag("TimeTesting")
 		@Test
 		public void testEncryption() throws IOException {
+			userKeysService.generateNewKeys();
 			File sourceFile = new File(tempFolder, "/sourceFile.src");
 			File encryptedFile = new File(tempFolder, "/encryptedFile.enc");
 			File decryptedFile = new File(tempFolder, "/decryptedFile");
 			
 			fillSourceFileByRandomContent(sourceFile);
 			
-			UserKeys userKeys = userKeysService.generateNewKeys();
 			
 			Stopwatch stopwatch = Stopwatch.createStarted();
 			encryptionService.encrypt(sourceFile, encryptedFile);
@@ -70,8 +70,7 @@ public class SymetricEncryptionServiceTest {
 		@Tag("Crypto")
 		@Test
 		public void testTextEncryption() throws IOException {
-			
-			UserKeys userKeys = userKeysService.generateNewKeys();
+			userKeysService.generateNewKeys();
 			String encrypted = encryptionService.encrypt(sourceText);
 			
 			String decrypted = encryptionService.decrypt(encrypted);

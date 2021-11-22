@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 
 public class NodeTO {
 
-	private String publicKey;
+	 private String publicKey;
 
 	 private String status;
 	 
