@@ -24,6 +24,8 @@ import org.hivedrive.cmd.service.UserKeysService;
 import org.hivedrive.cmd.to.NodeTO;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class P2PSessionManager {
@@ -46,11 +48,12 @@ public class P2PSessionManager {
 		this.userKeysService = userKeysService;
 	}
 
-	public void registerToNode() {
+	public void registerToNode() 
+			throws URISyntaxException, IOException, InterruptedException {
 		UserKeys keys = userKeysService.getKeys();
 		NodeTO me = new NodeTO();
 		me.setPublicKey(keys.getPublicAsymetricKeyAsString());
-//		post(ip);
+		post(nodeEndpoint(), me);
 	}
 
 	public Node getNode() {
@@ -72,7 +75,8 @@ public class P2PSessionManager {
 	}
 	
 
-	private <T> T get(String url, String publicKeyOfNode, Class<T> clazz) throws URISyntaxException, IOException, InterruptedException {
+	private <T> T get(String url, String publicKeyOfNode, Class<T> clazz) 
+			throws URISyntaxException, IOException, InterruptedException {
 		HttpRequest request = HttpRequest.newBuilder()
 				  .uri(new URI(url))
 				  .GET()
@@ -94,7 +98,12 @@ public class P2PSessionManager {
 	}
 	
 	
-	private void verifyResponseSignature(String publicKeyOfNode, HttpResponse<String> response) {
+	private void verifyResponseSignature(String publicKeyOfNode, HttpResponse<String> response) 
+			throws JsonMappingException, JsonProcessingException {
+		if(publicKeyOfNode == null) {
+			NodeTO node = new ObjectMapper().readValue(response.body(), NodeTO.class);
+			publicKeyOfNode = node.getPublicKey();
+		}
 		String signature = response.headers().firstValue(SIGN_HEADER_PARAM).get();
 		boolean verified = signatureService.verifySign(signature, response.body(), publicKeyOfNode);
 		if(!verified) {
@@ -103,7 +112,8 @@ public class P2PSessionManager {
 		
 	}
 
-	private void post(String url, Object object) throws URISyntaxException, IOException, InterruptedException {
+	private void post(String url, Object object) 
+			throws URISyntaxException, IOException, InterruptedException {
 		String json = new ObjectMapper().writeValueAsString(object);
 		HttpRequest request = HttpRequest.newBuilder()
 				  .uri(new URI(url))
