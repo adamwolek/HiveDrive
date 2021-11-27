@@ -74,9 +74,7 @@ public class PushCommand implements Runnable {
 	}
 
 	private void sendParts(List<PartInfo> parts) {
-		for (PartInfo part : parts) {
-			connectionService.send(part);
-		}
+		connectionService.sendParts(parts);
 		
 	}
 

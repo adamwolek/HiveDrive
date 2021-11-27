@@ -16,7 +16,7 @@ import javax.annotation.PostConstruct;
 
 import org.hivedrive.cmd.exception.HttpResponseNotSignedProperly;
 import org.hivedrive.cmd.helper.StatusCode;
-import org.hivedrive.cmd.model.Node;
+import org.hivedrive.cmd.model.NodeEntity;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.service.SignatureService;
@@ -32,7 +32,7 @@ public class P2PSessionManager {
 	
 	private P2PSession session;
 	
-	private Node node;
+	private NodeEntity node;
 
 	private String ip;
 
@@ -56,13 +56,13 @@ public class P2PSessionManager {
 		post(nodeEndpoint(), me);
 	}
 
-	public Node getNode() {
+	public NodeEntity getNode() {
 		return node;
 	}
 	
 	public boolean meetWithNode() {
 		try {
-			this.node = get(whoAreYouEndpoint(), null, Node.class);
+			this.node = get(whoAreYouEndpoint(), null, NodeEntity.class);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();

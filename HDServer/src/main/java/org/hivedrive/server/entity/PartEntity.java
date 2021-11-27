@@ -88,4 +88,8 @@ public class PartEntity {
 	public void setOrderInGroup(int orderInGroup) {
 		this.orderInGroup = orderInGroup;
 	}
+	public String getOwnerId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

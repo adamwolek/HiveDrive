@@ -2,7 +2,7 @@ package org.hivedrive.cmd.session;
 
 import java.time.LocalDateTime;
 
-import org.hivedrive.cmd.model.Node;
+import org.hivedrive.cmd.model.NodeEntity;
 
 public class P2PSession {
 
@@ -10,14 +10,14 @@ public class P2PSession {
 		
 	}
 	
-	private Node node;
+	private NodeEntity node;
 	private LocalDateTime createDate;
 	private Status status;
 	
-	public Node getNode() {
+	public NodeEntity getNode() {
 		return node;
 	}
-	public void setNode(Node node) {
+	public void setNode(NodeEntity node) {
 		this.node = node;
 	}
 	public LocalDateTime getCreateDate() {

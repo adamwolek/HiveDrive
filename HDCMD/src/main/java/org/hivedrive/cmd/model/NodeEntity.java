@@ -1,16 +1,12 @@
-package org.hivedrive.cmd.to;
+package org.hivedrive.cmd.model;
 
-public class NodeTO {
+public class NodeEntity {
 
 	private String publicKey;
 
 	private String status;
 	 
 	private String ipAddress;
-	
-	private Long freeSpace;
-	
-	private Long usedSpace;
 
 	public String getPublicKey() {
 		return publicKey;
@@ -34,22 +30,6 @@ public class NodeTO {
 
 	public void setIpAddress(String ipAddress) {
 		this.ipAddress = ipAddress;
-	}
-
-	public Long getFreeSpace() {
-		return freeSpace;
-	}
-
-	public void setFreeSpace(Long freeSpace) {
-		this.freeSpace = freeSpace;
-	}
-
-	public Long getUsedSpace() {
-		return usedSpace;
-	}
-
-	public void setUsedSpace(Long usedSpace) {
-		this.usedSpace = usedSpace;
 	}
 	
 	
