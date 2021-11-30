@@ -74,9 +74,7 @@ public class PushCommand implements Runnable {
 	}
 
 	private void sendParts(List<PartInfo> parts) {
-		for (PartInfo part : parts) {
-			connectionService.send(part);
-		}
+		connectionService.sendParts(parts);
 		
 	}
 
@@ -115,9 +113,7 @@ public class PushCommand implements Runnable {
     		partInfo.setOwnerPublicKey(
     				userKeysService.getKeys().getPublicAsymetricKeyAsString());
     		
-    		signatureService.init(
-    				userKeysService.getKeys().getPrivateAsymetricKey());
-    		String fileSign = signatureService.sign(part);
+    		String fileSign = signatureService.signByClient(part);
     		partInfo.setFileSign(fileSign);
     		
     		FileMetadata metadata = createFileMetadata(fileId, part);

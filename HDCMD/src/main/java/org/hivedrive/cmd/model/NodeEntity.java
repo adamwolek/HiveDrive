@@ -1,14 +1,12 @@
-package org.hivedrive.server.to;
+package org.hivedrive.cmd.model;
 
-import com.google.gson.Gson;
+public class NodeEntity {
 
-public class NodeTO {
+	private String publicKey;
 
-	 private String publicKey;
-
-	 private String status;
+	private String status;
 	 
-	 private String ipAddress;
+	private String ipAddress;
 
 	public String getPublicKey() {
 		return publicKey;
@@ -33,5 +31,6 @@ public class NodeTO {
 	public void setIpAddress(String ipAddress) {
 		this.ipAddress = ipAddress;
 	}
+	
 	
 }

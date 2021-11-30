@@ -111,8 +111,7 @@ class SynchronizeCommand implements Runnable {
     		partInfo.setPart(part);
     		partInfo.setOwnerPublicKey(keys.getPublicAsymetricKeyAsString());
     		
-    		signatureService.init(keys.getPrivateAsymetricKey());
-    		String fileSign = signatureService.sign(part);
+    		String fileSign = signatureService.signByClient(part);
     		partInfo.setFileSign(fileSign);
     		
     		FileMetadata metadata = createFileMetadata(fileId, part);

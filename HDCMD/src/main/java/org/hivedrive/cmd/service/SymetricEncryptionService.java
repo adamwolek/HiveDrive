@@ -39,7 +39,7 @@ public class SymetricEncryptionService {
 	UserKeysService userKeysService;
 
 	@PostConstruct
-	public void init() {
+	private void init() {
 	    this.secretKey = userKeysService.getKeys().getPrivateSymetricKey();
 	    try {
 			this.cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
