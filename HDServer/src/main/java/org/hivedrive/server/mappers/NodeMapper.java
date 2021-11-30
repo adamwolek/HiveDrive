@@ -1,10 +1,11 @@
 package org.hivedrive.server.mappers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.to.NodeTO;
 import org.springframework.stereotype.Service;
-
-import com.google.gson.Gson;
 
 @Service
 public class NodeMapper {
@@ -17,6 +18,14 @@ public class NodeMapper {
 		return entity;
 	}
 	
+	public List<NodeEntity> mapTOs(List<NodeTO> toes) {
+		List<NodeEntity> entities = new ArrayList<>();
+		for (NodeTO to : toes) {
+			entities.add(map(to));
+		}
+		return entities;
+	}
+	
 	public NodeTO map(NodeEntity entity) {
 		NodeTO to = new NodeTO();
 		to.setStatus(entity.getStatus());
@@ -25,13 +34,12 @@ public class NodeMapper {
 		return to;
 	}
 	
-	public String toJson(NodeTO to) {
-		Gson gson = new Gson();
-		return gson.toJson(to);
+	public List<NodeTO> mapEntities(List<NodeEntity> entities) {
+		List<NodeTO> toes = new ArrayList<>();
+		for (NodeEntity entity : entities) {
+			toes.add(map(entity));
+		}
+		return toes;
 	}
 	
-	public NodeTO fromJson(String json) {
-		Gson gson = new Gson();
-		return gson.fromJson(json, NodeTO.class);
-	}
 }

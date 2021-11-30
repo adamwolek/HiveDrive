@@ -57,13 +57,16 @@ public class PushCommand implements Runnable {
 
     
 	private StopWatch stopWatch;
+
+	private File workDirectory;
     
     @Override
 	public void run() {
     	UserKeys keys = userKeysService.getKeys();
-		SecretKey key = keys.getPrivateSymetricKey();
     	
 		if(repositoryConfigService.getRepositoryDirectory().exists()) {
+			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
+			workDirectory.mkdir();
 			List<PartInfo> parts = generatePartsForRepository();
 			sendParts(parts);
 		}

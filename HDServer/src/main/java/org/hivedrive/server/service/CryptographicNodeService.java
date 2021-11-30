@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import javax.annotation.PostConstruct;
 
 import org.hivedrive.cmd.model.UserKeys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
