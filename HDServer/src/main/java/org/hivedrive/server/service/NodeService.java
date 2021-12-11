@@ -18,16 +18,11 @@ public class NodeService {
 	@Autowired
 	private NodeMapper mapper;
 	
-	public NodeEntity post(NodeTO to) {
+	public NodeEntity saveOrUpdate(NodeTO to) {
 		NodeEntity entity = mapper.map(to);
 		return repository.save(entity);
 	}
 
-	public NodeEntity put(NodeTO to) {
-		NodeEntity entity = mapper.map(to);
-		return repository.save(entity);
-	}
-	
 	public boolean isAbleToAdd(NodeTO to) {
 		//TODO: implementacja
 		return true;
@@ -40,15 +35,26 @@ public class NodeService {
 	
 	public NodeTO getNodeByPublicKey(String publicKey) {
 		NodeEntity entity = getNodeEntityByPublicKey(publicKey);
-		return mapper.map(entity);
+		if (entity != null) {
+			return mapper.map(entity);
+		}
+		return null;
 	}
 
 	public NodeEntity getNodeEntityByPublicKey(String publicKey) {
 		return repository.findByPublicKey(publicKey);
 	}
+	
 	public List<NodeTO> getAll() {
 		List<NodeEntity> entities = (List<NodeEntity>) repository.findAll();
 		return mapper.mapEntities(entities);
+	}
+	
+	public void delete(NodeTO to) {
+		NodeEntity entity = mapper.map(to);
+		if (entity != null) {
+			repository.delete(entity);	
+		}
 	}
 	
 }

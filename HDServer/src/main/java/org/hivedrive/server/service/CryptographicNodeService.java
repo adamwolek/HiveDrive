@@ -22,7 +22,7 @@ public class CryptographicNodeService {
 		System.out.println(keysFolder.getAbsolutePath());
 		File[] files = keysFolder.listFiles();
 		if(files != null && files.length == 1) {
-			keys = UserKeys.load(files[0]);
+//			keys = UserKeys.load(files[0]);
 		}
     }
 

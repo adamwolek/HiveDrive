@@ -7,8 +7,6 @@ import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.to.NodeTO;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.Gson;
-
 @Service
 public class NodeMapper {
 
@@ -44,13 +42,4 @@ public class NodeMapper {
 		return toes;
 	}
 	
-	public String toJson(NodeTO to) {
-		Gson gson = new Gson();
-		return gson.toJson(to);
-	}
-	
-	public NodeTO fromJson(String json) {
-		Gson gson = new Gson();
-		return gson.fromJson(json, NodeTO.class);
-	}
 }
