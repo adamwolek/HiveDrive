@@ -53,7 +53,7 @@ import one.util.streamex.StreamEx;
 @Service
 public class ConnectionService {
 	
-	private static class PartAndP2PManager{
+	private static class PartAndP2PManager {
 		PartInfo part;
 		P2PSessionManager manager;
 		public PartAndP2PManager(PartInfo part, P2PSessionManager manager) {
@@ -61,9 +61,11 @@ public class ConnectionService {
 			this.part = part;
 			this.manager = manager;
 		}
-		
 	}
 	
+	
+	@Autowired
+	private ConfigurationService config;
 	
 	@Autowired
 	private UserKeysService userKeysService;
@@ -95,7 +97,6 @@ public class ConnectionService {
 		.collect(Collectors.toSet());
 	}
 
-
 	private void meetMoreNodes() {
 		Set<NodeEntity> newNodes = metadata.getActiveNodes().stream()
 		.map(ip -> new P2PSessionManager(ip, userKeysService, signatureService))
@@ -105,10 +106,6 @@ public class ConnectionService {
 		this.knownNodes.addAll(newNodes);
 	}
 
-
-	
-
-	
 	private CentralServerMetadata downloadMetadata() {
 		try {
 			String json = IOUtils.toString(new URL(URL_TO_CENTRAL_METADATA), "UTF-8");
@@ -122,21 +119,37 @@ public class ConnectionService {
 	}
 
 	public void sendParts(List<PartInfo> parts) {
-		Queue<NodeEntity> nodes = getNodesSortedByBestGeneralRate(this.knownNodes);
-		for (NodeEntity node : nodes) {
-			for (PartInfo part : parts) {
-				P2PSessionManager sessionManager = new P2PSessionManager(
-						node.getIpAddress(), userKeysService, signatureService);
-				sessionManager.send(part);
+		for (PartInfo part : parts) {
+			Queue<NodeEntity> nodes = getBestNodes(part);
+			int copiesOfPart = 0;
+			while(copiesOfPart >= config.getBestNumberOfCopies()) {
+				NodeEntity node = nodes.poll();
+				P2PSessionManager sessionManager = newSession(node);
 			}
 		}
+	}
+
+	private P2PSessionManager newSession(NodeEntity node) {
+		return new P2PSessionManager(
+				node.getIpAddress(), userKeysService, signatureService);
+	}
+
+	private Queue<NodeEntity> getBestNodes(PartInfo part) {
+		LinkedList<NodeEntity> nodes = new LinkedList<>();
+		nodes.addAll(getNodesWhoAlreadyHaveThisPart(part));
+		nodes.addAll(getNodesSortedByBestGeneralRate(knownNodes));
+		return null;
+	}
+
+	private LinkedList<NodeEntity> getNodesWhoAlreadyHaveThisPart(PartInfo part) {
+//		part.getOwnerPublicKey()
+		return null;
 	}
 
 	private Queue<NodeEntity> getNodesSortedByBestGeneralRate(Set<NodeEntity> knownNodes) {
 		return knownNodes.stream()
 		.sorted((n1, n2) -> {
-			
-			return 1;
+			return n1.getFreeSpace().compareTo(n2.getFreeSpace());
 		}).collect(Collectors.toCollection(LinkedList::new));
 	}
 

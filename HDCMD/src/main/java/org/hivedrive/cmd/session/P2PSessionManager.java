@@ -1,8 +1,10 @@
 package org.hivedrive.cmd.session;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -34,26 +36,43 @@ public class P2PSessionManager {
 	
 	private NodeEntity node;
 
-	private String ip;
+//	private String ip;
 
 	private UserKeysService userKeysService;
 	
 	private SignatureService signatureService;
 	
-	private static String SIGN_HEADER_PARAM = "X-SIGN";
+	public static String SIGN_HEADER_PARAM = "X-SIGN";
+
+	private URI whouAreYouEndpoint;
+	private URI nodeEndpoint;
+	private URI partEndpoint;
 	
 	public P2PSessionManager(String ip, UserKeysService userKeysService, 
-			SignatureService signatureService) {
-		this.ip = ip;
+			SignatureService signatureService)  {
+		try {
+			this.whouAreYouEndpoint = new URI(ip + "/whoAreYou");
+			this.nodeEndpoint = new URI(ip + "/node");
+			this.partEndpoint = new URI(ip + "part");
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 		this.userKeysService = userKeysService;
+		this.signatureService = signatureService;
+	}
+	
+	public P2PSessionManager(UserKeysService userKeysService, 
+			SignatureService signatureService)  {
+		this.userKeysService = userKeysService;
+		this.signatureService = signatureService;
 	}
 
-	public void registerToNode() 
+	public boolean registerToNode() 
 			throws URISyntaxException, IOException, InterruptedException {
 		UserKeys keys = userKeysService.getKeys();
 		NodeTO me = new NodeTO();
 		me.setPublicKey(keys.getPublicAsymetricKeyAsString());
-		post(nodeEndpoint(), me);
+		return post(nodeEndpoint, me);
 	}
 
 	public NodeEntity getNode() {
@@ -62,7 +81,7 @@ public class P2PSessionManager {
 	
 	public boolean meetWithNode() {
 		try {
-			this.node = get(whoAreYouEndpoint(), null, NodeEntity.class);
+			this.node = get(whouAreYouEndpoint, null, NodeEntity.class);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -75,10 +94,10 @@ public class P2PSessionManager {
 	}
 	
 
-	private <T> T get(String url, String publicKeyOfNode, Class<T> clazz) 
+	private <T> T get(URI uri, String publicKeyOfNode, Class<T> clazz) 
 			throws URISyntaxException, IOException, InterruptedException {
 		HttpRequest request = HttpRequest.newBuilder()
-				  .uri(new URI(url))
+				  .uri(uri)
 				  .GET()
 				  .build();
 		HttpResponse<String> response = HttpClient
@@ -88,7 +107,7 @@ public class P2PSessionManager {
 		
 		if(response.statusCode() == StatusCode.UNAUTHORIZED) {
 			registerToNode();
-			return get(url, publicKeyOfNode, clazz);
+			return get(uri, publicKeyOfNode, clazz);
 		}
 		verifyResponseSignature(publicKeyOfNode, response);
 		
@@ -112,11 +131,11 @@ public class P2PSessionManager {
 		
 	}
 
-	private void post(String url, Object object) 
+	private boolean post(URI uri, Object object) 
 			throws URISyntaxException, IOException, InterruptedException {
 		String json = new ObjectMapper().writeValueAsString(object);
 		HttpRequest request = HttpRequest.newBuilder()
-				  .uri(new URI(url))
+				  .uri(uri)
 				  .header(SIGN_HEADER_PARAM, signOf(json))
 				  .POST(BodyPublishers.ofString(json))
 				  .build();
@@ -126,26 +145,40 @@ public class P2PSessionManager {
 				  .send(request, BodyHandlers.ofString());
 		if(response.statusCode() == StatusCode.UNAUTHORIZED) {
 			registerToNode();
-			post(url, object);
+			return post(uri, object);
 		}
+		return response.statusCode() == StatusCode.ACCEPTED;
 	}
 	
 	private String signOf(String text) {
 		return signatureService.signByClient(text);
 	}
 
+	public URI getWhouAreYouEndpoint() {
+		return whouAreYouEndpoint;
+	}
 
-	private String whoAreYouEndpoint(){
-		return ip + "/whoAreYou";
+	public void setWhouAreYouEndpoint(URI whouAreYouEndpoint) {
+		this.whouAreYouEndpoint = whouAreYouEndpoint;
 	}
-	
-	private String nodeEndpoint(){
-		return ip + "/node";
+
+	public URI getNodeEndpoint() {
+		return nodeEndpoint;
 	}
-	
-	private String partEndpoint(){
-		return ip + "/part";
+
+	public void setNodeEndpoint(URI nodeEndpoint) {
+		this.nodeEndpoint = nodeEndpoint;
 	}
+
+	public URI getPartEndpoint() {
+		return partEndpoint;
+	}
+
+	public void setPartEndpoint(URI partEndpoint) {
+		this.partEndpoint = partEndpoint;
+	}
+
+
 	
 
 }

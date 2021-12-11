@@ -7,6 +7,10 @@ public class NodeEntity {
 	private String status;
 	 
 	private String ipAddress;
+	
+	private Long freeSpace;
+	
+	private Long usedSpace;
 
 	public String getPublicKey() {
 		return publicKey;
@@ -30,6 +34,22 @@ public class NodeEntity {
 
 	public void setIpAddress(String ipAddress) {
 		this.ipAddress = ipAddress;
+	}
+
+	public Long getFreeSpace() {
+		return freeSpace;
+	}
+
+	public void setFreeSpace(Long freeSpace) {
+		this.freeSpace = freeSpace;
+	}
+
+	public Long getUsedSpace() {
+		return usedSpace;
+	}
+
+	public void setUsedSpace(Long usedSpace) {
+		this.usedSpace = usedSpace;
 	}
 	
 	
