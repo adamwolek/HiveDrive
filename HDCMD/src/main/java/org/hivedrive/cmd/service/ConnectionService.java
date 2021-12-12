@@ -89,10 +89,12 @@ public class ConnectionService {
 		this.knownNodes = extractInitialKnownNodes(metadata);
 		meetMoreNodes();
 	}
+	
+	
 
 	private Set<NodeEntity> extractInitialKnownNodes(CentralServerMetadata metadata) {
 		return metadata.getActiveNodes().stream()
-		.map(ip -> new P2PSessionManager(ip, userKeysService, signatureService))
+		.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
 		.filter(sessionManager -> sessionManager.meetWithNode())
 		.map(sessionManager -> sessionManager.getNode())
 		.collect(Collectors.toSet());
@@ -100,7 +102,7 @@ public class ConnectionService {
 
 	private void meetMoreNodes() {
 		Set<NodeEntity> newNodes = metadata.getActiveNodes().stream()
-		.map(ip -> new P2PSessionManager(ip, userKeysService, signatureService))
+		.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
 		.filter(sessionManager -> sessionManager.meetWithNode())
 		.map(sessionManager -> sessionManager.getNode())
 		.collect(Collectors.toSet());

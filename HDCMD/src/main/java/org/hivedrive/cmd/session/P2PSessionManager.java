@@ -10,6 +10,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,25 +37,23 @@ public class P2PSessionManager {
 	
 	private NodeEntity node;
 
-//	private String ip;
-
 	private UserKeysService userKeysService;
 	
 	private SignatureService signatureService;
 	
 	public static String SIGN_HEADER_PARAM = "X-SIGN";
 
-	private URI whouAreYouEndpoint;
-	private URI nodeEndpoint;
-	private URI partEndpoint;
+	private URL whouAreYouEndpoint;
+	private URL nodeEndpoint;
+	private URL partEndpoint;
 	
-	public P2PSessionManager(String ip, UserKeysService userKeysService, 
+	public P2PSessionManager(String address, UserKeysService userKeysService, 
 			SignatureService signatureService)  {
 		try {
-			this.whouAreYouEndpoint = new URI(ip + "/whoAreYou");
-			this.nodeEndpoint = new URI(ip + "/node");
-			this.partEndpoint = new URI(ip + "part");
-		} catch (URISyntaxException e) {
+			this.whouAreYouEndpoint = new URL("http://" + address + "/whoAreYou");
+			this.nodeEndpoint = new URL("http://" + address + "/node");
+			this.partEndpoint = new URL("http://" + address + "part");
+		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
 		this.userKeysService = userKeysService;
@@ -94,10 +93,11 @@ public class P2PSessionManager {
 	}
 	
 
-	private <T> T get(URI uri, String publicKeyOfNode, Class<T> clazz) 
+	private <T> T get(URL url, String publicKeyOfNode, Class<T> clazz) 
 			throws URISyntaxException, IOException, InterruptedException {
 		HttpRequest request = HttpRequest.newBuilder()
-				  .uri(uri)
+				  .uri(url.toURI())
+				  .timeout(Duration.ofSeconds(10))
 				  .GET()
 				  .build();
 		HttpResponse<String> response = HttpClient
@@ -107,7 +107,7 @@ public class P2PSessionManager {
 		
 		if(response.statusCode() == StatusCode.UNAUTHORIZED) {
 			registerToNode();
-			return get(uri, publicKeyOfNode, clazz);
+			return get(url, publicKeyOfNode, clazz);
 		}
 		verifyResponseSignature(publicKeyOfNode, response);
 		
@@ -131,11 +131,12 @@ public class P2PSessionManager {
 		
 	}
 
-	private boolean post(URI uri, Object object) 
+	private boolean post(URL url, Object object) 
 			throws URISyntaxException, IOException, InterruptedException {
 		String json = new ObjectMapper().writeValueAsString(object);
 		HttpRequest request = HttpRequest.newBuilder()
-				  .uri(uri)
+				  .uri(url.toURI())
+				  .timeout(Duration.ofSeconds(10))
 				  .header(SIGN_HEADER_PARAM, signOf(json))
 				  .POST(BodyPublishers.ofString(json))
 				  .build();
@@ -145,7 +146,7 @@ public class P2PSessionManager {
 				  .send(request, BodyHandlers.ofString());
 		if(response.statusCode() == StatusCode.UNAUTHORIZED) {
 			registerToNode();
-			return post(uri, object);
+			return post(url, object);
 		}
 		return response.statusCode() == StatusCode.ACCEPTED;
 	}
@@ -154,27 +155,27 @@ public class P2PSessionManager {
 		return signatureService.signByClient(text);
 	}
 
-	public URI getWhouAreYouEndpoint() {
+	public URL getWhouAreYouEndpoint() {
 		return whouAreYouEndpoint;
 	}
 
-	public void setWhouAreYouEndpoint(URI whouAreYouEndpoint) {
+	public void setWhouAreYouEndpoint(URL whouAreYouEndpoint) {
 		this.whouAreYouEndpoint = whouAreYouEndpoint;
 	}
 
-	public URI getNodeEndpoint() {
+	public URL getNodeEndpoint() {
 		return nodeEndpoint;
 	}
 
-	public void setNodeEndpoint(URI nodeEndpoint) {
+	public void setNodeEndpoint(URL nodeEndpoint) {
 		this.nodeEndpoint = nodeEndpoint;
 	}
 
-	public URI getPartEndpoint() {
+	public URL getPartEndpoint() {
 		return partEndpoint;
 	}
 
-	public void setPartEndpoint(URI partEndpoint) {
+	public void setPartEndpoint(URL partEndpoint) {
 		this.partEndpoint = partEndpoint;
 	}
 

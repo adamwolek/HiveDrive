@@ -44,70 +44,104 @@ public class P2PSessionManagerTest {
 	
 	@Test
 	void testCentralNode() throws URISyntaxException, IOException, InterruptedException {
-		MockWebServer centralServer = new MockWebServer();
-		MockWebServer node1 = new MockWebServer();
-		MockWebServer node2 = new MockWebServer();
+		try (MockWebServer centralServer = new MockWebServer();
+				MockWebServer node1 = new MockWebServer();
+				MockWebServer node2 = new MockWebServer()) {
+			
+			
+			preapareCentralServer(centralServer, node1, node2);
+			preapareNode(node1);
+			preapareNode(node2);
+			
+			connectionService.init();
+			
+			RecordedRequest node1Request = node1.takeRequest();
+			RecordedRequest node2Request = node2.takeRequest();
+			
+			String body1 = node1Request.getBody().toString();
+			String body2 = node2Request.getBody().toString();
+			
+			System.out.println("");
+		}
+		
+		
+	}
+
+	private void preapareNode(MockWebServer node) throws JsonProcessingException {
+		NodeTO whoIsNode = new NodeTO();
+		whoIsNode.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
+		whoIsNode.setIpAddress("localhost");
+		
+		String body = new ObjectMapper().writeValueAsString(whoIsNode);
+		MockResponse whoAreYouResponse = new MockResponse()
+				.addHeader(P2PSessionManager.SIGN_HEADER_PARAM, 
+						signatureService.signByClient(body))
+				.setBody(body)
+				.addHeader("Content-Type", "application/json");
+		node.enqueue(whoAreYouResponse);
+		
+		MockResponse acceptedResponse = new MockResponse()
+				.setStatus("HTTP/1.1 202");
+		node.enqueue(acceptedResponse);
+	}
+
+	private void preapareCentralServer(MockWebServer centralServer, MockWebServer node1, MockWebServer node2)
+			throws JsonProcessingException {
 		ConnectionService.urlToCentralMetadata = centralServer.url("metadata").uri();
 		CentralServerMetadata metadata = new CentralServerMetadata();
-		metadata.setActiveNodes(Lists.newArrayList(node1.getHostName(), node2.getHostName()));
+		metadata.setActiveNodes(Lists.newArrayList(
+				node1.getHostName() + ":" + node1.getPort(), 
+				node2.getHostName() + ":" + node2.getPort()));
 		MockResponse centralResponse = new MockResponse()
-		        .setBody(new ObjectMapper().writeValueAsString(metadata));
+				.setBody(new ObjectMapper().writeValueAsString(metadata));
 		centralServer.enqueue(centralResponse);
-		
-		connectionService.init();
-		
-		RecordedRequest node1Request = node1.takeRequest();
-		RecordedRequest node2Request = node2.takeRequest();
-		
-		String body1 = node1Request.getBody().toString();
-		String body2 = node2Request.getBody().toString();
-		
-		System.out.println("");
 		
 	}
 	
 	@Test
-	void whoAreYouTest() throws JsonProcessingException {
-		MockWebServer mockServer = new MockWebServer();
-		URI uri = mockServer.url("/whoAreYou").uri();
-		
-		NodeTO nodeTo = new NodeTO();
-		nodeTo.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
-		nodeTo.setIpAddress(uri.getHost());
-		
-		String body = new ObjectMapper().writeValueAsString(nodeTo);
-		MockResponse mockedResponse = new MockResponse()
-				.addHeader(P2PSessionManager.SIGN_HEADER_PARAM, 
-						signatureService.signByClient(body))
-		        .setBody(body)
-		        .addHeader("Content-Type", "application/json");
-		mockServer.enqueue(mockedResponse);
-		
-		P2PSessionManager p2pSessionManager = new P2PSessionManager(
-				userKeysService, signatureService);
-		p2pSessionManager.setWhouAreYouEndpoint(uri);
-		boolean met = p2pSessionManager.meetWithNode();
-		
-		assertTrue(met);
+	void whoAreYouTest() throws IOException {
+		try(MockWebServer mockServer = new MockWebServer();) {
+			URL url = mockServer.url("/whoAreYou").url();
+			
+			NodeTO nodeTo = new NodeTO();
+			nodeTo.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
+			nodeTo.setIpAddress(url.getHost());
+			
+			String body = new ObjectMapper().writeValueAsString(nodeTo);
+			MockResponse mockedResponse = new MockResponse()
+					.addHeader(P2PSessionManager.SIGN_HEADER_PARAM, 
+							signatureService.signByClient(body))
+					.setBody(body)
+					.addHeader("Content-Type", "application/json");
+			mockServer.enqueue(mockedResponse);
+			
+			P2PSessionManager p2pSessionManager = new P2PSessionManager(
+					userKeysService, signatureService);
+			p2pSessionManager.setWhouAreYouEndpoint(url);
+			boolean met = p2pSessionManager.meetWithNode();
+			
+			assertTrue(met);
+		} 
 	}
 	
 	@Test
 	void postNodeTest() throws URISyntaxException, IOException, InterruptedException {
-		MockWebServer mockServer = new MockWebServer();
-		URI uri = mockServer.url("/node").uri();
-		
-		MockResponse mockedResponse = new MockResponse()
-				.setStatus("HTTP/1.1 202");
-		mockServer.enqueue(mockedResponse);
-		
-		NodeTO me = new NodeTO();
-		me.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
-		P2PSessionManager p2pSessionManager = new P2PSessionManager(
-				userKeysService, signatureService);
-		p2pSessionManager.setNodeEndpoint(uri);
-		boolean registered = p2pSessionManager.registerToNode();
-		
-		assertTrue(registered);
+		try(MockWebServer mockServer = new MockWebServer();) {
+			URL url = mockServer.url("/node").url();
+			
+			MockResponse mockedResponse = new MockResponse()
+					.setStatus("HTTP/1.1 202");
+			mockServer.enqueue(mockedResponse);
+			
+			NodeTO me = new NodeTO();
+			me.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
+			P2PSessionManager p2pSessionManager = new P2PSessionManager(
+					userKeysService, signatureService);
+			p2pSessionManager.setNodeEndpoint(url);
+			boolean registered = p2pSessionManager.registerToNode();
+			
+			assertTrue(registered);
+		}
 	}
 	
 	@Test
