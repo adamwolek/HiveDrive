@@ -73,7 +73,7 @@ public class ConnectionService {
 	@Autowired
 	private SignatureService signatureService;
 	
-	public static String URL_TO_CENTRAL_METADATA = "https://hivedrive.org/metadata.json";
+	public static URI urlToCentralMetadata;
 	private CentralServerMetadata metadata;
 
 	Logger logger = LoggerFactory.getLogger(ConnectionService.class);
@@ -84,6 +84,7 @@ public class ConnectionService {
 	
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
+		this.urlToCentralMetadata = new URI("https://hivedrive.org/metadata.json");
 		this.metadata = downloadMetadata();
 		this.knownNodes = extractInitialKnownNodes(metadata);
 		meetMoreNodes();
@@ -106,9 +107,9 @@ public class ConnectionService {
 		this.knownNodes.addAll(newNodes);
 	}
 
-	private CentralServerMetadata downloadMetadata() {
+	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
 		try {
-			String json = IOUtils.toString(new URL(URL_TO_CENTRAL_METADATA), "UTF-8");
+			String json = IOUtils.toString(urlToCentralMetadata, "UTF-8");
 			CentralServerMetadata metadata = new ObjectMapper().readValue(json, CentralServerMetadata.class);
 			return metadata;
 		} catch (JsonProcessingException e) {

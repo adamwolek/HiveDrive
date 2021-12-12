@@ -7,9 +7,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.assertj.core.util.Arrays;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.session.P2PSessionManager;
+import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.hivedrive.cmd.to.NodeTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,10 +21,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import okio.Buffer;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfig.class)
@@ -33,6 +38,33 @@ public class P2PSessionManagerTest {
 	
 	@Autowired
 	SignatureService signatureService;
+	
+	@Autowired
+	ConnectionService connectionService;
+	
+	@Test
+	void testCentralNode() throws URISyntaxException, IOException, InterruptedException {
+		MockWebServer centralServer = new MockWebServer();
+		MockWebServer node1 = new MockWebServer();
+		MockWebServer node2 = new MockWebServer();
+		ConnectionService.urlToCentralMetadata = centralServer.url("metadata").uri();
+		CentralServerMetadata metadata = new CentralServerMetadata();
+		metadata.setActiveNodes(Lists.newArrayList(node1.getHostName(), node2.getHostName()));
+		MockResponse centralResponse = new MockResponse()
+		        .setBody(new ObjectMapper().writeValueAsString(metadata));
+		centralServer.enqueue(centralResponse);
+		
+		connectionService.init();
+		
+		RecordedRequest node1Request = node1.takeRequest();
+		RecordedRequest node2Request = node2.takeRequest();
+		
+		String body1 = node1Request.getBody().toString();
+		String body2 = node2Request.getBody().toString();
+		
+		System.out.println("");
+		
+	}
 	
 	@Test
 	void whoAreYouTest() throws JsonProcessingException {
@@ -77,4 +109,20 @@ public class P2PSessionManagerTest {
 		
 		assertTrue(registered);
 	}
+	
+	@Test
+	void getNodeTest() {
+		
+	}
+	
+	@Test
+	void postPartTest() {
+
+	}
+	
+	@Test
+	void getPartTest() {
+
+	}
+	
 }
