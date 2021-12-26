@@ -2,10 +2,10 @@ package org.hivedrive.server.controller;
 
 import java.util.List;
 
+import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.helpers.NodeJsonHelper;
 import org.hivedrive.server.service.NodeService;
-import org.hivedrive.server.to.NodeTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

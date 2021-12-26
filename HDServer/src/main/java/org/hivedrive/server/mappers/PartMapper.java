@@ -3,10 +3,10 @@ package org.hivedrive.server.mappers;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.entity.PartEntity;
 import org.hivedrive.server.service.NodeService;
-import org.hivedrive.server.to.PartTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

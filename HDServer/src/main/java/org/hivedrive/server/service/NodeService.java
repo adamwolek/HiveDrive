@@ -2,10 +2,10 @@ package org.hivedrive.server.service;
 
 import java.util.List;
 
+import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.mappers.NodeMapper;
 import org.hivedrive.server.repository.NodeRepository;
-import org.hivedrive.server.to.NodeTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

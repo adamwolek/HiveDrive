@@ -9,10 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.server.controller.NodeController;
 import org.hivedrive.server.helpers.NodeJsonHelper;
 import org.hivedrive.server.mappers.NodeMapper;
-import org.hivedrive.server.to.NodeTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

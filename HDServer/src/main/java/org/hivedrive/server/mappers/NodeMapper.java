@@ -3,8 +3,8 @@ package org.hivedrive.server.mappers;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.server.entity.NodeEntity;
-import org.hivedrive.server.to.NodeTO;
 import org.springframework.stereotype.Service;
 
 @Service
