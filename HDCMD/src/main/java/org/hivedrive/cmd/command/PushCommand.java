@@ -62,8 +62,6 @@ public class PushCommand implements Runnable {
     
     @Override
 	public void run() {
-    	UserKeys keys = userKeysService.getKeys();
-    	
 		if(repositoryConfigService.getRepositoryDirectory().exists()) {
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
@@ -168,7 +166,6 @@ public class PushCommand implements Runnable {
 
 	private void log(String message) {
 		System.out.println(message);
-		
 	}
 
 

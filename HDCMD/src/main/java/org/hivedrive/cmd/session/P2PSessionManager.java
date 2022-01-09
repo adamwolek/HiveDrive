@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.exception.HttpResponseNotSignedProperly;
 import org.hivedrive.cmd.helper.StatusCode;
 import org.hivedrive.cmd.model.NodeEntity;
@@ -52,7 +53,7 @@ public class P2PSessionManager {
 		try {
 			this.whouAreYouEndpoint = new URL("http://" + address + "/whoAreYou");
 			this.nodeEndpoint = new URL("http://" + address + "/node");
-			this.partEndpoint = new URL("http://" + address + "part");
+			this.partEndpoint = new URL("http://" + address + "/part");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -88,8 +89,9 @@ public class P2PSessionManager {
 		}
 	}
 	
-	public void send(PartInfo part) {
+	public boolean send(PartInfo part) {
 		
+		return true;
 	}
 	
 
@@ -119,14 +121,16 @@ public class P2PSessionManager {
 	
 	private void verifyResponseSignature(String publicKeyOfNode, HttpResponse<String> response) 
 			throws JsonMappingException, JsonProcessingException {
-		if(publicKeyOfNode == null) {
-			NodeTO node = new ObjectMapper().readValue(response.body(), NodeTO.class);
-			publicKeyOfNode = node.getPublicKey();
-		}
-		String signature = response.headers().firstValue(SIGN_HEADER_PARAM).get();
-		boolean verified = signatureService.verifySign(signature, response.body(), publicKeyOfNode);
-		if(!verified) {
-			throw new HttpResponseNotSignedProperly();
+		if(StringUtils.isNotBlank(response.body())) {
+			if(publicKeyOfNode == null) {
+				NodeTO node = new ObjectMapper().readValue(response.body(), NodeTO.class);
+				publicKeyOfNode = node.getPublicKey();
+			}
+			String signature = response.headers().firstValue(SIGN_HEADER_PARAM).get();
+			boolean verified = signatureService.verifySign(signature, response.body(), publicKeyOfNode);
+			if(!verified) {
+				throw new HttpResponseNotSignedProperly();
+			}
 		}
 		
 	}

@@ -1,13 +1,18 @@
 package org.hivedrive.cmd.service;
 
+import static org.junit.Assert.assertNotNull;
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.assertj.core.util.Arrays;
+import org.checkerframework.checker.nullness.qual.AssertNonNullIfNonNull;
+import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.session.P2PSessionManager;
@@ -16,6 +21,11 @@ import org.hivedrive.cmd.to.NodeTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -29,9 +39,13 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 
+@ActiveProfiles("unitTests")
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfig.class)
 public class P2PSessionManagerTest {
+	
+	@Autowired
+	ConfigurationService configurationService;
 	
 	@Autowired
 	UserKeysService userKeysService;
@@ -44,24 +58,20 @@ public class P2PSessionManagerTest {
 	
 	@Test
 	void testCentralNode() throws URISyntaxException, IOException, InterruptedException {
-		try (MockWebServer centralServer = new MockWebServer();
+		try (MockWebServer centralServer = new MockWebServer(); 
 				MockWebServer node1 = new MockWebServer();
 				MockWebServer node2 = new MockWebServer()) {
 			
+			configurationService.setUrlToCentralMetadata(centralServer.url("metadata").uri().toURL());
 			
 			preapareCentralServer(centralServer, node1, node2);
 			preapareNode(node1);
 			preapareNode(node2);
 			
-			connectionService.init();
+			connectionService.manualInit();
 			
-			RecordedRequest node1Request = node1.takeRequest();
-			RecordedRequest node2Request = node2.takeRequest();
-			
-			String body1 = node1Request.getBody().toString();
-			String body2 = node2Request.getBody().toString();
-			
-			System.out.println("");
+			assertNotNull(node1.takeRequest());
+			assertNotNull(node2.takeRequest());
 		}
 		
 		
@@ -84,10 +94,9 @@ public class P2PSessionManagerTest {
 				.setStatus("HTTP/1.1 202");
 		node.enqueue(acceptedResponse);
 	}
-
+	
 	private void preapareCentralServer(MockWebServer centralServer, MockWebServer node1, MockWebServer node2)
-			throws JsonProcessingException {
-		ConnectionService.urlToCentralMetadata = centralServer.url("metadata").uri();
+			throws JsonProcessingException, MalformedURLException {
 		CentralServerMetadata metadata = new CentralServerMetadata();
 		metadata.setActiveNodes(Lists.newArrayList(
 				node1.getHostName() + ":" + node1.getPort(), 
@@ -95,7 +104,6 @@ public class P2PSessionManagerTest {
 		MockResponse centralResponse = new MockResponse()
 				.setBody(new ObjectMapper().writeValueAsString(metadata));
 		centralServer.enqueue(centralResponse);
-		
 	}
 	
 	@Test

@@ -1,6 +1,13 @@
 package org.hivedrive.server.controller;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.server.entity.NodeEntity;
@@ -21,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/node")
 public class NodeController {
 
+
 	
 	@Autowired
 	private NodeService service;
@@ -36,6 +44,46 @@ public class NodeController {
 	 */
 	@PostMapping
 	public ResponseEntity<Void> post(@RequestBody NodeTO node) {
+		
+		Thread thread = new Thread() {
+			public void run() {
+				System.out.println("dupa");
+				
+			}
+		};
+		thread.start();
+		
+		
+		
+		ExecutorService executor = Executors.newFixedThreadPool(4);
+		executor.execute(() -> {
+			System.out.println("dupa2");
+		});
+		executor.execute(() -> {
+			System.out.println("dupa3");
+		});
+		executor.execute(() -> {
+			System.out.println("dupa4");
+			
+		});
+		
+		Future<String> wynikObliczen = executor.submit(() -> {
+			System.out.println("dupa5");
+			return "wynikObliczen";
+		});
+		
+
+		List<String> modulyDoZbudowania = new ArrayList<>();
+		List<Future<String>> przyszleWyniki = modulyDoZbudowania.stream()
+		.map(modul -> {
+			return executor.submit(() -> {
+				//terminal.execute("gradle build " + modul);
+				return "zbudowanyKatalog";
+			});
+		}).collect(Collectors.toList());
+		
+		List<String> wyniki = przyszleWyniki.stream().map(przyszlyWnik -> przyszlyWnik.get()).collect(Collectors.toList());
+		
 		if (service.isAbleToAdd(node)) {
 			NodeEntity entity = service.saveOrUpdate(node);
 			if (entity != null) {

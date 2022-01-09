@@ -31,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
+import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
 import org.hivedrive.cmd.exception.ReadDataFromMetadataServerException;
 import org.hivedrive.cmd.helper.StatusCode;
@@ -41,8 +42,10 @@ import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,7 +76,9 @@ public class ConnectionService {
 	@Autowired
 	private SignatureService signatureService;
 	
-	public static URI urlToCentralMetadata;
+	@Autowired
+	Environment env;
+	
 	private CentralServerMetadata metadata;
 
 	Logger logger = LoggerFactory.getLogger(ConnectionService.class);
@@ -84,7 +89,12 @@ public class ConnectionService {
 	
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
-		this.urlToCentralMetadata = new URI("https://hivedrive.org/metadata.json");
+		if(!Arrays.asList(env.getActiveProfiles()).contains("unitTests")) {
+			this.manualInit();
+		}
+	}
+	
+	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
 		this.metadata = downloadMetadata();
 		this.knownNodes = extractInitialKnownNodes(metadata);
 		meetMoreNodes();
@@ -111,7 +121,7 @@ public class ConnectionService {
 
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
 		try {
-			String json = IOUtils.toString(urlToCentralMetadata, "UTF-8");
+			String json = IOUtils.toString(config.getUrlToCentralMetadata(), "UTF-8");
 			CentralServerMetadata metadata = new ObjectMapper().readValue(json, CentralServerMetadata.class);
 			return metadata;
 		} catch (JsonProcessingException e) {
@@ -128,6 +138,10 @@ public class ConnectionService {
 			while(copiesOfPart >= config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
 				P2PSessionManager sessionManager = newSession(node);
+				boolean success = sessionManager.send(part);
+				if(success) {
+					copiesOfPart++;
+				}
 			}
 		}
 	}
