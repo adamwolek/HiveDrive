@@ -15,6 +15,8 @@ import org.hivedrive.cmd.service.UserKeysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Multimaps;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -32,7 +34,8 @@ public class GenerateKeyCommand implements Runnable {
 	
 	@Override
 	public void run() {
-    	UserKeys keys = userKeysService.generateNewKeys();
+		UserKeys keys = userKeysService.generateNewKeys();
+    	
     	userKeysService.save(keyFile);
     	System.out.println("Keys generated");
 	}
