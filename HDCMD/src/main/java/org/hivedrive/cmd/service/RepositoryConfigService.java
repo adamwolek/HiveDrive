@@ -5,9 +5,8 @@ import java.io.IOException;
 
 import javax.annotation.PostConstruct;
 
-import org.hivedrive.cmd.command.PushCommand;
 import org.hivedrive.cmd.model.RepositoryConfigFileData;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
@@ -16,36 +15,38 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+@Lazy
 @Service
 public class RepositoryConfigService {
 
-	
 	private File repositoryDirectory;
 
 	private RepositoryConfigFileData config;
-	
+
 	@PostConstruct
 	void init() throws StreamReadException, DatabindException, IOException {
 		this.repositoryDirectory = new File(System.getProperty("user.dir"));
-		if(getConfigFile().exists()) {
+		if (getConfigFile().exists()) {
 			this.config = loadConfig();
 		}
 	}
-	
-	private RepositoryConfigFileData loadConfig() throws StreamReadException, DatabindException, IOException {
+
+	private RepositoryConfigFileData loadConfig()
+			throws StreamReadException, DatabindException, IOException {
 		var mapper = new ObjectMapper();
 		return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
 	}
 
-	public void initConfig(File keyFile, String repositoryName) {
+	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
 		try {
+			this.repositoryDirectory = newRepositoryDirectory;
 			RepositoryConfigFileData config = createNewConfig(keyFile, repositoryName);
 			save(config);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private RepositoryConfigFileData createNewConfig(File keyFile, String repositoryName) {
 		var config = new RepositoryConfigFileData();
 		config.setKeysPath(keyFile.getAbsolutePath());
@@ -53,9 +54,8 @@ public class RepositoryConfigService {
 		return config;
 	}
 
-	private void save(RepositoryConfigFileData config) 
-			throws StreamWriteException, DatabindException, IOException  {
-		File configFolder = getConfigFolder();
+	private void save(RepositoryConfigFileData config)
+			throws StreamWriteException, DatabindException, IOException {
 		var mapper = new ObjectMapper();
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 		mapper.writeValue(getConfigFile(), config);
@@ -66,7 +66,7 @@ public class RepositoryConfigService {
 		File configFile = new File(configFolder, "hivedriveConfig");
 		return configFile;
 	}
-	
+
 	private File getConfigFolder() {
 		File configFolder = new File(repositoryDirectory, ".hivedrive");
 		configFolder.mkdir();
@@ -88,7 +88,5 @@ public class RepositoryConfigService {
 	public void setConfig(RepositoryConfigFileData config) {
 		this.config = config;
 	}
-	
-	
-	
+
 }

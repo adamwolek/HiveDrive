@@ -15,7 +15,7 @@ public class PartMapper {
 
 	@Autowired
 	NodeService nodeService;
-	
+
 	public PartEntity map(PartTO to) {
 		PartEntity entity = new PartEntity();
 		entity.setStatus(to.getStatus());
@@ -28,13 +28,11 @@ public class PartMapper {
 		entity.setNode(node);
 		return entity;
 	}
-	
+
 	public List<PartEntity> mapToEntities(List<PartTO> tos) {
-		return tos.stream()
-				.map(this::map)
-				.collect(Collectors.toList());
+		return tos.stream().map(this::map).collect(Collectors.toList());
 	}
-	
+
 	public PartTO map(PartEntity entity) {
 		PartTO to = new PartTO();
 		to.setStatus(entity.getStatus());
@@ -46,11 +44,9 @@ public class PartMapper {
 		to.setOwnerId(entity.getNode().getPublicKey());
 		return to;
 	}
-	
+
 	public List<PartTO> mapToTOs(List<PartEntity> tos) {
-		return tos.stream()
-				.map(this::map)
-				.collect(Collectors.toList());
+		return tos.stream().map(this::map).collect(Collectors.toList());
 	}
-	
+
 }

@@ -1,7 +1,5 @@
 package org.hivedrive.cmd.to;
 
-import java.util.List;
-
 public class NodeTO {
 	/**
 	 * Public key which is used by the node's user
@@ -12,24 +10,18 @@ public class NodeTO {
 	 * Status, e.g. new
 	 */
 	private String status;
-	 
+
 	private String ipAddress;
-	
+
 	/**
 	 * Amount of space (in GB) where files can be saved
 	 */
 	private Long freeSpace;
-	
+
 	/**
 	 * Amount of space (in GB) where files have been already saved
 	 */
 	private Long usedSpace;
-	
-	/**
-	 * Locations where files can be saved
-	 * especially important when user uses a few discs
-	 */
-	private List<String> storageLocations;
 
 	public String getPublicKey() {
 		return publicKey;
@@ -71,13 +63,4 @@ public class NodeTO {
 		this.usedSpace = usedSpace;
 	}
 
-	public List<String> getStorageLocations() {
-		return storageLocations;
-	}
-
-	public void setStorageLocations(List<String> storageLocations) {
-		this.storageLocations = storageLocations;
-	}
-	
-	
 }
