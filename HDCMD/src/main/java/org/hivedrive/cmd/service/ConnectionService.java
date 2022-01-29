@@ -96,6 +96,12 @@ public class ConnectionService {
 	}
 
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
+		if(true) {
+			CentralServerMetadata metadata = new CentralServerMetadata();
+			metadata.setActiveNodes(Arrays.asList("localhost:8080"));
+			return metadata;
+		}
+		
 		try {
 			String json = IOUtils.toString(config.getUrlToCentralMetadata(), "UTF-8");
 			CentralServerMetadata metadata = new ObjectMapper().readValue(json,

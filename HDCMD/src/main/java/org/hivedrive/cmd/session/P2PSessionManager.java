@@ -126,11 +126,11 @@ public class P2PSessionManager {
 				NodeTO node = new ObjectMapper().readValue(response.body(), NodeTO.class);
 				publicKeyOfNode = node.getPublicKey();
 			}
-			String signature = response.headers().firstValue(SIGN_HEADER_PARAM).get();
-			boolean verified = signatureService.verifySign(signature, response.body(), publicKeyOfNode);
-			if(!verified) {
-				throw new HttpResponseNotSignedProperly();
-			}
+//			String signature = response.headers().firstValue(SIGN_HEADER_PARAM).get();
+//			boolean verified = signatureService.verifySign(signature, response.body(), publicKeyOfNode);
+//			if(!verified) {
+//				throw new HttpResponseNotSignedProperly();
+//			}
 		}
 		
 	}

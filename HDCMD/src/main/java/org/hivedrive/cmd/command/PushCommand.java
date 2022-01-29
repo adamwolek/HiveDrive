@@ -24,12 +24,16 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @Lazy
 @Component("push")
 @Command(name = "push", mixinStandardHelpOptions = true, version = "0.1", description = "Prints the checksum (MD5 by default) of a file to STDOUT.")
 public class PushCommand implements Runnable {
 
+	@Option(names = { "-dir", "--directory" }, description = "")
+	private File repositoryDirectory = new File(System.getProperty("user.dir"));
+	
 	@Autowired
 	private ConnectionService connectionService;
 
