@@ -61,11 +61,16 @@ public class PushCommand implements Runnable {
 
 	@Override
 	public void run() {
-		if (repositoryConfigService.getRepositoryDirectory().exists()) {
+		try {
+			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
+			repositoryConfigService.init();
+			
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
 			List<PartInfo> parts = generatePartsForRepository();
 			sendParts(parts);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}

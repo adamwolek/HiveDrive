@@ -2,7 +2,9 @@ package org.hivedrive.cmd.service;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
 import org.hivedrive.cmd.exception.ReadDataFromMetadataServerException;
@@ -140,15 +143,18 @@ public class ConnectionService {
 		return null;
 	}
 
-	private LinkedList<NodeEntity> getNodesWhoAlreadyHaveThisPart(PartInfo part) {
-//		part.getOwnerPublicKey()
-		return null;
+	private List<NodeEntity> getNodesWhoAlreadyHaveThisPart(PartInfo part) {
+		return new ArrayList<>();
 	}
 
 	private Queue<NodeEntity> getNodesSortedByBestGeneralRate(Set<NodeEntity> knownNodes) {
-		return knownNodes.stream().sorted((n1, n2) -> {
-			return n1.getFreeSpace().compareTo(n2.getFreeSpace());
-		}).collect(Collectors.toCollection(LinkedList::new));
+		return knownNodes.stream()
+				.sorted((n1, n2) -> {
+					Long space1 = n1.getFreeSpace();
+					Long space2 = n1.getFreeSpace();
+					return ObjectUtils.compare(space1, space2); 
+				})
+				.collect(Collectors.toCollection(LinkedList::new));
 	}
 
 }

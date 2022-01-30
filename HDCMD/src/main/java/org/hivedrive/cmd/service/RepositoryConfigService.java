@@ -23,9 +23,9 @@ public class RepositoryConfigService {
 
 	private RepositoryConfigFileData config;
 
-	@PostConstruct
-	void init() throws StreamReadException, DatabindException, IOException {
-		this.repositoryDirectory = new File(System.getProperty("user.dir"));
+//	@PostConstruct
+	public void init() throws StreamReadException, DatabindException, IOException {
+//		this.repositoryDirectory = new File(System.getProperty("user.dir"));
 		if (getConfigFile().exists()) {
 			this.config = loadConfig();
 		}
