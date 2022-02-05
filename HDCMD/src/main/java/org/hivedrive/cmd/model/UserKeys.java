@@ -1,37 +1,22 @@
 package org.hivedrive.cmd.model;
 
 import java.io.File;
-
-
-import java.io.IOException;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.util.Base64;
 import java.security.KeyFactory;
-
-import javax.annotation.PostConstruct;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.EncodedKeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.io.FileUtils;
 import org.hivedrive.cmd.exception.GenerateKeysError;
 import org.hivedrive.cmd.exception.LoadingKeysError;
-import org.hivedrive.cmd.exception.SaveKeysError;
-import org.hivedrive.cmd.service.RepositoryConfigService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.hivedrive.cmd.tool.JSONUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class UserKeys {
 	
@@ -81,9 +66,7 @@ public class UserKeys {
 	
 	public static UserKeys load(File clientKeys) {
 		try {
-			String json = FileUtils.readFileToString(clientKeys, "UTF-8");
-			UserKeys keys = new Gson().fromJson(json, UserKeys.class);
-			return keys;
+			return JSONUtils.read(clientKeys, UserKeys.class);
 		} catch (Exception e) {
 			throw new LoadingKeysError(e);
 		}

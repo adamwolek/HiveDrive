@@ -1,8 +1,12 @@
 package org.hivedrive.cmd.model;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.hivedrive.cmd.tool.JSONUtils;
 
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+
 
 public class FileMetadata {
 
@@ -37,7 +41,12 @@ public class FileMetadata {
 
 
 	public String toJSON() {
-		return new GsonBuilder().setPrettyPrinting().create().toJson(this);
+		try {
+			return JSONUtils.createWrtier().writeValueAsString(this);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+			return "error";
+		}
 	}
 	
 	@Override

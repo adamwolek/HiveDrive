@@ -26,6 +26,7 @@ import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.UserKeysService;
 import org.hivedrive.cmd.to.NodeTO;
+import org.hivedrive.cmd.tool.JSONUtils;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,7 +37,7 @@ public class P2PSessionManager {
 	
 	private P2PSession session;
 	
-	private NodeEntity node;
+	private NodeTO node;
 
 	private UserKeysService userKeysService;
 	
@@ -75,13 +76,13 @@ public class P2PSessionManager {
 		return post(nodeEndpoint, me);
 	}
 
-	public NodeEntity getNode() {
+	public NodeTO getNode() {
 		return node;
 	}
 	
 	public boolean meetWithNode() {
 		try {
-			this.node = get(whouAreYouEndpoint, null, NodeEntity.class);
+			this.node = get(whouAreYouEndpoint, null, NodeTO.class);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -114,7 +115,7 @@ public class P2PSessionManager {
 		verifyResponseSignature(publicKeyOfNode, response);
 		
 		String json = response.body();
-		T object = new ObjectMapper().readValue(json, clazz);
+		T object = JSONUtils.mapper().readValue(json, clazz);
 		return object;
 	}
 	
@@ -123,7 +124,7 @@ public class P2PSessionManager {
 			throws JsonMappingException, JsonProcessingException {
 		if(StringUtils.isNotBlank(response.body())) {
 			if(publicKeyOfNode == null) {
-				NodeTO node = new ObjectMapper().readValue(response.body(), NodeTO.class);
+				NodeTO node = JSONUtils.mapper().readValue(response.body(), NodeTO.class);
 				publicKeyOfNode = node.getPublicKey();
 			}
 //			String signature = response.headers().firstValue(SIGN_HEADER_PARAM).get();
@@ -137,7 +138,7 @@ public class P2PSessionManager {
 
 	private boolean post(URL url, Object object) 
 			throws URISyntaxException, IOException, InterruptedException {
-		String json = new ObjectMapper().writeValueAsString(object);
+		String json = JSONUtils.mapper().writeValueAsString(object);
 		HttpRequest request = HttpRequest.newBuilder()
 				  .uri(url.toURI())
 				  .timeout(Duration.ofSeconds(10))

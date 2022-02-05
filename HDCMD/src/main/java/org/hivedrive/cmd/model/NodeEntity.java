@@ -1,5 +1,7 @@
 package org.hivedrive.cmd.model;
 
+import java.util.Objects;
+
 public class NodeEntity {
 
 	private String publicKey;
@@ -50,6 +52,23 @@ public class NodeEntity {
 
 	public void setUsedSpace(Long usedSpace) {
 		this.usedSpace = usedSpace;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(ipAddress);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		NodeEntity other = (NodeEntity) obj;
+		return Objects.equals(ipAddress, other.ipAddress);
 	}
 	
 	

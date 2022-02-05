@@ -2,14 +2,15 @@ package org.hivedrive.cmd.model;
 
 import java.io.File;
 
-import com.google.gson.annotations.Expose;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 public class PartInfo {
 	
 	private String ownerPublicKey;
 	private String fileSign;
 	
-	@Expose(serialize = false) 
+	@JsonIgnore
 	private FileMetadata fileMetadata;
 	private String encryptedFileMetadata;
 	

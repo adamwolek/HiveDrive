@@ -6,6 +6,7 @@ import java.io.IOException;
 import javax.annotation.PostConstruct;
 
 import org.hivedrive.cmd.model.RepositoryConfigFileData;
+import org.hivedrive.cmd.tool.JSONUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class RepositoryConfigService {
 
 	private RepositoryConfigFileData loadConfig()
 			throws StreamReadException, DatabindException, IOException {
-		var mapper = new ObjectMapper();
+		var mapper = JSONUtils.mapper();
 		return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
 	}
 
@@ -56,7 +57,7 @@ public class RepositoryConfigService {
 
 	private void save(RepositoryConfigFileData config)
 			throws StreamWriteException, DatabindException, IOException {
-		var mapper = new ObjectMapper();
+		var mapper = JSONUtils.mapper();
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 		mapper.writeValue(getConfigFile(), config);
 	}

@@ -2,6 +2,7 @@ package org.hivedrive.cmd.command;
 
 import java.io.File;
 
+
 import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.service.UserKeysService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,6 @@ public class GenerateKeyCommand implements Runnable {
 	@Override
 	public void run() {
 		UserKeys keys = userKeysService.generateNewKeys();
-
 		userKeysService.save(keyFile);
 		System.out.println("Keys generated");
 	}

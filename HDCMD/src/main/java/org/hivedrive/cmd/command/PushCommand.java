@@ -2,11 +2,13 @@ package org.hivedrive.cmd.command;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -34,25 +36,28 @@ public class PushCommand implements Runnable {
 	@Option(names = { "-dir", "--directory" }, description = "")
 	private File repositoryDirectory = new File(System.getProperty("user.dir"));
 	
+	
 	@Autowired
+	public PushCommand(ConnectionService connectionService,
+			SymetricEncryptionService encryptionService, FileSplittingService fileSplittingService,
+			FileCompresssingService fileComporessingService, SignatureService signatureService,
+			UserKeysService userKeysService, RepositoryConfigService repositoryConfigService) {
+		super();
+		this.connectionService = connectionService;
+		this.encryptionService = encryptionService;
+		this.fileSplittingService = fileSplittingService;
+		this.fileComporessingService = fileComporessingService;
+		this.signatureService = signatureService;
+		this.userKeysService = userKeysService;
+		this.repositoryConfigService = repositoryConfigService;
+	}
+
 	private ConnectionService connectionService;
-
-	@Autowired
 	private SymetricEncryptionService encryptionService;
-
-	@Autowired
 	private FileSplittingService fileSplittingService;
-
-	@Autowired
 	private FileCompresssingService fileComporessingService;
-
-	@Autowired
 	private SignatureService signatureService;
-
-	@Autowired
 	private UserKeysService userKeysService;
-
-	@Autowired
 	private RepositoryConfigService repositoryConfigService;
 
 	private StopWatch stopWatch;
@@ -82,9 +87,25 @@ public class PushCommand implements Runnable {
 
 	private List<PartInfo> generatePartsForRepository() {
 		List<PartInfo> parts = new ArrayList<>();
+		
+		IOFileFilter filter = new IOFileFilter() {
+			
+			@Override
+			public boolean accept(File dir, String name) {
+				return false;
+			}
+			
+			@Override
+			public boolean accept(File file) {
+				List<String> excludedNames = Arrays.asList(".hivedrive");
+				if(excludedNames.contains(file.getName())) {
+					return false;
+				}
+				return true;
+			}
+		};
 		Collection<File> allFiles = FileUtils.listFiles(
-				repositoryConfigService.getRepositoryDirectory(), TrueFileFilter.TRUE,
-				TrueFileFilter.TRUE);
+				repositoryConfigService.getRepositoryDirectory(), filter, filter);
 		int sentFiles = 0;
 		for (File sourceFile : allFiles) {
 			stopWatch = StopWatch.createStarted();

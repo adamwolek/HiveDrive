@@ -1,5 +1,6 @@
 package org.hivedrive.cmd.service;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.security.Key;
@@ -17,12 +18,12 @@ import org.hivedrive.cmd.exception.GenerateKeysError;
 import org.hivedrive.cmd.exception.LoadingKeysError;
 import org.hivedrive.cmd.exception.SaveKeysError;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.tool.JSONUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Lazy
 @Service
@@ -45,19 +46,16 @@ public class UserKeysService {
 
 	private UserKeys load(File clientKeys) {
 		try {
-			String json = FileUtils.readFileToString(clientKeys, "UTF-8");
-			UserKeys keys = new Gson().fromJson(json, UserKeys.class);
-			return keys;
+			return JSONUtils.read(clientKeys, UserKeys.class);
 		} catch (Exception e) {
 			throw new LoadingKeysError(e);
 		}
 	}
 
 	public void save(File clientKeys) {
-		String json = new GsonBuilder().setPrettyPrinting().create().toJson(this);
 		try {
-			FileUtils.writeStringToFile(clientKeys, json, "UTF-8");
-		} catch (IOException e) {
+			JSONUtils.write(clientKeys, keys);
+		} catch (Exception e) {
 			throw new SaveKeysError(e);
 		}
 	}

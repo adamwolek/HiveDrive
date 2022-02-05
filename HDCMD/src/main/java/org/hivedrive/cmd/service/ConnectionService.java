@@ -1,6 +1,7 @@
 package org.hivedrive.cmd.service;
 
 import java.io.IOException;
+
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -23,8 +25,11 @@ import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
 import org.hivedrive.cmd.exception.ReadDataFromMetadataServerException;
 import org.hivedrive.cmd.model.NodeEntity;
 import org.hivedrive.cmd.model.PartInfo;
+import org.hivedrive.cmd.repository.NodeRepository;
 import org.hivedrive.cmd.session.P2PSessionManager;
 import org.hivedrive.cmd.to.CentralServerMetadata;
+import org.hivedrive.cmd.to.NodeTO;
+import org.hivedrive.cmd.tool.JSONUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,23 +55,29 @@ public class ConnectionService {
 		}
 	}
 
-	@Autowired
+	
 	private ConfigurationService config;
-
-	@Autowired
 	private UserKeysService userKeysService;
-
-	@Autowired
 	private SignatureService signatureService;
+	private Environment env;
+	private NodeRepository nodeRepository;
 
 	@Autowired
-	Environment env;
+	public ConnectionService(ConfigurationService config, UserKeysService userKeysService,
+			SignatureService signatureService, Environment env, NodeRepository nodeRepository) {
+		super();
+		this.config = config;
+		this.userKeysService = userKeysService;
+		this.signatureService = signatureService;
+		this.env = env;
+		this.nodeRepository = nodeRepository;
+	}
+
+	
 
 	private CentralServerMetadata metadata;
 
 	Logger logger = LoggerFactory.getLogger(ConnectionService.class);
-
-	private Set<NodeEntity> knownNodes = new HashSet<>();
 
 	private Executor executor = Executors.newFixedThreadPool(5);
 
@@ -79,23 +90,37 @@ public class ConnectionService {
 
 	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
 		this.metadata = downloadMetadata();
-		this.knownNodes = extractInitialKnownNodes(metadata);
+		saveInitialKnownNodes(metadata);
 		meetMoreNodes();
 	}
 
-	private Set<NodeEntity> extractInitialKnownNodes(CentralServerMetadata metadata) {
-		return metadata.getActiveNodes().stream()
-				.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
-				.filter(sessionManager -> sessionManager.meetWithNode())
-				.map(sessionManager -> sessionManager.getNode()).collect(Collectors.toSet());
+	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
+		nodeRepository.getAllNodes().stream()
+			.map(NodeEntity::getIpAddress)
+			.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
+			.filter(P2PSessionManager::meetWithNode)
+			.map(P2PSessionManager::getNode)
+			.map(this::mapToNewEntity)
+			.forEach(nodeRepository::save);
 	}
 
 	private void meetMoreNodes() {
-		Set<NodeEntity> newNodes = metadata.getActiveNodes().stream()
-				.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
-				.filter(sessionManager -> sessionManager.meetWithNode())
-				.map(sessionManager -> sessionManager.getNode()).collect(Collectors.toSet());
-		this.knownNodes.addAll(newNodes);
+		metadata.getActiveNodes().stream()
+			.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
+			.filter(P2PSessionManager::meetWithNode)
+			.map(P2PSessionManager::getNode)
+			.map(this::mapToNewEntity)
+			.forEach(nodeRepository::save);
+	}
+
+	private NodeEntity mapToNewEntity(NodeTO nodeTO) {
+		NodeEntity entity = new NodeEntity();
+		entity.setPublicKey(nodeTO.getPublicKey());
+		entity.setIpAddress(nodeTO.getIpAddress());
+		entity.setStatus(nodeTO.getStatus());
+		entity.setFreeSpace(nodeTO.getFreeSpace());
+		entity.setUsedSpace(nodeTO.getUsedSpace());
+		return entity;
 	}
 
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
@@ -107,7 +132,7 @@ public class ConnectionService {
 		
 		try {
 			String json = IOUtils.toString(config.getUrlToCentralMetadata(), "UTF-8");
-			CentralServerMetadata metadata = new ObjectMapper().readValue(json,
+			CentralServerMetadata metadata = JSONUtils.mapper().readValue(json,
 					CentralServerMetadata.class);
 			return metadata;
 		} catch (JsonProcessingException e) {
@@ -137,24 +162,19 @@ public class ConnectionService {
 	}
 
 	private Queue<NodeEntity> getBestNodes(PartInfo part) {
-		LinkedList<NodeEntity> nodes = new LinkedList<>();
-		nodes.addAll(getNodesWhoAlreadyHaveThisPart(part));
-		nodes.addAll(getNodesSortedByBestGeneralRate(knownNodes));
-		return null;
+		LinkedList<NodeEntity> allNodes = new LinkedList<>(nodeRepository.getAllNodes());
+		allNodes.sort(getComparatorByGeneralRate());
+		return allNodes;
 	}
 
-	private List<NodeEntity> getNodesWhoAlreadyHaveThisPart(PartInfo part) {
-		return new ArrayList<>();
+
+	private Comparator<? super NodeEntity> getComparatorByGeneralRate() {
+		return (n1, n2) -> {
+			Long space1 = n1.getFreeSpace();
+			Long space2 = n1.getFreeSpace();
+			return ObjectUtils.compare(space1, space2); 
+		};
 	}
 
-	private Queue<NodeEntity> getNodesSortedByBestGeneralRate(Set<NodeEntity> knownNodes) {
-		return knownNodes.stream()
-				.sorted((n1, n2) -> {
-					Long space1 = n1.getFreeSpace();
-					Long space2 = n1.getFreeSpace();
-					return ObjectUtils.compare(space1, space2); 
-				})
-				.collect(Collectors.toCollection(LinkedList::new));
-	}
 
 }
