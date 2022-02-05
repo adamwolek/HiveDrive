@@ -1,11 +1,17 @@
 package org.hivedrive.server.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.PartEntity;
 import org.hivedrive.server.mappers.PartMapper;
 import org.hivedrive.server.repository.PartRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 @Service
 public class PartService {
@@ -33,6 +39,11 @@ public class PartService {
 	public PartTO get(String ownerId, String repository, String groupId, Integer orderInGroup) {
 		PartTO part = partRepository.findPart(ownerId, repository, groupId, orderInGroup);
 		return part;
+	}
+	
+	public List<PartTO> findAllParts(){
+		List<PartEntity> parts = Lists.newArrayList(partRepository.findAll());
+		return mapper.mapToTOs(parts);
 	}
 
 }

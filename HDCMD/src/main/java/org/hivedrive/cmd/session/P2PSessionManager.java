@@ -136,7 +136,7 @@ public class P2PSessionManager {
 	
 	private void verifyResponseSignature(String publicKeyOfNode, HttpResponse<String> response) 
 			throws JsonMappingException, JsonProcessingException {
-		if(StringUtils.isNotBlank(response.body())) {
+		if(correspondingNode != null && StringUtils.isNotBlank(response.body())) {
 			if(publicKeyOfNode == null) {
 				publicKeyOfNode = correspondingNode.getPublicKey();
 			}

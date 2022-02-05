@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.PartEntity;
+import org.hivedrive.server.repository.PartRepository;
 import org.hivedrive.server.service.PartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -28,17 +29,17 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/part")
 public class PartController {
 
-	@Autowired
-	private PartService service;
+	private PartService partService;
 
+	@Autowired
 	public PartController(PartService service) {
-		this.service = service;
+		this.partService = service;
 	}
 
 	@PostMapping
 	public ResponseEntity<Void> post(@RequestBody PartTO part) {
-		if (service.isAbleToAdd(part)) {
-			PartEntity entity = service.saveOrUpdate(part);
+		if (partService.isAbleToAdd(part)) {
+			PartEntity entity = partService.saveOrUpdate(part);
 			if (entity != null) {
 				return new ResponseEntity<>(HttpStatus.CREATED);
 			}
@@ -48,8 +49,8 @@ public class PartController {
 
 	@PutMapping
 	public ResponseEntity<Void> put(@RequestBody PartTO part) {
-		if (service.isAbleToUpdate(part)) {
-			PartEntity entity = service.saveOrUpdate(part);
+		if (partService.isAbleToUpdate(part)) {
+			PartEntity entity = partService.saveOrUpdate(part);
 			if (entity != null) {
 				return new ResponseEntity<>(HttpStatus.OK);
 			}
@@ -63,14 +64,14 @@ public class PartController {
 			@RequestParam("repository") String repository, 
 			@RequestParam("groupId") String groupId,
 			@RequestParam("orderInGroup") Integer orderInGroup) {
-		PartTO part = service.get(publicKey, repository, groupId, orderInGroup);
+		PartTO part = partService.get(publicKey, repository, groupId, orderInGroup);
 		return part;
 	}
 
 	@GetMapping("/all")
 	List<PartTO> getAll() {
-
-		return null;
+		List<PartTO> allParts = partService.findAllParts();
+		return allParts;
 	}
 
 	@PostMapping(path = "/content", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
