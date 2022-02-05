@@ -30,6 +30,7 @@ import org.hivedrive.cmd.tool.JSONUtils;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -37,7 +38,7 @@ public class P2PSessionManager {
 	
 	private P2PSession session;
 	
-	private NodeTO node;
+	private NodeTO correspondingNode;
 
 	private UserKeysService userKeysService;
 	
@@ -48,13 +49,22 @@ public class P2PSessionManager {
 	private URL whouAreYouEndpoint;
 	private URL nodeEndpoint;
 	private URL partEndpoint;
+	private URL allPartEndpoint;
+	private URL allNodeEndpoint;
+	
+	public P2PSessionManager(NodeTO correspondingNode, UserKeysService userKeysService, 
+			SignatureService signatureService)  {
+		this(correspondingNode.getIpAddress(), userKeysService, signatureService);
+	}
 	
 	public P2PSessionManager(String address, UserKeysService userKeysService, 
 			SignatureService signatureService)  {
 		try {
 			this.whouAreYouEndpoint = new URL("http://" + address + "/whoAreYou");
 			this.nodeEndpoint = new URL("http://" + address + "/node");
+			this.allNodeEndpoint = new URL("http://" + address + "/node/all");
 			this.partEndpoint = new URL("http://" + address + "/part");
+			this.allPartEndpoint = new URL("http://" + address + "/part/all");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -77,12 +87,12 @@ public class P2PSessionManager {
 	}
 
 	public NodeTO getNode() {
-		return node;
+		return correspondingNode;
 	}
 	
 	public boolean meetWithNode() {
 		try {
-			this.node = get(whouAreYouEndpoint, null, NodeTO.class);
+			this.correspondingNode = get(whouAreYouEndpoint, null, new TypeReference<NodeTO>() { });
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -99,8 +109,8 @@ public class P2PSessionManager {
 		}
 	}
 	
-
-	private <T> T get(URL url, String publicKeyOfNode, Class<T> clazz) 
+	
+	private <T> T get(URL url, String publicKeyOfNode, TypeReference<T> typeReference) 
 			throws URISyntaxException, IOException, InterruptedException {
 		HttpRequest request = HttpRequest.newBuilder()
 				  .uri(url.toURI())
@@ -114,12 +124,12 @@ public class P2PSessionManager {
 		
 		if(response.statusCode() == StatusCode.UNAUTHORIZED) {
 			registerToNode();
-			return get(url, publicKeyOfNode, clazz);
+			return get(url, publicKeyOfNode, typeReference);
 		}
 		verifyResponseSignature(publicKeyOfNode, response);
 		
 		String json = response.body();
-		T object = JSONUtils.mapper().readValue(json, clazz);
+		T object = JSONUtils.mapper().readValue(json, typeReference);
 		return object;
 	}
 	
@@ -128,16 +138,9 @@ public class P2PSessionManager {
 			throws JsonMappingException, JsonProcessingException {
 		if(StringUtils.isNotBlank(response.body())) {
 			if(publicKeyOfNode == null) {
-				NodeTO node = JSONUtils.mapper().readValue(response.body(), NodeTO.class);
-				publicKeyOfNode = node.getPublicKey();
+				publicKeyOfNode = correspondingNode.getPublicKey();
 			}
-//			String signature = response.headers().firstValue(SIGN_HEADER_PARAM).get();
-//			boolean verified = signatureService.verifySign(signature, response.body(), publicKeyOfNode);
-//			if(!verified) {
-//				throw new HttpResponseNotSignedProperly();
-//			}
 		}
-		
 	}
 
 	private boolean post(URL url, Object object) 
@@ -187,6 +190,16 @@ public class P2PSessionManager {
 
 	public void setPartEndpoint(URL partEndpoint) {
 		this.partEndpoint = partEndpoint;
+	}
+
+	public List<NodeTO> getAllNodes() throws URISyntaxException, IOException, InterruptedException {
+		TypeReference<List<NodeTO>> typeReference = new TypeReference<List<NodeTO>>() { };
+		return get(allNodeEndpoint, null, typeReference);
+	}
+
+	public List<PartInfo> getAllParts() throws URISyntaxException, IOException, InterruptedException {
+		TypeReference<List<PartInfo>> typeReference = new TypeReference<List<PartInfo>>() { };
+		return get(allPartEndpoint, null, typeReference);
 	}
 
 

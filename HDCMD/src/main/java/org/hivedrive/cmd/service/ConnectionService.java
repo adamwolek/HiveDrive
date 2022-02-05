@@ -44,18 +44,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class ConnectionService {
 
-	private static class PartAndP2PManager {
-		PartInfo part;
-		P2PSessionManager manager;
-
-		public PartAndP2PManager(PartInfo part, P2PSessionManager manager) {
-			super();
-			this.part = part;
-			this.manager = manager;
-		}
-	}
-
-	
 	private ConfigurationService config;
 	private UserKeysService userKeysService;
 	private SignatureService signatureService;
@@ -79,7 +67,6 @@ public class ConnectionService {
 
 	Logger logger = LoggerFactory.getLogger(ConnectionService.class);
 
-	private Executor executor = Executors.newFixedThreadPool(5);
 
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
@@ -96,8 +83,8 @@ public class ConnectionService {
 
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
 		nodeRepository.getAllNodes().stream()
-			.map(NodeEntity::getIpAddress)
-			.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
+			.map(this::mapEntityToTO)
+			.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
 			.filter(P2PSessionManager::meetWithNode)
 			.map(P2PSessionManager::getNode)
 			.map(this::mapToNewEntity)
@@ -122,6 +109,17 @@ public class ConnectionService {
 		entity.setUsedSpace(nodeTO.getUsedSpace());
 		return entity;
 	}
+	
+	private NodeTO mapEntityToTO(NodeEntity entity) {
+		NodeTO nodeTO = new NodeTO();
+		nodeTO.setPublicKey(entity.getPublicKey());
+		nodeTO.setIpAddress(entity.getIpAddress());
+		nodeTO.setStatus(entity.getStatus());
+		nodeTO.setFreeSpace(entity.getFreeSpace());
+		nodeTO.setUsedSpace(entity.getUsedSpace());
+		return nodeTO;
+	}
+
 
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
 		if(true) {
@@ -148,7 +146,7 @@ public class ConnectionService {
 			int copiesOfPart = 0;
 			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
-				P2PSessionManager sessionManager = newSession(node);
+				P2PSessionManager sessionManager = newSession(node.getIpAddress());
 				boolean success = sessionManager.send(part);
 				if (success) {
 					copiesOfPart++;
@@ -156,9 +154,30 @@ public class ConnectionService {
 			}
 		}
 	}
+	
+	public List<NodeEntity> getAllKnonwNodes(String ipAddress) throws URISyntaxException, IOException, InterruptedException {
+		P2PSessionManager session = newSession(ipAddress);
+		return session.getAllNodes().stream()
+		.map(this::mapToNewEntity)
+		.map(nodeRepository::save)
+		.collect(Collectors.toList());
+	}
+	
+//	public List<NodeEntity> getAllKnonwNodes(NodeEntity node) {
+//		
+//	}
+	
+	public List<PartInfo> getAllPartsStoredOnNode(String ipAddress) throws URISyntaxException, IOException, InterruptedException {
+		P2PSessionManager session = newSession(ipAddress);
+		return session.getAllParts();
+	}
+	
+//	public List<PartInfo> getAllPartsStoredOnNode(NodeEntity node) {
+//		
+//	}
 
-	private P2PSessionManager newSession(NodeEntity node) {
-		return new P2PSessionManager(node.getIpAddress(), userKeysService, signatureService);
+	private P2PSessionManager newSession(String ipAddress) {
+		return new P2PSessionManager(ipAddress, userKeysService, signatureService);
 	}
 
 	private Queue<NodeEntity> getBestNodes(PartInfo part) {
@@ -175,6 +194,7 @@ public class ConnectionService {
 			return ObjectUtils.compare(space1, space2); 
 		};
 	}
+
 
 
 }
