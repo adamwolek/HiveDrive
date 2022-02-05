@@ -146,7 +146,7 @@ public class ConnectionService {
 		for (PartInfo part : parts) {
 			Queue<NodeEntity> nodes = getBestNodes(part);
 			int copiesOfPart = 0;
-			while (copiesOfPart >= config.getBestNumberOfCopies()) {
+			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
 				P2PSessionManager sessionManager = newSession(node);
 				boolean success = sessionManager.send(part);

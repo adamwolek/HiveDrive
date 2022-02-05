@@ -1,6 +1,7 @@
 package org.hivedrive.cmd.command;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -76,6 +77,12 @@ public class PushCommand implements Runnable {
 			sendParts(parts);
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				FileUtils.forceDelete(workDirectory);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 	}
@@ -167,7 +174,7 @@ public class PushCommand implements Runnable {
 
 	private File packFile(File file) {
 		log(stopWatch.formatTime() + " - Packing");
-		File zip = new File(StringUtils.substringBefore(file.getAbsolutePath(), ".") + ".zip");
+		File zip = new File(workDirectory, StringUtils.substringBefore(file.getName(), ".") + ".zip");
 		fileComporessingService.compressFile(file, zip);
 		return zip;
 	}

@@ -91,8 +91,12 @@ public class P2PSessionManager {
 	}
 	
 	public boolean send(PartInfo part) {
-		
-		return true;
+		try {
+			return post(partEndpoint, part);
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 	
 
@@ -143,6 +147,7 @@ public class P2PSessionManager {
 				  .uri(url.toURI())
 				  .timeout(Duration.ofSeconds(10))
 				  .header(SIGN_HEADER_PARAM, signOf(json))
+				  .header("Content-Type", "application/json")
 				  .POST(BodyPublishers.ofString(json))
 				  .build();
 		HttpResponse<String> response = HttpClient
