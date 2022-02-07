@@ -26,6 +26,7 @@ import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.UserKeysService;
 import org.hivedrive.cmd.to.NodeTO;
+import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.cmd.tool.JSONUtils;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +45,8 @@ public class P2PSessionManager {
 	
 	private SignatureService signatureService;
 	
-	public static String SIGN_HEADER_PARAM = "X-SIGN";
+	public static String SENDER_ID_HEADER_PARAM = "x-sender-id";
+	public static String SIGN_HEADER_PARAM = "x-sign";
 
 	private URL whouAreYouEndpoint;
 	private URL nodeEndpoint;
@@ -115,6 +117,7 @@ public class P2PSessionManager {
 		HttpRequest request = HttpRequest.newBuilder()
 				  .uri(url.toURI())
 				  .timeout(Duration.ofSeconds(10))
+				  .header(SENDER_ID_HEADER_PARAM, userKeysService.getKeys().getPublicAsymetricKeyAsString())
 				  .GET()
 				  .build();
 		HttpResponse<String> response = HttpClient
@@ -150,6 +153,7 @@ public class P2PSessionManager {
 				  .uri(url.toURI())
 				  .timeout(Duration.ofSeconds(10))
 				  .header(SIGN_HEADER_PARAM, signOf(json))
+				  .header(SENDER_ID_HEADER_PARAM, userKeysService.getKeys().getPublicAsymetricKeyAsString())
 				  .header("Content-Type", "application/json")
 				  .POST(BodyPublishers.ofString(json))
 				  .build();
@@ -197,8 +201,8 @@ public class P2PSessionManager {
 		return get(allNodeEndpoint, null, typeReference);
 	}
 
-	public List<PartInfo> getAllParts() throws URISyntaxException, IOException, InterruptedException {
-		TypeReference<List<PartInfo>> typeReference = new TypeReference<List<PartInfo>>() { };
+	public List<PartTO> getAllParts() throws URISyntaxException, IOException, InterruptedException {
+		TypeReference<List<PartTO>> typeReference = new TypeReference<List<PartTO>>() { };
 		return get(allPartEndpoint, null, typeReference);
 	}
 

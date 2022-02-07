@@ -29,6 +29,7 @@ import org.hivedrive.cmd.repository.NodeRepository;
 import org.hivedrive.cmd.session.P2PSessionManager;
 import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.hivedrive.cmd.to.NodeTO;
+import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.cmd.tool.JSONUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,6 +156,7 @@ public class ConnectionService {
 		}
 	}
 	
+
 	public List<NodeEntity> getAllKnonwNodes(String ipAddress) throws URISyntaxException, IOException, InterruptedException {
 		P2PSessionManager session = newSession(ipAddress);
 		return session.getAllNodes().stream()
@@ -167,7 +169,7 @@ public class ConnectionService {
 //		
 //	}
 	
-	public List<PartInfo> getAllPartsStoredOnNode(String ipAddress) throws URISyntaxException, IOException, InterruptedException {
+	public List<PartTO> getAllPartsStoredOnNode(String ipAddress) throws URISyntaxException, IOException, InterruptedException {
 		P2PSessionManager session = newSession(ipAddress);
 		return session.getAllParts();
 	}

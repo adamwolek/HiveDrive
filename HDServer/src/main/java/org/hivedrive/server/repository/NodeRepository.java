@@ -10,5 +10,8 @@ public interface NodeRepository extends CrudRepository<NodeEntity, Long> {
  NodeEntity save(NodeEntity node);
  
  NodeEntity findByPublicKey(String publicKey);
+ 
+
+ 
 
 }

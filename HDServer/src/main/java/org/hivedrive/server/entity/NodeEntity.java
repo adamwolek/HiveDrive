@@ -1,17 +1,23 @@
 package org.hivedrive.server.entity;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 @Entity
 public class NodeEntity {
 
 	@Id
-	 private String publicKey;
-	
-	 private String status;
-	 
-	 private String ipAddress;
+	@GeneratedValue
+	private Long id;
+
+	@Column(columnDefinition = "LONGTEXT")
+	private String publicKey;
+
+	private String status;
+
+	private String ipAddress;
 
 	public String getPublicKey() {
 		return publicKey;
@@ -36,5 +42,5 @@ public class NodeEntity {
 	public void setIpAddress(String ipAddress) {
 		this.ipAddress = ipAddress;
 	}
-	 
+
 }

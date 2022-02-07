@@ -6,7 +6,9 @@ import java.io.FileNotFoundException;
 import java.util.List;
 
 import org.hivedrive.cmd.to.PartTO;
+import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.entity.PartEntity;
+import org.hivedrive.server.repository.NodeRepository;
 import org.hivedrive.server.repository.PartRepository;
 import org.hivedrive.server.service.PartService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -30,21 +33,30 @@ import org.springframework.web.multipart.MultipartFile;
 public class PartController {
 
 	private PartService partService;
+	private SenderInfo senderInfo;
+	private NodeRepository nodeRepository;
 
 	@Autowired
-	public PartController(PartService service) {
+	public PartController(PartService service, NodeRepository nodeRepository, SenderInfo senderInfo) {
 		this.partService = service;
+		this.nodeRepository = nodeRepository;
+		this.senderInfo = senderInfo;
 	}
 
 	@PostMapping
 	public ResponseEntity<Void> post(@RequestBody PartTO part) {
-		if (partService.isAbleToAdd(part)) {
-			PartEntity entity = partService.saveOrUpdate(part);
-			if (entity != null) {
-				return new ResponseEntity<>(HttpStatus.CREATED);
-			}
+		part.setOwnerId(senderInfo.getSenderPublicKey());
+		NodeEntity senderNode = nodeRepository.findByPublicKey(senderInfo.getSenderPublicKey());
+		if(senderNode == null) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		} else if (!partService.isAbleToAdd(part)) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
-		return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		PartEntity entity = partService.saveOrUpdate(part);
+		if (entity != null) {
+			return new ResponseEntity<>(HttpStatus.CREATED);
+		}
+		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@PutMapping

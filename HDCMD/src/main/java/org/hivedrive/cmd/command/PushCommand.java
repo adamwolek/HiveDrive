@@ -71,10 +71,13 @@ public class PushCommand implements Runnable {
 			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
 			repositoryConfigService.init();
 			
+			userKeysService.loadKeys();
+			
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
 			List<PartInfo> parts = generatePartsForRepository();
 			sendParts(parts);
+			System.out.println("Zakończono wysyłanie");
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

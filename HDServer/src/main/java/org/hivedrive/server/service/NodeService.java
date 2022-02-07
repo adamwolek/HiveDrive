@@ -19,8 +19,16 @@ public class NodeService {
 	private NodeMapper mapper;
 	
 	public NodeEntity saveOrUpdate(NodeTO to) {
-		NodeEntity entity = mapper.map(to);
-		return repository.save(entity);
+		NodeEntity newEntity = mapper.map(to);
+		Iterable<NodeEntity> all = repository.findAll();
+		NodeEntity existingNode = repository.findByPublicKey(newEntity.getPublicKey());
+		if(existingNode != null) {
+			existingNode.setIpAddress(newEntity.getIpAddress());
+			existingNode.setStatus(newEntity.getStatus());
+			return repository.save(existingNode);
+		} else {
+			return repository.save(newEntity);
+		}
 	}
 
 	public boolean isAbleToAdd(NodeTO to) {

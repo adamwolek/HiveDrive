@@ -39,8 +39,6 @@ public class UserKeysService {
 		if (configService.getConfig() != null) {
 			File keysFile = new File(configService.getConfig().getKeysPath());
 			keys = load(keysFile);
-		} else {
-			keys = generateNewKeys(); // only for tests!
 		}
 	}
 
