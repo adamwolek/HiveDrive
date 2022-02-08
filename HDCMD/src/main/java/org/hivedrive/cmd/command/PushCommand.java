@@ -69,7 +69,6 @@ public class PushCommand implements Runnable {
 	public void run() {
 		try {
 			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
-			repositoryConfigService.init();
 			
 			userKeysService.loadKeys();
 			

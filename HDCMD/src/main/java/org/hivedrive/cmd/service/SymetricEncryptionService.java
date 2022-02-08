@@ -34,12 +34,14 @@ public class SymetricEncryptionService {
 
 	@PostConstruct
 	private void init() {
-		this.secretKey = userKeysService.getKeys().getPrivateSymetricKey();
-		try {
-			this.cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-			throw new RuntimeException(e);
-		}
+		userKeysService.addPropertyChangeListener(event -> {
+			this.secretKey = userKeysService.getKeys().getPrivateSymetricKey();
+			try {
+				this.cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+				throw new RuntimeException(e);
+			}
+		});
 	}
 
 	public static IvParameterSpec generateIv() {

@@ -45,7 +45,7 @@ class PartMapperTest {
 		LocalDateTime date = LocalDateTime.now();
 		
         to = new PartTO();
-        to.setStatus("test status");
+//        to.setStatus("test status");
         to.setCreateDate(date);
         to.setGlobalId("qwert");
         to.setGroupId("yuiop");
@@ -60,7 +60,7 @@ class PartMapperTest {
         
         entity = new PartEntity();
         entity.setPathToPart(new File("C:/User/Test/Documents/test.docx"));
-        entity.setStatus("test status");
+//        entity.setStatus("test status");
         entity.setCreateDate(date);
         entity.setGlobalId("qwert");
         entity.setGroupId("yuiop");
@@ -69,7 +69,7 @@ class PartMapperTest {
         entity.setRepository("asdf");
         
         to2 = new PartTO();
-        to2.setStatus("test status 2");
+//        to2.setStatus("test status 2");
         to2.setCreateDate(date);
         to2.setGlobalId("trewq");
         to2.setGroupId("poiuy");
@@ -79,7 +79,7 @@ class PartMapperTest {
         
         entity2 = new PartEntity();
         entity2.setPathToPart(new File("C:/User/Test/Documents/test.docx"));
-        entity2.setStatus("test status 2");
+//        entity2.setStatus("test status 2");
         entity2.setCreateDate(date);
         entity2.setGlobalId("trewq");
         entity2.setGroupId("poiuy");

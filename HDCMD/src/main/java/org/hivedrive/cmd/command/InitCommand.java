@@ -1,6 +1,7 @@
 package org.hivedrive.cmd.command;
 
 import java.io.File;
+import java.io.IOException;
 
 import javax.annotation.PostConstruct;
 
@@ -38,7 +39,11 @@ public class InitCommand implements Runnable {
 
 	@Override
 	public void run() {
-		config.initConfig(key, repositoryName, repositoryDirectory);
+		try {
+			config.setRepositoryDirectory(repositoryDirectory);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

@@ -1,6 +1,7 @@
 package org.hivedrive.server.entity;
 
 import java.io.File;
+
 import java.time.LocalDateTime;
 
 import javax.persistence.Entity;
@@ -8,6 +9,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+
+import org.hivedrive.cmd.status.PartStatus;
+
 
 @Entity
 public class PartEntity {
@@ -24,7 +28,7 @@ public class PartEntity {
 
 	private File pathToPart;
 	private LocalDateTime createDate;
-	private String status;
+	private PartStatus status;
 	private String globalId;
 	/**
 	 * Name of repository created by repository owner
@@ -65,11 +69,12 @@ public class PartEntity {
 		this.createDate = createDate;
 	}
 
-	public String getStatus() {
+
+	public PartStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(PartStatus status) {
 		this.status = status;
 	}
 

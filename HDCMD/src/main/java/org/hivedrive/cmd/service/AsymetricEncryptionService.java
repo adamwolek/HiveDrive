@@ -33,16 +33,18 @@ public class AsymetricEncryptionService {
 
 	@PostConstruct
 	public void init() {
-		UserKeys keys = userKeysService.getKeys();
-		if (keys != null) {
-			this.privateAsymetricKey = keys.getPrivateAsymetricKey();
-			this.publicAsymetricKey = keys.getPublicAsymetricKey();
-			try {
-				this.cipher = Cipher.getInstance("RSA");
-			} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-				throw new RuntimeException(e);
+		userKeysService.addPropertyChangeListener(event -> {
+			UserKeys keys = userKeysService.getKeys();
+			if (keys != null) {
+				this.privateAsymetricKey = keys.getPrivateAsymetricKey();
+				this.publicAsymetricKey = keys.getPublicAsymetricKey();
+				try {
+					this.cipher = Cipher.getInstance("RSA");
+				} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+					throw new RuntimeException(e);
+				}
 			}
-		}
+		});
 	}
 
 	public void encryptWithPrivateKey(File inputFile, File outputFile) {

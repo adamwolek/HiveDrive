@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
+import org.springframework.integration.dsl.PollerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -71,9 +72,13 @@ public class ConnectionService {
 
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
-		if (!Arrays.asList(env.getActiveProfiles()).contains("unitTests")) {
-			this.manualInit();
-		}
+		userKeysService.addPropertyChangeListener(event -> {
+			try {
+				this.manualInit();
+			} catch (URISyntaxException | IOException | InterruptedException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
@@ -148,8 +153,9 @@ public class ConnectionService {
 			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
 				P2PSessionManager sessionManager = newSession(node.getIpAddress());
-				boolean success = sessionManager.send(part);
-				if (success) {
+				boolean accepted = sessionManager.send(part);
+				OKHTTp
+				if (accepted) {
 					copiesOfPart++;
 				}
 			}

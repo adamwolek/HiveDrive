@@ -1,6 +1,9 @@
 package org.hivedrive.cmd.service;
 
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.security.Key;
@@ -32,16 +35,28 @@ public class UserKeysService {
 	@Autowired
 	private RepositoryConfigService configService;
 
+	private PropertyChangeSupport support;
+	
 	private UserKeys keys;
+	
+	public UserKeysService() {
+		support = new PropertyChangeSupport(this);
+	}
 
 	@PostConstruct
 	public void loadKeys() {
-		if (configService.getConfig() != null) {
-			File keysFile = new File(configService.getConfig().getKeysPath());
-			keys = load(keysFile);
-		}
+		configService.addPropertyChangeListener(event -> {
+			if (configService.getConfig() != null) {
+				File keysFile = new File(configService.getConfig().getKeysPath());
+				setKeys(load(keysFile));
+			}
+		});
 	}
 
+	public void addPropertyChangeListener(PropertyChangeListener pcl) {
+		support.addPropertyChangeListener(pcl);
+    }
+	
 	private UserKeys load(File clientKeys) {
 		try {
 			return JSONUtils.read(clientKeys, UserKeys.class);
@@ -102,7 +117,10 @@ public class UserKeysService {
 	}
 
 	public void setKeys(UserKeys keys) {
+		UserKeys oldValue = this.keys;
 		this.keys = keys;
+		support.firePropertyChange("keys", oldValue, this.keys);
+		
 	}
 
 }

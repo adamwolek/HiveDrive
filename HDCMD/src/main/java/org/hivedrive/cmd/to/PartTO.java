@@ -2,10 +2,12 @@ package org.hivedrive.cmd.to;
 
 import java.time.LocalDateTime;
 
+import org.hivedrive.cmd.status.PartStatus;
+
 public class PartTO {
 
 	private LocalDateTime createDate;
-	private String status;
+	private PartStatus status;
 	private String globalId;
 	/**
 	 * Name of repository created by repository owner
@@ -32,11 +34,11 @@ public class PartTO {
 		this.createDate = createDate;
 	}
 
-	public String getStatus() {
+	public PartStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(PartStatus status) {
 		this.status = status;
 	}
 

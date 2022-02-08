@@ -117,7 +117,7 @@ public class P2PSessionManager {
 		HttpRequest request = HttpRequest.newBuilder()
 				  .uri(url.toURI())
 				  .timeout(Duration.ofSeconds(10))
-				  .header(SENDER_ID_HEADER_PARAM, userKeysService.getKeys().getPublicAsymetricKeyAsString())
+				  .header(SENDER_ID_HEADER_PARAM, getSenderId())
 				  .GET()
 				  .build();
 		HttpResponse<String> response = HttpClient
@@ -137,6 +137,13 @@ public class P2PSessionManager {
 	}
 	
 	
+	private String getSenderId() {
+		if(userKeysService.getKeys() != null) {
+			return userKeysService.getKeys().getPublicAsymetricKeyAsString();
+		}
+		return "";
+	}
+
 	private void verifyResponseSignature(String publicKeyOfNode, HttpResponse<String> response) 
 			throws JsonMappingException, JsonProcessingException {
 		if(correspondingNode != null && StringUtils.isNotBlank(response.body())) {

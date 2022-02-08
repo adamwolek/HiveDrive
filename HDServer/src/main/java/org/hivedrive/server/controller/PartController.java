@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.List;
 
+import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.entity.PartEntity;
@@ -52,6 +53,7 @@ public class PartController {
 		} else if (!partService.isAbleToAdd(part)) {
 			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
+		part.setStatus(PartStatus.WAITING_FOR_APPROVAL);
 		PartEntity entity = partService.saveOrUpdate(part);
 		if (entity != null) {
 			return new ResponseEntity<>(HttpStatus.CREATED);

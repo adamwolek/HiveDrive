@@ -1,5 +1,7 @@
 package org.hivedrive.cmd.service;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 
@@ -24,8 +26,17 @@ public class RepositoryConfigService {
 
 	private RepositoryConfigFileData config;
 
-//	@PostConstruct
-	public void init() throws StreamReadException, DatabindException, IOException {
+	private PropertyChangeSupport support;
+	
+	public RepositoryConfigService() {
+		 support = new PropertyChangeSupport(this);
+	}
+	
+	public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        support.addPropertyChangeListener(pcl);
+    }
+	
+	private void init() throws StreamReadException, DatabindException, IOException {
 //		this.repositoryDirectory = new File(System.getProperty("user.dir"));
 		if (getConfigFile().exists()) {
 			this.config = loadConfig();
@@ -38,7 +49,7 @@ public class RepositoryConfigService {
 		return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
 	}
 
-	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
+	private void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
 		try {
 			this.repositoryDirectory = newRepositoryDirectory;
 			RepositoryConfigFileData config = createNewConfig(keyFile, repositoryName);
@@ -78,8 +89,11 @@ public class RepositoryConfigService {
 		return repositoryDirectory;
 	}
 
-	public void setRepositoryDirectory(File repositoryDirectory) {
+	public void setRepositoryDirectory(File repositoryDirectory) throws StreamReadException, DatabindException, IOException {
+		File oldValue = this.repositoryDirectory;
 		this.repositoryDirectory = repositoryDirectory;
+		init();
+		support.firePropertyChange("repositoryDirectory", oldValue, this.repositoryDirectory);
 	}
 
 	public RepositoryConfigFileData getConfig() {
