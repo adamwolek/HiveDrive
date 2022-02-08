@@ -1,19 +1,13 @@
 package org.hivedrive.cmd.service;
 
 import java.io.IOException;
-
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -36,11 +30,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
-import org.springframework.integration.dsl.PollerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Lazy
 @Service
@@ -63,12 +55,9 @@ public class ConnectionService {
 		this.nodeRepository = nodeRepository;
 	}
 
-	
-
 	private CentralServerMetadata metadata;
 
 	Logger logger = LoggerFactory.getLogger(ConnectionService.class);
-
 
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
@@ -88,22 +77,17 @@ public class ConnectionService {
 	}
 
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
-		nodeRepository.getAllNodes().stream()
-			.map(this::mapEntityToTO)
-			.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
-			.filter(P2PSessionManager::meetWithNode)
-			.map(P2PSessionManager::getNode)
-			.map(this::mapToNewEntity)
-			.forEach(nodeRepository::save);
+		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
+				.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
+				.filter(P2PSessionManager::meetWithNode).map(P2PSessionManager::getNode)
+				.map(this::mapToNewEntity).forEach(nodeRepository::save);
 	}
 
 	private void meetMoreNodes() {
 		metadata.getActiveNodes().stream()
-			.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
-			.filter(P2PSessionManager::meetWithNode)
-			.map(P2PSessionManager::getNode)
-			.map(this::mapToNewEntity)
-			.forEach(nodeRepository::save);
+				.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
+				.filter(P2PSessionManager::meetWithNode).map(P2PSessionManager::getNode)
+				.map(this::mapToNewEntity).forEach(nodeRepository::save);
 	}
 
 	private NodeEntity mapToNewEntity(NodeTO nodeTO) {
@@ -115,7 +99,7 @@ public class ConnectionService {
 		entity.setUsedSpace(nodeTO.getUsedSpace());
 		return entity;
 	}
-	
+
 	private NodeTO mapEntityToTO(NodeEntity entity) {
 		NodeTO nodeTO = new NodeTO();
 		nodeTO.setPublicKey(entity.getPublicKey());
@@ -126,14 +110,13 @@ public class ConnectionService {
 		return nodeTO;
 	}
 
-
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
-		if(true) {
+		if (true) {
 			CentralServerMetadata metadata = new CentralServerMetadata();
 			metadata.setActiveNodes(Arrays.asList("localhost:8080"));
 			return metadata;
 		}
-		
+
 		try {
 			String json = IOUtils.toString(config.getUrlToCentralMetadata(), "UTF-8");
 			CentralServerMetadata metadata = JSONUtils.mapper().readValue(json,
@@ -153,33 +136,43 @@ public class ConnectionService {
 			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
 				P2PSessionManager sessionManager = newSession(node.getIpAddress());
-				boolean accepted = sessionManager.send(part);
-				OKHTTp
-				if (accepted) {
+				boolean requestSent = sessionManager.send(part);
+				if (requestSent) {
+					while (!sessionManager.partAccepted(part)) {
+						delay();
+					}
+					sessionManager.sendContent(part);
 					copiesOfPart++;
 				}
 			}
 		}
 	}
-	
 
-	public List<NodeEntity> getAllKnonwNodes(String ipAddress) throws URISyntaxException, IOException, InterruptedException {
-		P2PSessionManager session = newSession(ipAddress);
-		return session.getAllNodes().stream()
-		.map(this::mapToNewEntity)
-		.map(nodeRepository::save)
-		.collect(Collectors.toList());
+	private void delay() {
+		try {
+			TimeUnit.SECONDS.sleep(1);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
-	
+
+	public List<NodeEntity> getAllKnonwNodes(String ipAddress)
+			throws URISyntaxException, IOException, InterruptedException {
+		P2PSessionManager session = newSession(ipAddress);
+		return session.getAllNodes().stream().map(this::mapToNewEntity).map(nodeRepository::save)
+				.collect(Collectors.toList());
+	}
+
 //	public List<NodeEntity> getAllKnonwNodes(NodeEntity node) {
 //		
 //	}
-	
-	public List<PartTO> getAllPartsStoredOnNode(String ipAddress) throws URISyntaxException, IOException, InterruptedException {
+
+	public List<PartTO> getAllPartsStoredOnNode(String ipAddress)
+			throws URISyntaxException, IOException, InterruptedException {
 		P2PSessionManager session = newSession(ipAddress);
 		return session.getAllParts();
 	}
-	
+
 //	public List<PartInfo> getAllPartsStoredOnNode(NodeEntity node) {
 //		
 //	}
@@ -194,15 +187,12 @@ public class ConnectionService {
 		return allNodes;
 	}
 
-
 	private Comparator<? super NodeEntity> getComparatorByGeneralRate() {
 		return (n1, n2) -> {
 			Long space1 = n1.getFreeSpace();
 			Long space2 = n1.getFreeSpace();
-			return ObjectUtils.compare(space1, space2); 
+			return ObjectUtils.compare(space1, space2);
 		};
 	}
-
-
 
 }

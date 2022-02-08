@@ -2,6 +2,7 @@ package org.hivedrive.cmd.to;
 
 import java.time.LocalDateTime;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.hivedrive.cmd.status.PartStatus;
 
 public class PartTO {
@@ -30,6 +31,11 @@ public class PartTO {
 		return createDate;
 	}
 
+	private void refreshGlobalId() {
+		this.globalId = DigestUtils.md5Hex(ownerId) + "|" + repository + "|" + groupId + "|"
+				+ orderInGroup;
+	}
+
 	public void setCreateDate(LocalDateTime createDate) {
 		this.createDate = createDate;
 	}
@@ -56,6 +62,7 @@ public class PartTO {
 
 	public void setRepository(String repository) {
 		this.repository = repository;
+		refreshGlobalId();
 	}
 
 	public String getGroupId() {
@@ -64,6 +71,7 @@ public class PartTO {
 
 	public void setGroupId(String groupId) {
 		this.groupId = groupId;
+		refreshGlobalId();
 	}
 
 	public int getOrderInGroup() {
@@ -72,6 +80,7 @@ public class PartTO {
 
 	public void setOrderInGroup(int orderInGroup) {
 		this.orderInGroup = orderInGroup;
+		refreshGlobalId();
 	}
 
 	public String getOwnerId() {
@@ -80,5 +89,6 @@ public class PartTO {
 
 	public void setOwnerId(String ownerId) {
 		this.ownerId = ownerId;
+		refreshGlobalId();
 	}
 }
