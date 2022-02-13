@@ -44,6 +44,8 @@ public class ConnectionService {
 	private Environment env;
 	private NodeRepository nodeRepository;
 
+	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
+	
 	@Autowired
 	public ConnectionService(ConfigurationService config, UserKeysService userKeysService,
 			SignatureService signatureService, Environment env, NodeRepository nodeRepository) {
@@ -57,7 +59,6 @@ public class ConnectionService {
 
 	private CentralServerMetadata metadata;
 
-	Logger logger = LoggerFactory.getLogger(ConnectionService.class);
 
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
@@ -130,6 +131,7 @@ public class ConnectionService {
 	}
 
 	public void sendParts(List<PartInfo> parts) {
+		int partIndex = 1;
 		for (PartInfo part : parts) {
 			Queue<NodeEntity> nodes = getBestNodes(part);
 			int copiesOfPart = 0;
@@ -138,13 +140,21 @@ public class ConnectionService {
 				P2PSessionManager sessionManager = newSession(node.getIpAddress());
 				boolean requestSent = sessionManager.send(part);
 				if (requestSent) {
-					while (!sessionManager.partAccepted(part)) {
-						delay();
-					}
+					waitForAcceptance(part, sessionManager);
 					sessionManager.sendContent(part);
 					copiesOfPart++;
 				}
 			}
+			logger.info("Part " + partIndex + " sent");
+			partIndex++;
+		}
+	}
+
+	private void waitForAcceptance(PartInfo part, P2PSessionManager sessionManager) {
+		int triesCount = 0;
+		while (!sessionManager.partAccepted(part) & triesCount < 5) {
+			triesCount++;
+			delay();
 		}
 	}
 

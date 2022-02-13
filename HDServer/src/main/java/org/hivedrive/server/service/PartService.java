@@ -37,8 +37,9 @@ public class PartService {
 	}
 
 	public PartTO get(String ownerId, String repository, String groupId, Integer orderInGroup) {
-		PartTO part = partRepository.findPart(ownerId, repository, groupId, orderInGroup);
-		return part;
+		ArrayList<PartEntity> parts = Lists.newArrayList(partRepository.findAll());
+		PartEntity part = partRepository.findPart(ownerId, repository, groupId, orderInGroup);
+		return mapper.map(part);
 	}
 	
 	public List<PartTO> findAllParts(){

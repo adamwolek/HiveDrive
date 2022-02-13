@@ -24,6 +24,7 @@ public class PartMapper {
 		entity.setGroupId(to.getGroupId());
 		entity.setOrderInGroup(to.getOrderInGroup());
 		entity.setRepository(to.getRepository());
+		entity.setGlobalId(to.getGlobalId());
 		NodeEntity node = nodeService.getNodeEntityByPublicKey(to.getOwnerId());
 		entity.setNode(node);
 		return entity;
@@ -41,6 +42,7 @@ public class PartMapper {
 		to.setGroupId(entity.getGroupId());
 		to.setOrderInGroup(entity.getOrderInGroup());
 		to.setRepository(entity.getRepository());
+		to.setGlobalId(entity.getGlobalId());
 		to.setOwnerId(entity.getNode().getPublicKey());
 		return to;
 	}

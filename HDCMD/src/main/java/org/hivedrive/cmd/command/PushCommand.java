@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -22,6 +23,8 @@ import org.hivedrive.cmd.service.RepositoryConfigService;
 import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.SymetricEncryptionService;
 import org.hivedrive.cmd.service.UserKeysService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -37,6 +40,7 @@ public class PushCommand implements Runnable {
 	@Option(names = { "-dir", "--directory" }, description = "")
 	private File repositoryDirectory = new File(System.getProperty("user.dir"));
 	
+	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
 	
 	@Autowired
 	public PushCommand(ConnectionService connectionService,
@@ -76,7 +80,7 @@ public class PushCommand implements Runnable {
 			workDirectory.mkdir();
 			List<PartInfo> parts = generatePartsForRepository();
 			sendParts(parts);
-			System.out.println("Zakończono wysyłanie");
+			logger.info("Sending finished");
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -91,6 +95,7 @@ public class PushCommand implements Runnable {
 
 	private void sendParts(List<PartInfo> parts) {
 		connectionService.sendParts(parts);
+		logger.info("Sent " + parts.size() + " files.");
 
 	}
 
@@ -113,6 +118,9 @@ public class PushCommand implements Runnable {
 				return true;
 			}
 		};
+		
+		File directoryToSplit = new File(workDirectory, "/parts");
+		directoryToSplit.mkdir();
 		Collection<File> allFiles = FileUtils.listFiles(
 				repositoryConfigService.getRepositoryDirectory(), filter, filter);
 		int sentFiles = 0;
@@ -121,38 +129,38 @@ public class PushCommand implements Runnable {
 			sentFiles++;
 			double currentPercentage = 100 * sentFiles / (double) allFiles.size();
 			log(currentPercentage + "%");
+			
 			File packedFile = packFile(sourceFile);
 			File encryptedFile = encryptFile(packedFile);
 			packedFile.delete();
-			File directoryWithSplittedFiles = splitFiles(encryptedFile);
+			
+			List<File> partedFile = splitFileToDirectory(encryptedFile, directoryToSplit);
 			encryptedFile.delete();
-			parts.addAll(generatePartsFromFile(directoryWithSplittedFiles, sourceFile));
+			
+			List<PartInfo> partsFromFile = createPartsObjectsFromFile(partedFile, sourceFile);
+			parts.addAll(partsFromFile);
+			logger.info("File " + sentFiles + " splitted into " + partsFromFile.size() + " parts");
 		}
 		return parts;
 	}
 
-	private List<PartInfo> generatePartsFromFile(File directoryWithSplittedFiles, File sourceFile) {
-		List<PartInfo> parts = new ArrayList<>();
-		String fileId = repositoryConfigService.getRepositoryDirectory().toURI()
-				.relativize(sourceFile.toURI()).getPath();
-		File[] files = directoryWithSplittedFiles.listFiles();
-		for (File part : files) {
-
+	private List<PartInfo> createPartsObjectsFromFile(List<File> partedFile, File sourceFile) {
+		String fileId = repositoryConfigService.getRepositoryDirectory().toURI().relativize(sourceFile.toURI())
+				.getPath();
+		return partedFile.stream().map(partOfFile -> {
 			PartInfo partInfo = new PartInfo();
-			partInfo.setPart(part);
+			partInfo.setPart(partOfFile);
 			partInfo.setOwnerPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
 
-			String fileSign = signatureService.signByClient(part);
+			String fileSign = signatureService.signByClient(partOfFile);
 			partInfo.setFileSign(fileSign);
 
-			FileMetadata metadata = createFileMetadata(fileId, part);
+			FileMetadata metadata = createFileMetadata(fileId, partOfFile);
 			partInfo.setFileMetadata(metadata);
 			String encrypedFileMetadata = encryptionService.encrypt(metadata.toJSON());
 			partInfo.setEncryptedFileMetadata(encrypedFileMetadata);
-
-			parts.add(partInfo);
-		}
-		return parts;
+			return partInfo;
+		}).collect(Collectors.toList());
 
 	}
 
@@ -165,13 +173,9 @@ public class PushCommand implements Runnable {
 		return metadata;
 	}
 
-	private File splitFiles(File encryptedFile) {
+	private List<File> splitFileToDirectory(File encryptedFile, File directoryToSplit) {
 		log(stopWatch.formatTime() + " - Splitting");
-		File directory = encryptedFile.getParentFile();
-		File directoryToSplit = new File(directory.getAbsolutePath() + "/parts");
-		directoryToSplit.mkdir();
-		fileSplittingService.splitFileIntoDirectory(encryptedFile, directoryToSplit);
-		return directoryToSplit;
+		return fileSplittingService.splitFileIntoDirectory(encryptedFile, directoryToSplit);
 	}
 
 	private File packFile(File file) {
@@ -194,7 +198,7 @@ public class PushCommand implements Runnable {
 	}
 
 	private void log(String message) {
-		System.out.println(message);
+//		System.out.println(message);
 	}
 
 }

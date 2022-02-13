@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +24,13 @@ class SignatureServiceTest {
 	@Autowired
 	UserKeysService userKeysService;
 	
-	
+	@BeforeEach
+	private void beforeTest() {
+		userKeysService.setKeys(userKeysService.generateNewKeys());
+	}
 	
 	@Test
 	void checkSignature() {
-		userKeysService.generateNewKeys();
 		String text = RandomStringUtils.random(10000);
 		
 		String signature = signatureService.signByClient(text);

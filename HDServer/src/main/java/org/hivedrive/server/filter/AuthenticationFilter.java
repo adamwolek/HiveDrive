@@ -45,9 +45,6 @@ public class AuthenticationFilter implements Filter {
     	senderInfo.setBody(new String(httpRequest.getContentAsByteArray()));
     	boolean verified = signatureService.verifySign(senderInfo.getSign(), senderInfo.getBody(), senderInfo.getSenderPublicKey());
     	senderInfo.setAuthenticated(verified);
-    	System.out.println("Filtrowanko!");
-    	System.out.println(senderInfo);
-    	
     	chain.doFilter(httpRequest, response);
     }
 

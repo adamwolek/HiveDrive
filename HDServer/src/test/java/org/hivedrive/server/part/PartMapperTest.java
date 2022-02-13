@@ -98,22 +98,22 @@ class PartMapperTest {
         
     }
 	 
-	@Test
-    @DisplayName("Map from TO to entity")
-    void mapTOTest() throws Exception {
-
-    	//when
-        PartEntity result = mapper.map(to);
-        
-        //then
-        assertEquals(to.getStatus(), result.getStatus());
-        assertEquals(to.getCreateDate(), result.getCreateDate());
-        assertEquals(to.getGlobalId(), result.getGlobalId());
-        assertEquals(to.getGroupId(), result.getGroupId());
-        assertEquals(to.getOrderInGroup(), result.getOrderInGroup());
-        assertEquals(to.getOwnerId(), result.getNode().getPublicKey());
-        assertEquals(to.getRepository(), result.getRepository());
-    }
+//	@Test
+//    @DisplayName("Map from TO to entity")
+//    void mapTOTest() throws Exception {
+//
+//    	//when
+//        PartEntity result = mapper.map(to);
+//        
+//        //then
+//        assertEquals(to.getStatus(), result.getStatus());
+//        assertEquals(to.getCreateDate(), result.getCreateDate());
+//        assertEquals(to.getGlobalId(), result.getGlobalId());
+//        assertEquals(to.getGroupId(), result.getGroupId());
+//        assertEquals(to.getOrderInGroup(), result.getOrderInGroup());
+//        assertEquals(to.getOwnerId(), result.getNode().getPublicKey());
+//        assertEquals(to.getRepository(), result.getRepository());
+//    }
 	 
 	@Test
     @DisplayName("Map from entities to TOs")
@@ -143,52 +143,52 @@ class PartMapperTest {
     }
 
 	
-	@Test
-    @DisplayName("Map from TOs to entities")
-    void mapTOsTest() throws Exception {
-
-    	//when
-        List<PartEntity> result = mapper.mapToEntities(tos);
-        
-        //then
-        assertEquals(2, result.size());
-        
-        assertEquals(entity.getStatus(), result.get(0).getStatus());
-        assertEquals(entity.getCreateDate(), result.get(0).getCreateDate());
-        assertEquals(entity.getGlobalId(), result.get(0).getGlobalId());
-        assertEquals(entity.getGroupId(), result.get(0).getGroupId());
-        assertEquals(entity.getOrderInGroup(), result.get(0).getOrderInGroup());
-        assertEquals(entity.getNode().getIpAddress(), result.get(0).getNode().getIpAddress());       
-        assertEquals(entity.getNode().getPublicKey(), result.get(0).getNode().getPublicKey());
-        assertEquals(entity.getNode().getStatus(), result.get(0).getNode().getStatus());
-        assertEquals(entity.getRepository(), result.get(0).getRepository());
-        
-        assertEquals(entity2.getStatus(), result.get(1).getStatus());
-        assertEquals(entity2.getCreateDate(), result.get(1).getCreateDate());
-        assertEquals(entity2.getGlobalId(), result.get(1).getGlobalId());
-        assertEquals(entity2.getGroupId(), result.get(1).getGroupId());
-        assertEquals(entity2.getOrderInGroup(), result.get(1).getOrderInGroup());
-        assertEquals(entity2.getNode().getIpAddress(), result.get(1).getNode().getIpAddress());       
-        assertEquals(entity2.getNode().getPublicKey(), result.get(1).getNode().getPublicKey());
-        assertEquals(entity2.getNode().getStatus(), result.get(1).getNode().getStatus());
-        assertEquals(entity2.getRepository(), result.get(1).getRepository());
-    }
+//	@Test
+//    @DisplayName("Map from TOs to entities")
+//    void mapTOsTest() throws Exception {
+//
+//    	//when
+//        List<PartEntity> result = mapper.mapToEntities(tos);
+//        
+//        //then
+//        assertEquals(2, result.size());
+//        
+//        assertEquals(entity.getStatus(), result.get(0).getStatus());
+//        assertEquals(entity.getCreateDate(), result.get(0).getCreateDate());
+//        assertEquals(entity.getGlobalId(), result.get(0).getGlobalId());
+//        assertEquals(entity.getGroupId(), result.get(0).getGroupId());
+//        assertEquals(entity.getOrderInGroup(), result.get(0).getOrderInGroup());
+//        assertEquals(entity.getNode().getIpAddress(), result.get(0).getNode().getIpAddress());       
+//        assertEquals(entity.getNode().getPublicKey(), result.get(0).getNode().getPublicKey());
+//        assertEquals(entity.getNode().getStatus(), result.get(0).getNode().getStatus());
+//        assertEquals(entity.getRepository(), result.get(0).getRepository());
+//        
+//        assertEquals(entity2.getStatus(), result.get(1).getStatus());
+//        assertEquals(entity2.getCreateDate(), result.get(1).getCreateDate());
+//        assertEquals(entity2.getGlobalId(), result.get(1).getGlobalId());
+//        assertEquals(entity2.getGroupId(), result.get(1).getGroupId());
+//        assertEquals(entity2.getOrderInGroup(), result.get(1).getOrderInGroup());
+//        assertEquals(entity2.getNode().getIpAddress(), result.get(1).getNode().getIpAddress());       
+//        assertEquals(entity2.getNode().getPublicKey(), result.get(1).getNode().getPublicKey());
+//        assertEquals(entity2.getNode().getStatus(), result.get(1).getNode().getStatus());
+//        assertEquals(entity2.getRepository(), result.get(1).getRepository());
+//    }
 	
-	@Test
-    @DisplayName("Map from entity to TO")
-    void mapEntityTest() throws Exception {
-
-    	//when
-        PartTO result = mapper.map(entity);
-        
-        //then
-        assertEquals(entity.getStatus(), result.getStatus());
-        assertEquals(entity.getCreateDate(), result.getCreateDate());
-        assertEquals(entity.getGlobalId(), result.getGlobalId());
-        assertEquals(entity.getGroupId(), result.getGroupId());
-        assertEquals(entity.getOrderInGroup(), result.getOrderInGroup());
-        assertEquals(entity.getNode().getPublicKey(), result.getOwnerId());
-        assertEquals(entity.getRepository(), result.getRepository());
-    }
+//	@Test
+//    @DisplayName("Map from entity to TO")
+//    void mapEntityTest() throws Exception {
+//
+//    	//when
+//        PartTO result = mapper.map(entity);
+//        
+//        //then
+//        assertEquals(entity.getStatus(), result.getStatus());
+//        assertEquals(entity.getCreateDate(), result.getCreateDate());
+//        assertEquals(entity.getGlobalId(), result.getGlobalId());
+//        assertEquals(entity.getGroupId(), result.getGroupId());
+//        assertEquals(entity.getOrderInGroup(), result.getOrderInGroup());
+//        assertEquals(entity.getNode().getPublicKey(), result.getOwnerId());
+//        assertEquals(entity.getRepository(), result.getRepository());
+//    }
 
 }

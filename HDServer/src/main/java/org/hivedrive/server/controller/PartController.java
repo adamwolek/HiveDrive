@@ -3,6 +3,7 @@ package org.hivedrive.server.controller;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.nio.file.FileStore;
 import java.util.List;
 
 import org.hivedrive.cmd.status.PartStatus;
@@ -56,7 +57,7 @@ public class PartController {
 		part.setStatus(PartStatus.WAITING_FOR_APPROVAL);
 		PartEntity entity = partService.saveOrUpdate(part);
 		if (entity != null) {
-			return new ResponseEntity<>(HttpStatus.CREATED);
+			return new ResponseEntity<>(HttpStatus.ACCEPTED);
 		}
 		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
@@ -74,11 +75,11 @@ public class PartController {
 	
 
 	@GetMapping
-	PartTO get(@RequestParam("publicKey") String publicKey,
-			@RequestParam("repository") String repository, 
-			@RequestParam("groupId") String groupId,
-			@RequestParam("orderInGroup") Integer orderInGroup) {
-		PartTO part = partService.get(publicKey, repository, groupId, orderInGroup);
+	PartTO get(
+			@RequestParam(name = "repository") String repository, 
+			@RequestParam(name = "groupId") String groupId,
+			@RequestParam(name = "orderInGroup") Integer orderInGroup) {
+		PartTO part = partService.get(senderInfo.getSenderPublicKey(), repository, groupId, orderInGroup);
 		return part;
 	}
 
@@ -89,8 +90,9 @@ public class PartController {
 	}
 
 	@PostMapping(path = "/content", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-	void postContent(@RequestPart MultipartFile content) {
-
+	void postContent(@RequestPart(name = "part") MultipartFile content) {
+		new FileStore
+		System.out.println("SAVE CONTENT!");
 	}
 
 	@GetMapping(path = "/content", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })

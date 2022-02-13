@@ -42,15 +42,14 @@ public class SymetricEncryptionServiceTest {
 		@Autowired
 		private UserKeysService userKeysService;
 		
-//		@BeforeEach
-//		private void beforeTest() {
-//			userKeysService.setKeys(userKeysService.generateNewKeys());
-//		}
+		@BeforeEach
+		private void beforeTest() {
+			userKeysService.setKeys(userKeysService.generateNewKeys());
+		}
 		
 		@Tag("TimeTesting")
 		@Test
 		public void testEncryption() throws IOException {
-			userKeysService.generateNewKeys();
 			File sourceFile = new File(tempFolder, "/sourceFile.src");
 			File encryptedFile = new File(tempFolder, "/encryptedFile.enc");
 			File decryptedFile = new File(tempFolder, "/decryptedFile");
@@ -72,7 +71,6 @@ public class SymetricEncryptionServiceTest {
 		@Tag("Crypto")
 		@Test
 		public void testTextEncryption() throws IOException {
-			userKeysService.generateNewKeys();
 			String encrypted = encryptionService.encrypt(sourceText);
 			
 			String decrypted = encryptionService.decrypt(encrypted);

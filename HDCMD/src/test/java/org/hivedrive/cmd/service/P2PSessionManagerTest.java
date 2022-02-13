@@ -19,6 +19,7 @@ import org.hivedrive.cmd.session.P2PSessionManager;
 import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.tool.JSONUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,6 +58,11 @@ public class P2PSessionManagerTest {
 	
 	@Autowired
 	ConnectionService connectionService;
+	
+	@BeforeEach
+	private void beforeTest() {
+		userKeysService.setKeys(userKeysService.generateNewKeys());
+	}
 	
 //	@Test
 //	void testCentralNode() throws URISyntaxException, IOException, InterruptedException {
@@ -110,11 +117,12 @@ public class P2PSessionManagerTest {
 	@Test
 	void whoAreYouTest() throws IOException {
 		try(MockWebServer mockServer = new MockWebServer();) {
-			URL url = mockServer.url("/whoAreYou").url();
+			HttpUrl url = mockServer.url("");
+			
 			
 			NodeTO nodeTo = new NodeTO();
 			nodeTo.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
-			nodeTo.setIpAddress(url.getHost());
+			nodeTo.setIpAddress(mockServer.getHostName());
 			
 			String body = JSONUtils.mapper().writeValueAsString(nodeTo);
 			MockResponse mockedResponse = new MockResponse()
@@ -126,7 +134,7 @@ public class P2PSessionManagerTest {
 			
 			P2PSessionManager p2pSessionManager = new P2PSessionManager(
 					userKeysService, signatureService);
-			p2pSessionManager.setWhouAreYouEndpoint(url);
+			p2pSessionManager.setUriBuilderFactory(new DefaultUriBuilderFactory(url.toString()));
 			boolean met = p2pSessionManager.meetWithNode();
 			
 			assertTrue(met);
@@ -136,7 +144,7 @@ public class P2PSessionManagerTest {
 	@Test
 	void postNodeTest() throws URISyntaxException, IOException, InterruptedException {
 		try(MockWebServer mockServer = new MockWebServer();) {
-			URL url = mockServer.url("/node").url();
+			HttpUrl url = mockServer.url("");
 			
 			MockResponse mockedResponse = new MockResponse()
 					.setStatus("HTTP/1.1 202");
@@ -146,7 +154,7 @@ public class P2PSessionManagerTest {
 			me.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
 			P2PSessionManager p2pSessionManager = new P2PSessionManager(
 					userKeysService, signatureService);
-			p2pSessionManager.setNodeEndpoint(url);
+			p2pSessionManager.setUriBuilderFactory(new DefaultUriBuilderFactory(url.toString()));
 			boolean registered = p2pSessionManager.registerToNode();
 			
 			assertTrue(registered);

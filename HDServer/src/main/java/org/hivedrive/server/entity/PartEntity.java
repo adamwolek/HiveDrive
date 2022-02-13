@@ -43,7 +43,6 @@ public class PartEntity {
 	 */
 	private Integer orderInGroup;
 
-	private Long ownerId;
 
 	public NodeEntity getNode() {
 		return node;
@@ -110,13 +109,6 @@ public class PartEntity {
 		this.id = id;
 	}
 
-	public Long getOwnerId() {
-		return ownerId;
-	}
-
-	public void setOwnerId(Long ownerId) {
-		this.ownerId = ownerId;
-	}
 
 	public Integer getOrderInGroup() {
 		return orderInGroup;

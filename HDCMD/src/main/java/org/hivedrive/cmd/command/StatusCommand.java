@@ -4,6 +4,8 @@ import java.io.File;
 
 import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.service.StatusService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -22,6 +24,8 @@ public class StatusCommand implements Runnable {
 	
 	private StatusService statusService;
 
+	private Logger logger = LoggerFactory.getLogger(StatusCommand.class);
+	
 	@Autowired
 	public StatusCommand(StatusService statusService) {
 		this.statusService = statusService;
@@ -31,7 +35,7 @@ public class StatusCommand implements Runnable {
 	public void run() {
 		if(nodeAddress != null) {
 			String status = statusService.getNodeStatistics(nodeAddress);
-			System.out.println(status);
+			logger.info(status);
 		}
 		
 	}

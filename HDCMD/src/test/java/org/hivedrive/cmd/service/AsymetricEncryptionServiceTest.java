@@ -46,10 +46,10 @@ public class AsymetricEncryptionServiceTest {
 	@Autowired
 	private UserKeysService userKeysService;
 	
-//	@BeforeEach
-//	private void beforeTest() {
-//		userKeysService.setKeys(userKeysService.generateNewKeys());
-//	}
+	@BeforeEach
+	private void beforeTest() {
+		userKeysService.setKeys(userKeysService.generateNewKeys());
+	}
 	
 //	@Tag("TimeTesting")
 //	@Test

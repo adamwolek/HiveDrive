@@ -43,6 +43,7 @@ dependencies {
 	
 	
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '2.5.3'
+	implementation group: 'org.springframework', name: 'spring-web', version: '5.3.9'
 //	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-integration', version: '2.5.3'
 //	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-webflux', version: '2.5.3'
 	testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.5.3'
@@ -71,6 +72,7 @@ dependencies {
     // https://mvnrepository.com/artifact/commons-codec/commons-codec
 	implementation group: 'commons-codec', name: 'commons-codec', version: '1.15'
     
+    implementation 'com.github.mizosoft.methanol:methanol:1.6.0'
     
     // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
 	//implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
