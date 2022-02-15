@@ -91,7 +91,6 @@ public class PartController {
 
 	@PostMapping(path = "/content", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
 	void postContent(@RequestPart(name = "part") MultipartFile content) {
-		new FileStore
 		System.out.println("SAVE CONTENT!");
 	}
 
