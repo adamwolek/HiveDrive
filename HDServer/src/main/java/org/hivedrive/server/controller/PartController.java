@@ -3,6 +3,7 @@ package org.hivedrive.server.controller;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.FileStore;
 import java.util.List;
 
@@ -91,25 +92,20 @@ public class PartController {
 		return allParts;
 	}
 
+	//TODO:try catch
 	@PostMapping(path = "/content", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
 	void postContent(@RequestPart(name = "part") MultipartFile content) {
-		PartEntity part;
-		createFileForPart(part, content.getBytes());
+		PartEntity part = null;
+		try {
+			partService.createFileForPart(part, content.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		partRepository.save(part);
 		System.out.println("SAVE CONTENT!");
 	}
 
-	private void createFileForPart(PartEntity part, byte[] bytes) {
-		try {
-			File partFile = new File(part.getId() + "-" + part.getGlobalId());
-			FileUtils.writeByteArrayToFile(partFile, bytes);
-			part.setPathToPart(partFile);
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-		
-	}
-
+	//TODO: pobranie zawartości pliku
 	@GetMapping(path = "/content", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
 	ResponseEntity<Resource> getContent() throws FileNotFoundException {
 		File file = new File("");
