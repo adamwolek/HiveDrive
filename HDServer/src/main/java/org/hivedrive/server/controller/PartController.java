@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.FileStore;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -30,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.google.common.collect.Lists;
 
 @RestController
 @RequestMapping("/part")
@@ -77,12 +80,17 @@ public class PartController {
 	
 
 	@GetMapping
-	PartTO get(
+	ResponseEntity<Collection<PartTO>> get(
 			@RequestParam(name = "repository") String repository, 
 			@RequestParam(name = "groupId") String groupId,
 			@RequestParam(name = "orderInGroup") Integer orderInGroup) {
-		PartTO part = partService.get(senderInfo.getSenderPublicKey(), repository, groupId, orderInGroup);
-		return part;
+		if(groupId == null && orderInGroup == null) {
+			Collection<PartTO> parts = partService.get(senderInfo.getSenderPublicKey(), repository);
+			return new ResponseEntity<>(parts, HttpStatus.OK);
+		} else {
+			PartTO part = partService.get(senderInfo.getSenderPublicKey(), repository, groupId, orderInGroup);
+			return new ResponseEntity<>(Lists.newArrayList(part), HttpStatus.OK);
+		}
 	}
 
 	@GetMapping("/all")

@@ -33,6 +33,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 
 @Lazy
 @Service
@@ -45,16 +48,19 @@ public class ConnectionService {
 	private NodeRepository nodeRepository;
 
 	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
+	private RepositoryConfigService repositoryConfigService;
 	
 	@Autowired
 	public ConnectionService(ConfigurationService config, UserKeysService userKeysService,
-			SignatureService signatureService, Environment env, NodeRepository nodeRepository) {
+			SignatureService signatureService, Environment env, NodeRepository nodeRepository, 
+			RepositoryConfigService repositoryConfigService) {
 		super();
 		this.config = config;
 		this.userKeysService = userKeysService;
 		this.signatureService = signatureService;
 		this.env = env;
 		this.nodeRepository = nodeRepository;
+		this.repositoryConfigService = repositoryConfigService;
 	}
 
 	private CentralServerMetadata metadata;
@@ -173,19 +179,12 @@ public class ConnectionService {
 				.collect(Collectors.toList());
 	}
 
-//	public List<NodeEntity> getAllKnonwNodes(NodeEntity node) {
-//		
-//	}
 
 	public List<PartTO> getAllPartsStoredOnNode(String ipAddress)
 			throws URISyntaxException, IOException, InterruptedException {
 		P2PSessionManager session = newSession(ipAddress);
 		return session.getAllParts();
 	}
-
-//	public List<PartInfo> getAllPartsStoredOnNode(NodeEntity node) {
-//		
-//	}
 
 	private P2PSessionManager newSession(String ipAddress) {
 		return new P2PSessionManager(ipAddress, userKeysService, signatureService);
@@ -203,6 +202,20 @@ public class ConnectionService {
 			Long space2 = n1.getFreeSpace();
 			return ObjectUtils.compare(space1, space2);
 		};
+	}
+
+	public List<PartInfo> downloadParts() {
+		List<PartTO> parts = nodeRepository.getAllNodes().stream()
+		.map(this::mapEntityToTO)
+		.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
+		.filter(P2PSessionManager::meetWithNode)
+		.flatMap(session -> {
+			String repository = repositoryConfigService.getConfig().getRepositoryName();
+			return session.findPartsByRepository(repository).stream();
+		})
+		.collect(Collectors.toList());
+		Multimap<String, PartTO> groupedParts = Multimaps.index(parts, PartTO::getGlobalId);
+		return null;
 	}
 
 }

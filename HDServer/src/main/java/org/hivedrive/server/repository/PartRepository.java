@@ -1,5 +1,7 @@
 package org.hivedrive.server.repository;
 
+import java.util.Collection;
+
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.PartEntity;
 import org.springframework.data.jpa.repository.Query;
@@ -21,5 +23,12 @@ public interface PartRepository extends CrudRepository<PartEntity, Long> {
 			@Param("repository") String repository, 
 			@Param("groupId") String groupId, 
 			@Param("orderInGroup") Integer orderInGroup);
+
+	@Query("FROM PartEntity part "
+			+ "WHERE part.node.publicKey = :ownerId "
+			+ "AND part.repository = :repository ")
+	Collection<PartEntity> findPart(
+			@Param("ownerId") String ownerId, 
+			@Param("repository") String repository);
 
 }

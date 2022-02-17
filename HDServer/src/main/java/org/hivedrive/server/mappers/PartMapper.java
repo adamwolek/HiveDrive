@@ -1,5 +1,6 @@
 package org.hivedrive.server.mappers;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,7 @@ public class PartMapper {
 		return entity;
 	}
 
-	public List<PartEntity> mapToEntities(List<PartTO> tos) {
+	public List<PartEntity> mapToEntities(Collection<PartTO> tos) {
 		return tos.stream().map(this::map).collect(Collectors.toList());
 	}
 
@@ -47,7 +48,7 @@ public class PartMapper {
 		return to;
 	}
 
-	public List<PartTO> mapToTOs(List<PartEntity> tos) {
+	public List<PartTO> mapToTOs(Collection<PartEntity> tos) {
 		return tos.stream().map(this::map).collect(Collectors.toList());
 	}
 

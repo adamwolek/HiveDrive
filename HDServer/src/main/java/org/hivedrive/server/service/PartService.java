@@ -1,6 +1,7 @@
 package org.hivedrive.server.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.hivedrive.cmd.to.PartTO;
@@ -37,13 +38,17 @@ public class PartService {
 	}
 
 	public PartTO get(String ownerId, String repository, String groupId, Integer orderInGroup) {
-		ArrayList<PartEntity> parts = Lists.newArrayList(partRepository.findAll());
 		PartEntity part = partRepository.findPart(ownerId, repository, groupId, orderInGroup);
 		return mapper.map(part);
 	}
 	
 	public List<PartTO> findAllParts(){
 		List<PartEntity> parts = Lists.newArrayList(partRepository.findAll());
+		return mapper.mapToTOs(parts);
+	}
+
+	public List<PartTO> get(String senderPublicKey, String repository) {
+		Collection<PartEntity> parts = partRepository.findPart(senderPublicKey, repository);
 		return mapper.mapToTOs(parts);
 	}
 

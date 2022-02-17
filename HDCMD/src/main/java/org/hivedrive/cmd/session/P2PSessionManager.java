@@ -13,6 +13,7 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -36,6 +37,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.mizosoft.methanol.MultipartBodyPublisher;
 import com.github.mizosoft.methanol.MultipartBodyPublisher.Builder;
+import com.google.common.collect.Iterables;
 
 public class P2PSessionManager {
 
@@ -240,14 +242,15 @@ public class P2PSessionManager {
 
 	public boolean partAccepted(PartInfo part) {
 		try {
-			PartTO partOnNode = get(
+			Collection<PartTO> parts = get(
 					partEndpoint()
 					.queryParam("repository", part.getFileMetadata().getRepository())
 					.queryParam("groupId", part.getFileMetadata().getFileId())
 					.queryParam("orderInGroup", part.getFileMetadata().getPartIndex())
 					.build(), 
-					new TypeReference<PartTO>() {
+					new TypeReference<Collection<PartTO>>() {
 			});
+			PartTO partOnNode = Iterables.getFirst(parts, null);
 			return PartStatus.ACCEPTED == partOnNode.getStatus();
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -259,16 +262,20 @@ public class P2PSessionManager {
 	public void setUriBuilderFactory(DefaultUriBuilderFactory uriBuilderFactory) {
 		this.uriBuilderFactory = uriBuilderFactory;
 	}
-
-//	public void setNodeEndpoint(URI uri) {
-//		this.nodeEndpoint = new DefaultUriBuilderFactory(uri.toString()).builder();
-//	}
-//
-//	public void setWhouAreYouEndpoint(URI uri) {
-//		this.whouAreYouEndpoint = new DefaultUriBuilderFactory(uri.toString()).builder();
-//	}
-
-
 	
+	public List<PartTO> findPartsByRepository(String repository) {
+		try {
+			TypeReference<List<PartTO>> typeReference = new TypeReference<List<PartTO>>() {
+			};
+			return get(partEndpoint()
+					.queryParam("repository", repository)
+					.build(), 
+					typeReference);
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	
 }

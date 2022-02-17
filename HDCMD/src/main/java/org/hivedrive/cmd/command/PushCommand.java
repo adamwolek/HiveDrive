@@ -40,7 +40,7 @@ public class PushCommand implements Runnable {
 	@Option(names = { "-dir", "--directory" }, description = "")
 	private File repositoryDirectory = new File(System.getProperty("user.dir"));
 	
-	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
+	private Logger logger = LoggerFactory.getLogger(PushCommand.class);
 	
 	@Autowired
 	public PushCommand(ConnectionService connectionService,
