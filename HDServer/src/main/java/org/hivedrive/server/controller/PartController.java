@@ -4,10 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileStore;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
@@ -22,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -92,7 +90,6 @@ public class PartController {
 		return allParts;
 	}
 
-	//TODO:try catch
 	@PostMapping(path = "/content", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
 	void postContent(@RequestPart(name = "part") MultipartFile content) {
 		PartEntity part = null;
@@ -101,14 +98,12 @@ public class PartController {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		partRepository.save(part);
-		System.out.println("SAVE CONTENT!");
 	}
 
-	//TODO: pobranie zawartości pliku
-	@GetMapping(path = "/content", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
-	ResponseEntity<Resource> getContent() throws FileNotFoundException {
-		File file = new File("");
+	@GetMapping(path = "/content/{partId}", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
+	ResponseEntity<Resource> getContent(@PathVariable Long partId) throws FileNotFoundException {
+		PartTO partTO = partService.get(partId);
+		File file = partService.getFile(partTO);
 		InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
 		return ResponseEntity.ok().contentLength(file.length())
 				.contentType(MediaType.APPLICATION_OCTET_STREAM).body(resource);
