@@ -1,6 +1,7 @@
 package org.hivedrive.cmd.command;
 
 import java.io.File;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +15,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.hivedrive.cmd.helper.FileNameHelper;
 import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.service.ConnectionService;
@@ -31,6 +33,8 @@ import org.springframework.stereotype.Component;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+
+import static org.hivedrive.cmd.helper.FileNameHelper.*;
 
 @Lazy
 @Component("push")
@@ -180,7 +184,7 @@ public class PushCommand implements Runnable {
 
 	private File packFile(File file) {
 		log(stopWatch.formatTime() + " - Packing");
-		File zip = new File(workDirectory, StringUtils.substringBefore(file.getName(), ".") + ".zip");
+		File zip = changeDirectory(changeExtension(file, "zip"), workDirectory);
 		fileComporessingService.compressFile(file, zip);
 		return zip;
 	}
@@ -188,7 +192,7 @@ public class PushCommand implements Runnable {
 	private File encryptFile(File file) {
 		log(stopWatch.formatTime() + " - Encrypting");
 		try {
-			File encryptedFile = new File(file.getAbsolutePath() + ".enc");
+			File encryptedFile = addExtension(file, "enc");
 			encryptionService.encrypt(file, encryptedFile);
 			return encryptedFile;
 		} catch (Exception e) {

@@ -22,12 +22,15 @@ import org.hivedrive.cmd.helper.StatusCode;
 import org.hivedrive.cmd.mapper.PartInfoToTOMapper;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.UserKeysService;
 import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.cmd.tool.JSONUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilder;
@@ -41,6 +44,8 @@ import com.google.common.collect.Iterables;
 
 public class P2PSessionManager {
 
+	private Logger logger = LoggerFactory.getLogger(P2PSessionManager.class);
+	
 	private P2PSession session;
 
 	private NodeTO correspondingNode;
@@ -107,17 +112,16 @@ public class P2PSessionManager {
 			});
 			return true;
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Error: ", e);
 			return false;
 		}
 	}
 
-	public boolean send(PartInfo part) {
+	public boolean send(PartTO part) {
 		try {
-			PartTO partTO = PartInfoToTOMapper.create().map(part);
-			return post(partEndpoint().build(), partTO);
+			return post(partEndpoint().build(), part);
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			e.printStackTrace();
+			logger.error("Error: ", e);
 			return false;
 		}
 	}
@@ -126,7 +130,7 @@ public class P2PSessionManager {
 		try {
 			postMultipart(partContentEndpoint().build(), part.getPart());
 		} catch (IOException | URISyntaxException | InterruptedException e) {
-			e.printStackTrace();
+			logger.error("Error: ", e);
 		}
 	}
 
@@ -196,9 +200,26 @@ public class P2PSessionManager {
 	}
 
 	private Duration timeoutForRequests() {
-//		return Duration.ofSeconds(10);
 		return Duration.ofSeconds(500);
 	}
+	
+	private byte[] getMultipart(URI uri) throws URISyntaxException, IOException, InterruptedException {
+		String publicKeyOfNode = getPublicKeyOfNode();
+		HttpRequest request = HttpRequest.newBuilder().uri(uri)
+				.timeout(Duration.ofSeconds(10))
+				.header(SENDER_ID_HEADER_PARAM, getSenderId())
+				.GET()
+				.build();
+		HttpResponse<byte[]> response = HttpClient.newBuilder().build().send(request,
+				BodyHandlers.ofByteArray());
+		if (response.statusCode() == StatusCode.UNAUTHORIZED) {
+			registerToNode();
+			return getMultipart(uri);
+		}
+		return response.body();
+	}
+	
+	
 	private boolean postMultipart(URI uri, File file)
 			throws IOException, URISyntaxException, InterruptedException {
 		var publisher = MultipartBodyPublisher.newBuilder().filePart("part", file.toPath()).build();
@@ -253,7 +274,7 @@ public class P2PSessionManager {
 			PartTO partOnNode = Iterables.getFirst(parts, null);
 			return PartStatus.ACCEPTED == partOnNode.getStatus();
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			e.printStackTrace();
+			logger.error("Error: ", e);
 		}
 		return false;
 	}
@@ -272,9 +293,20 @@ public class P2PSessionManager {
 					.build(), 
 					typeReference);
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			e.printStackTrace();
+			logger.error("Error: ", e);
 			return null;
 		}
+	}
+	public byte[] getContent(PartTO part) {
+		try {
+			byte[] fileData = getMultipart(partContentEndpoint()
+					.path("/" + part.getId()).build());
+			return fileData;
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			logger.error("Error: ", e);
+			return null;
+		}
+		
 	}
 
 	

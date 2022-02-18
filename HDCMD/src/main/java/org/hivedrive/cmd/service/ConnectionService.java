@@ -1,22 +1,28 @@
 package org.hivedrive.cmd.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
 import org.hivedrive.cmd.exception.ReadDataFromMetadataServerException;
+import org.hivedrive.cmd.mapper.PartInfoToTOMapper;
+import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.NodeEntity;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.repository.NodeRepository;
@@ -34,6 +40,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
@@ -41,19 +49,22 @@ import com.google.common.collect.Multimaps;
 @Service
 public class ConnectionService {
 
+	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
+	
 	private ConfigurationService config;
 	private UserKeysService userKeysService;
 	private SignatureService signatureService;
 	private Environment env;
 	private NodeRepository nodeRepository;
 
-	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
 	private RepositoryConfigService repositoryConfigService;
+
+	private SymetricEncryptionService encryptionService;
 	
 	@Autowired
 	public ConnectionService(ConfigurationService config, UserKeysService userKeysService,
 			SignatureService signatureService, Environment env, NodeRepository nodeRepository, 
-			RepositoryConfigService repositoryConfigService) {
+			RepositoryConfigService repositoryConfigService, SymetricEncryptionService encryptionService) {
 		super();
 		this.config = config;
 		this.userKeysService = userKeysService;
@@ -61,6 +72,7 @@ public class ConnectionService {
 		this.env = env;
 		this.nodeRepository = nodeRepository;
 		this.repositoryConfigService = repositoryConfigService;
+		this.encryptionService = encryptionService;
 	}
 
 	private CentralServerMetadata metadata;
@@ -144,7 +156,8 @@ public class ConnectionService {
 			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
 				P2PSessionManager sessionManager = newSession(node.getIpAddress());
-				boolean requestSent = sessionManager.send(part);
+				PartTO partTO = PartInfoToTOMapper.create().map(part);
+				boolean requestSent = sessionManager.send(partTO);
 				if (requestSent) {
 					waitForAcceptance(part, sessionManager);
 					sessionManager.sendContent(part);
@@ -204,7 +217,7 @@ public class ConnectionService {
 		};
 	}
 
-	public List<PartInfo> downloadParts() {
+	public List<PartInfo> downloadParts(File workDirectory) {
 		List<PartTO> parts = nodeRepository.getAllNodes().stream()
 		.map(this::mapEntityToTO)
 		.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
@@ -214,8 +227,35 @@ public class ConnectionService {
 			return session.findPartsByRepository(repository).stream();
 		})
 		.collect(Collectors.toList());
-		Multimap<String, PartTO> groupedParts = Multimaps.index(parts, PartTO::getGlobalId);
-		return null;
+		ListMultimap<String, PartTO> groupedParts = Multimaps.index(parts, PartTO::getGlobalId);
+		return groupedParts.keys().stream()
+		.map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
+		.map(selectedPart -> {
+			try {
+				P2PSessionManager session = newSession(
+						selectedPart.getNodeWhichContainsPart().getLocalIpAddress());
+				File directoryForParts = new File(workDirectory, "/parts");
+				File part = new File(directoryForParts, "part" + selectedPart.getGroupId() 
+				+ "-" + selectedPart.getOrderInGroup());
+				byte[] data = session.getContent(selectedPart);
+				FileUtils.writeByteArrayToFile(part, data);
+				PartInfo partInfo = new PartInfo();
+				partInfo.setPart(part);
+				partInfo.setEncryptedFileMetadata(selectedPart.getEncryptedFileMetadata());
+				partInfo.setFileMetadata(FileMetadata.parseJSON(
+						encryptionService.decrypt(partInfo.getEncryptedFileMetadata())));
+				return partInfo;
+			} catch (Exception e) {
+				logger.error("Error: ", e);
+				return null;
+			}
+		}).collect(Collectors.toList());
 	}
+
+
+	private PartTO randomElement(List<PartTO> elements) {
+		return elements.get(new Random().nextInt(elements.size()));
+	}
+
 
 }

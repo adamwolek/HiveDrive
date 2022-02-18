@@ -1,10 +1,19 @@
 package org.hivedrive.cmd.command;
 
 import java.io.File;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.service.FileCompresssingService;
@@ -19,8 +28,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import static org.hivedrive.cmd.helper.FileNameHelper.*;
+
 
 @Lazy
 @Component("pull")
@@ -67,7 +84,8 @@ public class PullCommand implements Runnable {
 			
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
-			List<PartInfo> parts = downloadParts();
+			List<File> downloadedParts = downloadParts();
+			logger.info("Downloaded " + downloadedParts.size() + " files");
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -77,13 +95,64 @@ public class PullCommand implements Runnable {
 				e.printStackTrace();
 			}
 		}
-		
 	}
 
 
-	private List<PartInfo> downloadParts() {
-		List<PartInfo> parts = connectionService.downloadParts();
-		return parts;
+	private List<File> downloadParts() {
+		ImmutableListMultimap<String, PartInfo> groupedParts = Multimaps.index(connectionService.downloadParts(workDirectory), part -> part.getFileMetadata().getFileId());
+		for (String fileId : groupedParts.keys()) {
+			ImmutableList<PartInfo> parts = groupedParts.get(fileId);
+			File encryptedFile = mergeIntoOneFile(parts);
+			File packedFile = decryptFile(encryptedFile);
+			File rawFile = unpackFile(packedFile);
+		}
+		return groupedParts.keys().stream()
+		.map(fileId -> groupedParts.get(fileId))
+		.map(this::mergeIntoOneFile)
+		.map(this::decryptFile)
+		.map(this::unpackFile)
+		.collect(Collectors.toList());
+	}
+
+	private File unpackFile(File source) {
+		try {
+			File rawFile = changeDirectory(removeExtension(source), 
+					repositoryConfigService.getRepositoryDirectory());
+			fileComporessingService.uncompressFile(source, rawFile);
+			FileUtils.forceDelete(source);
+			return rawFile;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private File decryptFile(File source) {
+		try {
+			File decryptedFile = new File(source.getParentFile(), source.getName() + ".zip");
+			encryptionService.encrypt(source, decryptedFile);
+			FileUtils.forceDelete(source);
+			return decryptedFile;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+	}
+	
+	private File mergeIntoOneFile(List<PartInfo> parts) {
+		PartInfo anyPart = Iterables.getFirst(parts, null);
+		File wholeFile = new File(workDirectory, anyPart.getFileMetadata().getFileId());
+		try (FileOutputStream mergedFileOS = new FileOutputStream(wholeFile)){
+			for (PartInfo part : parts) {
+				try (InputStream partIS = new FileInputStream(part.getPart())){
+					IOUtils.copy(partIS, mergedFileOS);
+					
+				} 
+			}
+			return wholeFile;
+		} catch (Exception e) {
+			logger.error("Error:", e);
+			return null;
+		}
 	}
 	
 	

@@ -8,10 +8,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class PartInfo {
 	
 	private String ownerPublicKey;
+	
 	private String fileSign;
 	
 	@JsonIgnore
 	private FileMetadata fileMetadata;
+	
 	private String encryptedFileMetadata;
 	
 	private File part;

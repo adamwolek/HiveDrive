@@ -12,6 +12,8 @@ public class NodeTO {
 	private String status;
 
 	private String ipAddress;
+	
+	private String localIpAddress;
 
 	/**
 	 * Amount of space (in GB) where files can be saved
@@ -22,6 +24,16 @@ public class NodeTO {
 	 * Amount of space (in GB) where files have been already saved
 	 */
 	private Long usedSpace;
+
+	
+	
+	public String getLocalIpAddress() {
+		return localIpAddress;
+	}
+
+	public void setLocalIpAddress(String localIpAddress) {
+		this.localIpAddress = localIpAddress;
+	}
 
 	public String getPublicKey() {
 		return publicKey;

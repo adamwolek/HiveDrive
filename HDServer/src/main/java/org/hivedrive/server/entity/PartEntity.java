@@ -43,6 +43,16 @@ public class PartEntity {
 	 */
 	private Integer orderInGroup;
 
+	private String encryptedFileMetadata;
+	
+	
+	public String getEncryptedFileMetadata() {
+		return encryptedFileMetadata;
+	}
+
+	public void setEncryptedFileMetadata(String encryptedFileMetadata) {
+		this.encryptedFileMetadata = encryptedFileMetadata;
+	}
 
 	public NodeEntity getNode() {
 		return node;

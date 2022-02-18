@@ -1,24 +1,35 @@
 package org.hivedrive.server.mappers;
 
 import java.util.Collection;
+
 import java.util.List;
 import java.util.stream.Collectors;
-
+import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.entity.PartEntity;
+import org.hivedrive.server.helpers.IPAddressHelper;
+import org.hivedrive.server.service.NodeKeysService;
 import org.hivedrive.server.service.NodeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PartMapper {
 
+	private Logger logger = LoggerFactory.getLogger(PartMapper.class);
+	
 	@Autowired
 	NodeService nodeService;
+	
+	@Autowired
+	NodeKeysService nodeKeysService;
 
 	public PartEntity map(PartTO to) {
 		PartEntity entity = new PartEntity();
+		entity.setId(to.getId());
 		entity.setStatus(to.getStatus());
 		entity.setCreateDate(to.getCreateDate());
 		entity.setGlobalId(to.getGlobalId());
@@ -26,6 +37,7 @@ public class PartMapper {
 		entity.setOrderInGroup(to.getOrderInGroup());
 		entity.setRepository(to.getRepository());
 		entity.setGlobalId(to.getGlobalId());
+		entity.setEncryptedFileMetadata(to.getEncryptedFileMetadata());
 		NodeEntity node = nodeService.getNodeEntityByPublicKey(to.getOwnerId());
 		entity.setNode(node);
 		return entity;
@@ -37,6 +49,7 @@ public class PartMapper {
 
 	public PartTO map(PartEntity entity) {
 		PartTO to = new PartTO();
+		to.setId(entity.getId());
 		to.setStatus(entity.getStatus());
 		to.setCreateDate(entity.getCreateDate());
 		to.setGlobalId(entity.getGlobalId());
@@ -45,7 +58,21 @@ public class PartMapper {
 		to.setRepository(entity.getRepository());
 		to.setGlobalId(entity.getGlobalId());
 		to.setOwnerId(entity.getNode().getPublicKey());
+		to.setNodeWhichContainsPart(getMe());
+		to.setEncryptedFileMetadata(entity.getEncryptedFileMetadata());
 		return to;
+	}
+
+	private NodeTO getMe() {
+		NodeTO me = new NodeTO();
+		try {
+			me.setIpAddress(IPAddressHelper.getGlobalAddress());
+			me.setLocalIpAddress(IPAddressHelper.getLocalAddress());
+		} catch (Exception e) {
+			logger.error("Error: ", e);
+		}
+		me.setPublicKey(nodeKeysService.getPublicAsymetricKeyAsString());
+		return me;
 	}
 
 	public List<PartTO> mapToTOs(Collection<PartEntity> tos) {

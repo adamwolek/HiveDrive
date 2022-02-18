@@ -1,15 +1,17 @@
 package org.hivedrive.cmd.model;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.hivedrive.cmd.tool.JSONUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 
 public class FileMetadata {
 
+	private static Logger logger = LoggerFactory.getLogger(FileMetadata.class);
+	
 	private String repository;
 	private String fileId;
 	private int partIndex;
@@ -44,8 +46,18 @@ public class FileMetadata {
 		try {
 			return JSONUtils.createWrtier().writeValueAsString(this);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			logger.error("Error: ", e);
 			return "error";
+		}
+	}
+	
+	public static FileMetadata parseJSON(String json) {
+		try {
+			FileMetadata fileMetadata = JSONUtils.mapper().reader().readValue(json);
+			return fileMetadata;
+		} catch (JsonProcessingException e) {
+			logger.error("Error: ", e);
+			return null;
 		}
 	}
 	

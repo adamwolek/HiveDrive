@@ -7,6 +7,8 @@ import org.hivedrive.cmd.status.PartStatus;
 
 public class PartTO {
 
+	private Long id;
+	
 	private LocalDateTime createDate;
 	private PartStatus status;
 	private String globalId;
@@ -26,6 +28,35 @@ public class PartTO {
 	 * Public key of owner
 	 */
 	private String ownerId;
+
+	private NodeTO nodeWhichContainsPart;
+	
+	private String encryptedFileMetadata;
+	
+	
+	public String getEncryptedFileMetadata() {
+		return encryptedFileMetadata;
+	}
+
+	public void setEncryptedFileMetadata(String encryptedFileMetadata) {
+		this.encryptedFileMetadata = encryptedFileMetadata;
+	}
+
+	public NodeTO getNodeWhichContainsPart() {
+		return nodeWhichContainsPart;
+	}
+
+	public void setNodeWhichContainsPart(NodeTO nodeWhichContainsPart) {
+		this.nodeWhichContainsPart = nodeWhichContainsPart;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
 
 	public LocalDateTime getCreateDate() {
 		return createDate;
