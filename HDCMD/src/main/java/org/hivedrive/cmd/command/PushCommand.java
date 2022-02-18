@@ -76,6 +76,7 @@ public class PushCommand implements Runnable {
 	@Override
 	public void run() {
 		try {
+			logger.info("Repository: " + repositoryDirectory.getAbsolutePath());
 			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
 			
 			userKeysService.loadKeys();

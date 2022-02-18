@@ -133,7 +133,8 @@ public class ConnectionService {
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
 		if (true) {
 			CentralServerMetadata metadata = new CentralServerMetadata();
-			metadata.setActiveNodes(Arrays.asList("localhost:8080"));
+			//metadata.setActiveNodes(Arrays.asList("localhost:8080"));
+			metadata.setActiveNodes(Arrays.asList("192.168.0.121:8080"));
 			return metadata;
 		}
 

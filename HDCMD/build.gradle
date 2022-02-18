@@ -16,7 +16,7 @@ plugins {
 }
 
 group = 'org.hivedrive.cmd'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 sourceCompatibility = '11'
 
 repositories {
@@ -39,7 +39,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
-	testImplementation 'org.mockito:mockito-core:3.+'
+	//testImplementation 'org.mockito:mockito-core:3.+'
 	
 	
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '2.5.3'
