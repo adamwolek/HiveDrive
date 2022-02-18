@@ -80,7 +80,7 @@ public class P2PSessionManager {
 
 	public P2PSessionManager(NodeTO correspondingNode, UserKeysService userKeysService,
 			SignatureService signatureService) {
-		this(correspondingNode.getIpAddress(), userKeysService, signatureService);
+		this(correspondingNode.getAccessibleIP(), userKeysService, signatureService);
 	}
 
 	public P2PSessionManager(String address, UserKeysService userKeysService,
@@ -126,9 +126,12 @@ public class P2PSessionManager {
 		}
 	}
 
-	public void sendContent(PartInfo part) {
+	public void sendContent(Long partId, File part) {
 		try {
-			postMultipart(partContentEndpoint().build(), part.getPart());
+			
+			postMultipart(partContentEndpoint()
+					.path("/" + partId).build(), 
+					part);
 		} catch (IOException | URISyntaxException | InterruptedException e) {
 			logger.error("Error: ", e);
 		}
@@ -261,7 +264,7 @@ public class P2PSessionManager {
 		return get(allPartEndpoint().build(), typeReference);
 	}
 
-	public boolean partAccepted(PartInfo part) {
+	public PartTO downloadPart(PartInfo part) {
 		try {
 			Collection<PartTO> parts = get(
 					partEndpoint()
@@ -271,12 +274,15 @@ public class P2PSessionManager {
 					.build(), 
 					new TypeReference<Collection<PartTO>>() {
 			});
-			PartTO partOnNode = Iterables.getFirst(parts, null);
-			return PartStatus.ACCEPTED == partOnNode.getStatus();
-		} catch (URISyntaxException | IOException | InterruptedException e) {
+			return Iterables.getFirst(parts, null);
+		} catch (Exception e) {
 			logger.error("Error: ", e);
+			return null;
 		}
-		return false;
+	}
+	
+	public boolean isAccepted(PartTO part) {
+		return part != null && PartStatus.ACCEPTED == part.getStatus();
 	}
 	
 	

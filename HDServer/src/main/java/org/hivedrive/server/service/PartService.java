@@ -27,11 +27,17 @@ public class PartService {
 	private PartMapper mapper;
 	
 	@Autowired
-	private ConfigurationService configurationService;
+	ServerConfigService serverConfigService;
 
 	public PartEntity saveOrUpdate(PartTO to) {
-		PartEntity entity = mapper.map(to);
-		return partRepository.save(entity);
+		PartEntity existingPart = partRepository.findPart(to.getOwnerId(), to.getRepository(), to.getGroupId(), to.getOrderInGroup());
+		if(existingPart == null) {
+			PartEntity entity = mapper.map(to);
+			return partRepository.save(entity);
+		} else {
+			//tutaj raczej powinien być rzucony wyjątek że obiekt już istnieje
+			return existingPart;
+		}
 	}
 
 	public boolean isAbleToAdd(PartTO part) {
@@ -59,15 +65,21 @@ public class PartService {
 		return mapper.mapToTOs(parts);
 	}
 	
-	public void createFileForPart(PartEntity part, byte[] bytes) {
+	public File createFileForPart(PartEntity part, byte[] bytes) {
 		try {
-			String path = configurationService.getLocationsWhereYouCanSaveFiles().get(0);
-			File partFile = new File(path, part.getId() + "-" + part.getGlobalId());
+			if(part.getPathToPart() != null && part.getPathToPart().exists()) {
+				FileUtils.forceDelete(part.getPathToPart());
+				part.setPathToPart(null);
+			}
+			File location = serverConfigService.getLocationsWhereYouCanSaveFiles().get(0);
+			File partFile = new File(location, part.getId() + "-" + part.getGlobalId());
 			FileUtils.writeByteArrayToFile(partFile, bytes);
 			part.setPathToPart(partFile);
 			partRepository.save(part);
+			return partFile;
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
 		
 	}

@@ -15,11 +15,14 @@ public class IPAddressHelper {
 	public static String getGlobalAddress() throws IOException {
 		URL checker = new URL("http://checkip.amazonaws.com");
 		BufferedReader in = new BufferedReader(new InputStreamReader(checker.openStream()));
-		return in.readLine() + port;
+		return in.readLine() + ":" + port;
 	}
 	
 	public static String getLocalAddress() throws UnknownHostException {
-		String localAddress = InetAddress.getLocalHost().getHostAddress() + ":"  + port;
+		//Doesnt work:
+		//InetAddress.getLocalHost().getHostAddress()
+		
+		String localAddress = "localhost" + ":"  + port;
 		return localAddress;
 	}
 	

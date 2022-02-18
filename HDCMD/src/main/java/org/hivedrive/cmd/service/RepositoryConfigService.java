@@ -49,7 +49,7 @@ public class RepositoryConfigService {
 		return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
 	}
 
-	private void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
+	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
 		try {
 			this.repositoryDirectory = newRepositoryDirectory;
 			RepositoryConfigFileData config = createNewConfig(keyFile, repositoryName);

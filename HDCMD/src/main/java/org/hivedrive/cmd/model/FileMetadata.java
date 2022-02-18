@@ -53,9 +53,10 @@ public class FileMetadata {
 	
 	public static FileMetadata parseJSON(String json) {
 		try {
-			FileMetadata fileMetadata = JSONUtils.mapper().reader().readValue(json);
+			FileMetadata fileMetadata = JSONUtils.mapper().reader()
+					.readValue(json, FileMetadata.class);
 			return fileMetadata;
-		} catch (JsonProcessingException e) {
+		} catch (Exception e) {
 			logger.error("Error: ", e);
 			return null;
 		}

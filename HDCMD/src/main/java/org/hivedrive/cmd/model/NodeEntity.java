@@ -10,9 +10,21 @@ public class NodeEntity {
 	 
 	private String ipAddress;
 	
+	private String localIpAddress;
+	
 	private Long freeSpace;
 	
 	private Long usedSpace;
+
+	
+	
+	public String getLocalIpAddress() {
+		return localIpAddress;
+	}
+
+	public void setLocalIpAddress(String localIpAddress) {
+		this.localIpAddress = localIpAddress;
+	}
 
 	public String getPublicKey() {
 		return publicKey;

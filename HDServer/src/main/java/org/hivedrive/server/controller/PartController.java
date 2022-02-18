@@ -7,7 +7,9 @@ import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
+import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
@@ -15,6 +17,8 @@ import org.hivedrive.server.entity.PartEntity;
 import org.hivedrive.server.repository.NodeRepository;
 import org.hivedrive.server.repository.PartRepository;
 import org.hivedrive.server.service.PartService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -38,16 +42,21 @@ import com.google.common.collect.Lists;
 @RequestMapping("/part")
 public class PartController {
 
+	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
+	
 	private PartService partService;
 	private SenderInfo senderInfo;
 	private NodeRepository nodeRepository;
 	private PartRepository partRepository;
 
+
 	@Autowired
-	public PartController(PartService service, NodeRepository nodeRepository, SenderInfo senderInfo) {
+	public PartController(PartService service, NodeRepository nodeRepository, SenderInfo senderInfo, 
+			PartRepository partRepository) {
 		this.partService = service;
 		this.nodeRepository = nodeRepository;
 		this.senderInfo = senderInfo;
+		this.partRepository = partRepository;
 	}
 
 	@PostMapping
@@ -59,7 +68,9 @@ public class PartController {
 		} else if (!partService.isAbleToAdd(part)) {
 			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
+		//docelowo
 		part.setStatus(PartStatus.WAITING_FOR_APPROVAL);
+		part.setStatus(PartStatus.ACCEPTED);
 		PartEntity entity = partService.saveOrUpdate(part);
 		if (entity != null) {
 			return new ResponseEntity<>(HttpStatus.ACCEPTED);
@@ -82,8 +93,8 @@ public class PartController {
 	@GetMapping
 	ResponseEntity<Collection<PartTO>> get(
 			@RequestParam(name = "repository") String repository, 
-			@RequestParam(name = "groupId") String groupId,
-			@RequestParam(name = "orderInGroup") Integer orderInGroup) {
+			@RequestParam(name = "groupId", required = false) String groupId,
+			@RequestParam(name = "orderInGroup", required = false) Integer orderInGroup) {
 		if(groupId == null && orderInGroup == null) {
 			Collection<PartTO> parts = partService.get(senderInfo.getSenderPublicKey(), repository);
 			return new ResponseEntity<>(parts, HttpStatus.OK);
@@ -92,30 +103,36 @@ public class PartController {
 			return new ResponseEntity<>(Lists.newArrayList(part), HttpStatus.OK);
 		}
 	}
-
+	
 	@GetMapping("/all")
 	List<PartTO> getAll() {
 		List<PartTO> allParts = partService.findAllParts();
 		return allParts;
 	}
 
-	@PostMapping(path = "/content", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-	void postContent(@RequestPart(name = "part") MultipartFile content) {
-		PartEntity part = null;
-		try {
-			partService.createFileForPart(part, content.getBytes());
-		} catch (IOException e) {
-			e.printStackTrace();
+	@PostMapping(path = "/content/{partId}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+	ResponseEntity<Void> postContent(@PathVariable Long partId, @RequestPart(name = "part") MultipartFile content) throws IOException {
+		Optional<PartEntity> part = partRepository.findById(partId);
+		if(part.isPresent()) {
+			File savedFile = partService.createFileForPart(part.get(), content.getBytes());
+			logger.info("Content for partId: " + partId + " received and saved in file: " + savedFile.getAbsolutePath());
+			return new ResponseEntity<>(HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
 
 	@GetMapping(path = "/content/{partId}", produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
 	ResponseEntity<Resource> getContent(@PathVariable Long partId) throws FileNotFoundException {
-		PartTO partTO = partService.get(partId);
-		File file = partService.getFile(partTO);
-		InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
-		return ResponseEntity.ok().contentLength(file.length())
-				.contentType(MediaType.APPLICATION_OCTET_STREAM).body(resource);
+		Optional<PartEntity> part = partRepository.findById(partId);
+		if(part.isPresent()) {
+			File file = part.get().getPathToPart();
+			InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+			return ResponseEntity.ok().contentLength(file.length())
+					.contentType(MediaType.APPLICATION_OCTET_STREAM).body(resource);
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 	}
 
 }

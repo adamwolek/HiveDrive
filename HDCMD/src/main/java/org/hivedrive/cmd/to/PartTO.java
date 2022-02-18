@@ -63,7 +63,7 @@ public class PartTO {
 	}
 
 	private void refreshGlobalId() {
-		this.globalId = DigestUtils.md5Hex(ownerId != null ? ownerId : "empty") + "|" + repository + "|" + groupId + "|"
+		this.globalId = DigestUtils.md5Hex(ownerId != null ? ownerId : "empty") + "-" + repository + "-" + groupId + "-"
 				+ orderInGroup;
 	}
 

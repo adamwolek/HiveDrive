@@ -115,7 +115,7 @@ public class PushCommand implements Runnable {
 			
 			@Override
 			public boolean accept(File file) {
-				List<String> excludedNames = Arrays.asList(".hivedrive");
+				List<String> excludedNames = Arrays.asList(".hivedrive", ".temp");
 				if(excludedNames.contains(file.getName())) {
 					return false;
 				}
@@ -145,6 +145,8 @@ public class PushCommand implements Runnable {
 			parts.addAll(partsFromFile);
 			logger.info("File " + sentFiles + " splitted into " + partsFromFile.size() + " parts");
 		}
+		
+		
 		return parts;
 	}
 

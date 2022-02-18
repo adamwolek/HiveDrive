@@ -1,5 +1,7 @@
 package org.hivedrive.cmd.to;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class NodeTO {
 	/**
 	 * Public key which is used by the node's user
@@ -25,8 +27,6 @@ public class NodeTO {
 	 */
 	private Long usedSpace;
 
-	
-	
 	public String getLocalIpAddress() {
 		return localIpAddress;
 	}
@@ -73,6 +73,11 @@ public class NodeTO {
 
 	public void setUsedSpace(Long usedSpace) {
 		this.usedSpace = usedSpace;
+	}
+	
+	@JsonIgnore
+	public String getAccessibleIP() {
+		return localIpAddress;
 	}
 
 }

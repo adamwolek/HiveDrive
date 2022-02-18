@@ -100,12 +100,12 @@ public class PullCommand implements Runnable {
 
 	private List<File> downloadParts() {
 		ImmutableListMultimap<String, PartInfo> groupedParts = Multimaps.index(connectionService.downloadParts(workDirectory), part -> part.getFileMetadata().getFileId());
-		for (String fileId : groupedParts.keys()) {
-			ImmutableList<PartInfo> parts = groupedParts.get(fileId);
-			File encryptedFile = mergeIntoOneFile(parts);
-			File packedFile = decryptFile(encryptedFile);
-			File rawFile = unpackFile(packedFile);
-		}
+//		for (String fileId : groupedParts.keys()) {
+//			ImmutableList<PartInfo> parts = groupedParts.get(fileId);
+//			File encryptedFile = mergeIntoOneFile(parts);
+//			File packedFile = decryptFile(encryptedFile);
+//			File rawFile = unpackFile(packedFile);
+//		}
 		return groupedParts.keys().stream()
 		.map(fileId -> groupedParts.get(fileId))
 		.map(this::mergeIntoOneFile)
@@ -129,7 +129,7 @@ public class PullCommand implements Runnable {
 	private File decryptFile(File source) {
 		try {
 			File decryptedFile = new File(source.getParentFile(), source.getName() + ".zip");
-			encryptionService.encrypt(source, decryptedFile);
+			encryptionService.decrypt(source, decryptedFile);
 			FileUtils.forceDelete(source);
 			return decryptedFile;
 		} catch (Exception e) {
@@ -140,7 +140,10 @@ public class PullCommand implements Runnable {
 	
 	private File mergeIntoOneFile(List<PartInfo> parts) {
 		PartInfo anyPart = Iterables.getFirst(parts, null);
-		File wholeFile = new File(workDirectory, anyPart.getFileMetadata().getFileId());
+//		if(true) {
+//			anyPart.getPart();
+//		}
+		File wholeFile = declareWholeFile(anyPart);
 		try (FileOutputStream mergedFileOS = new FileOutputStream(wholeFile)){
 			for (PartInfo part : parts) {
 				try (InputStream partIS = new FileInputStream(part.getPart())){
@@ -153,6 +156,19 @@ public class PullCommand implements Runnable {
 			logger.error("Error:", e);
 			return null;
 		}
+	}
+
+
+	private File declareWholeFile(PartInfo anyPart) {
+		File wholeFile = new File(workDirectory, anyPart.getFileMetadata().getFileId());
+		if(wholeFile.exists()) {
+			try {
+				FileUtils.forceDelete(wholeFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return wholeFile;
 	}
 	
 	

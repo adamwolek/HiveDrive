@@ -11,13 +11,10 @@ import org.springframework.stereotype.Service;
 public class ConfigurationService {
 	
 	public URL urlToCentralMetadata;
-	private List<String> locationsWhereYouCanSaveFiles;
 	public int bestNumberOfCopies = 6;
 	
 	void init() throws MalformedURLException {
 		this.urlToCentralMetadata = new URL("https://hivedrive.org/metadata.json");
-		this.locationsWhereYouCanSaveFiles = new ArrayList<>();
-		this.locationsWhereYouCanSaveFiles.add("/home/Dokumenty");
 	}
 
 	
@@ -42,9 +39,6 @@ public class ConfigurationService {
 		this.bestNumberOfCopies = bestNumberOfCopies;
 	}
 	
-	public List<String> getLocationsWhereYouCanSaveFiles() {
-		return this.locationsWhereYouCanSaveFiles;
-	}
 	
 
 }

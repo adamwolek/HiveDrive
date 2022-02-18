@@ -75,7 +75,6 @@ public class ConnectionService {
 		this.encryptionService = encryptionService;
 	}
 
-	private CentralServerMetadata metadata;
 
 
 	@PostConstruct
@@ -90,29 +89,30 @@ public class ConnectionService {
 	}
 
 	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
-		this.metadata = downloadMetadata();
+		CentralServerMetadata metadata = downloadMetadata();
 		saveInitialKnownNodes(metadata);
 		meetMoreNodes();
 	}
 
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
-		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-				.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
-				.filter(P2PSessionManager::meetWithNode).map(P2PSessionManager::getNode)
-				.map(this::mapToNewEntity).forEach(nodeRepository::save);
+		metadata.getActiveNodes().stream()
+			.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
+			.filter(P2PSessionManager::meetWithNode).map(P2PSessionManager::getNode)
+			.map(this::mapToNewEntity).forEach(nodeRepository::save);
 	}
 
 	private void meetMoreNodes() {
-		metadata.getActiveNodes().stream()
-				.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
-				.filter(P2PSessionManager::meetWithNode).map(P2PSessionManager::getNode)
-				.map(this::mapToNewEntity).forEach(nodeRepository::save);
+		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
+			.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
+			.filter(P2PSessionManager::meetWithNode).map(P2PSessionManager::getNode)
+			.map(this::mapToNewEntity).forEach(nodeRepository::save);
 	}
 
 	private NodeEntity mapToNewEntity(NodeTO nodeTO) {
 		NodeEntity entity = new NodeEntity();
 		entity.setPublicKey(nodeTO.getPublicKey());
-		entity.setIpAddress(nodeTO.getIpAddress());
+		entity.setIpAddress(nodeTO.getAccessibleIP());
+		entity.setLocalIpAddress(nodeTO.getLocalIpAddress());
 		entity.setStatus(nodeTO.getStatus());
 		entity.setFreeSpace(nodeTO.getFreeSpace());
 		entity.setUsedSpace(nodeTO.getUsedSpace());
@@ -123,6 +123,7 @@ public class ConnectionService {
 		NodeTO nodeTO = new NodeTO();
 		nodeTO.setPublicKey(entity.getPublicKey());
 		nodeTO.setIpAddress(entity.getIpAddress());
+		nodeTO.setLocalIpAddress(entity.getLocalIpAddress());
 		nodeTO.setStatus(entity.getStatus());
 		nodeTO.setFreeSpace(entity.getFreeSpace());
 		nodeTO.setUsedSpace(entity.getUsedSpace());
@@ -159,8 +160,8 @@ public class ConnectionService {
 				PartTO partTO = PartInfoToTOMapper.create().map(part);
 				boolean requestSent = sessionManager.send(partTO);
 				if (requestSent) {
-					waitForAcceptance(part, sessionManager);
-					sessionManager.sendContent(part);
+					Long partId = waitForAcceptance(part, sessionManager);
+					sessionManager.sendContent(partId, part.getPart());
 					copiesOfPart++;
 				}
 			}
@@ -169,12 +170,14 @@ public class ConnectionService {
 		}
 	}
 
-	private void waitForAcceptance(PartInfo part, P2PSessionManager sessionManager) {
+	private Long waitForAcceptance(PartInfo part, P2PSessionManager sessionManager) {
 		int triesCount = 0;
-		while (!sessionManager.partAccepted(part) & triesCount < 5) {
-			triesCount++;
+		PartTO downloadedPart = null;
+		do {
 			delay();
-		}
+			downloadedPart = sessionManager.downloadPart(part);
+		} while (!sessionManager.isAccepted(downloadedPart) & triesCount < 5);
+		return downloadedPart.getId();
 	}
 
 	private void delay() {
@@ -235,7 +238,7 @@ public class ConnectionService {
 				P2PSessionManager session = newSession(
 						selectedPart.getNodeWhichContainsPart().getLocalIpAddress());
 				File directoryForParts = new File(workDirectory, "/parts");
-				File part = new File(directoryForParts, "part" + selectedPart.getGroupId() 
+				File part = new File(directoryForParts, "part-" + selectedPart.getGroupId() 
 				+ "-" + selectedPart.getOrderInGroup());
 				byte[] data = session.getContent(selectedPart);
 				FileUtils.writeByteArrayToFile(part, data);

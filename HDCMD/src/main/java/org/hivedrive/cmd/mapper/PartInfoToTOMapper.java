@@ -15,6 +15,7 @@ public class PartInfoToTOMapper {
 		to.setOrderInGroup(part.getFileMetadata().getPartIndex());
 		to.setRepository(part.getFileMetadata().getRepository());
 		to.setOwnerId(part.getOwnerPublicKey());
+		to.setEncryptedFileMetadata(part.getEncryptedFileMetadata());
 		return to;
 	}
 	

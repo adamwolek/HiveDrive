@@ -58,6 +58,7 @@ class NodeServiceTest {
 	        //then
 	        assertEquals(to.getStatus(), result.getStatus());
 	        assertEquals(to.getIpAddress(), result.getIpAddress());
+	        assertEquals(to.getIpAddress(), result.getIpAddress());
 	        assertEquals(to.getPublicKey(), result.getPublicKey());
 	    }
 	    
@@ -116,7 +117,7 @@ class NodeServiceTest {
 	    	//then
 	    	assertEquals(1, result.size());
 	    	assertEquals(to.getStatus(), result.get(0).getStatus());
-	        assertEquals(to.getIpAddress(), result.get(0).getIpAddress());
+	        assertEquals(to.getAccessibleIP(), result.get(0).getAccessibleIP());
 	        assertEquals(to.getPublicKey(), result.get(0).getPublicKey());
 	    }
 	    

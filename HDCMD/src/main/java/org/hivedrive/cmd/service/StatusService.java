@@ -25,9 +25,11 @@ public class StatusService {
 		try {
 			List<NodeEntity> allNodes = connectionService.getAllKnonwNodes(nodeAddress);
 			message += "Node knows " + allNodes.size() + " another nodes";
+			message += "\n";
 			
 			List<PartTO> allParts = connectionService.getAllPartsStoredOnNode(nodeAddress);
 			message += "Node stores " + allParts.size() + " parts";
+			message += "\n";
 		} catch (Exception e) {
 			e.printStackTrace();
 			message += "Error: " + ExceptionUtils.getMessage(e);
