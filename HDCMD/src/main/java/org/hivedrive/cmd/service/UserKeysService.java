@@ -75,7 +75,7 @@ public class UserKeysService {
 
 	public UserKeys generateNewKeys() {
 		try {
-			UserKeys keys = new UserKeys();
+			keys = new UserKeys();
 
 			SecretKey symetricKey = generateSymetricKey();
 			String symetricPrivateBase64 = Base64.getEncoder()
