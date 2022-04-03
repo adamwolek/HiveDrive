@@ -8,21 +8,28 @@ import java.net.NetworkInterface;
 import java.net.URL;
 import java.net.UnknownHostException;
 
-public class IPAddressHelper {
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
+@Service
+public class AddressService {
+
+	@Value("${network.ip-address}")
+	private String localIpAddress;
+	
 	private static int port = 8080;
 	
-	public static String getGlobalAddress() throws IOException {
+	public String getGlobalAddress() throws IOException {
 		URL checker = new URL("http://checkip.amazonaws.com");
 		BufferedReader in = new BufferedReader(new InputStreamReader(checker.openStream()));
 		return in.readLine() + ":" + port;
 	}
 	
-	public static String getLocalAddress() throws UnknownHostException {
+	public String getLocalAddress() throws UnknownHostException {
 		//Doesnt work:
 		//InetAddress.getLocalHost().getHostAddress()
 		
-		String localAddress = "localhost" + ":"  + port;
+		String localAddress = localIpAddress + ":"  + port;
 		return localAddress;
 	}
 	

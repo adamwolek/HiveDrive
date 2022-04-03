@@ -26,7 +26,7 @@ import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.NodeEntity;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.repository.NodeRepository;
-import org.hivedrive.cmd.session.P2PSessionManager;
+import org.hivedrive.cmd.session.P2PSession;
 import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
@@ -96,15 +96,15 @@ public class ConnectionService {
 
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
 		metadata.getActiveNodes().stream()
-			.map(address -> new P2PSessionManager(address, userKeysService, signatureService))
-			.filter(P2PSessionManager::meetWithNode).map(P2PSessionManager::getNode)
+			.map(address -> new P2PSession(address, userKeysService, signatureService))
+			.filter(P2PSession::meetWithNode).map(P2PSession::getNode)
 			.map(this::mapToNewEntity).forEach(nodeRepository::save);
 	}
 
 	private void meetMoreNodes() {
 		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-			.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
-			.filter(P2PSessionManager::meetWithNode).map(P2PSessionManager::getNode)
+			.map(node -> new P2PSession(node, userKeysService, signatureService))
+			.filter(P2PSession::meetWithNode).map(P2PSession::getNode)
 			.map(this::mapToNewEntity).forEach(nodeRepository::save);
 	}
 
@@ -134,7 +134,7 @@ public class ConnectionService {
 		if (true) {
 			CentralServerMetadata metadata = new CentralServerMetadata();
 			//metadata.setActiveNodes(Arrays.asList("localhost:8080"));
-			metadata.setActiveNodes(Arrays.asList("192.168.0.121:8080"));
+			metadata.setActiveNodes(Arrays.asList("192.168.0.120:8080"));
 			return metadata;
 		}
 
@@ -157,7 +157,7 @@ public class ConnectionService {
 			int copiesOfPart = 0;
 			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
-				P2PSessionManager sessionManager = newSession(node.getIpAddress());
+				P2PSession sessionManager = newSession(node.getIpAddress());
 				PartTO partTO = PartInfoToTOMapper.create().map(part);
 				boolean requestSent = sessionManager.send(partTO);
 				if (requestSent) {
@@ -171,7 +171,7 @@ public class ConnectionService {
 		}
 	}
 
-	private Long waitForAcceptance(PartInfo part, P2PSessionManager sessionManager) {
+	private Long waitForAcceptance(PartInfo part, P2PSession sessionManager) {
 		int triesCount = 0;
 		PartTO downloadedPart = null;
 		do {
@@ -191,7 +191,7 @@ public class ConnectionService {
 
 	public List<NodeEntity> getAllKnonwNodes(String ipAddress)
 			throws URISyntaxException, IOException, InterruptedException {
-		P2PSessionManager session = newSession(ipAddress);
+		P2PSession session = newSession(ipAddress);
 		return session.getAllNodes().stream().map(this::mapToNewEntity).map(nodeRepository::save)
 				.collect(Collectors.toList());
 	}
@@ -199,12 +199,12 @@ public class ConnectionService {
 
 	public List<PartTO> getAllPartsStoredOnNode(String ipAddress)
 			throws URISyntaxException, IOException, InterruptedException {
-		P2PSessionManager session = newSession(ipAddress);
+		P2PSession session = newSession(ipAddress);
 		return session.getAllParts();
 	}
 
-	private P2PSessionManager newSession(String ipAddress) {
-		return new P2PSessionManager(ipAddress, userKeysService, signatureService);
+	private P2PSession newSession(String ipAddress) {
+		return new P2PSession(ipAddress, userKeysService, signatureService);
 	}
 
 	private Queue<NodeEntity> getBestNodes(PartInfo part) {
@@ -224,8 +224,8 @@ public class ConnectionService {
 	public List<PartInfo> downloadParts(File workDirectory) {
 		List<PartTO> parts = nodeRepository.getAllNodes().stream()
 		.map(this::mapEntityToTO)
-		.map(node -> new P2PSessionManager(node, userKeysService, signatureService))
-		.filter(P2PSessionManager::meetWithNode)
+		.map(node -> new P2PSession(node, userKeysService, signatureService))
+		.filter(P2PSession::meetWithNode)
 		.flatMap(session -> {
 			String repository = repositoryConfigService.getConfig().getRepositoryName();
 			return session.findPartsByRepository(repository).stream();
@@ -236,7 +236,7 @@ public class ConnectionService {
 		.map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
 		.map(selectedPart -> {
 			try {
-				P2PSessionManager session = newSession(
+				P2PSession session = newSession(
 						selectedPart.getNodeWhichContainsPart().getLocalIpAddress());
 				File directoryForParts = new File(workDirectory, "/parts");
 				File part = new File(directoryForParts, "part-" + selectedPart.getGroupId() 

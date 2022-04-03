@@ -15,7 +15,7 @@ import org.checkerframework.checker.nullness.qual.AssertNonNullIfNonNull;
 import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
-import org.hivedrive.cmd.session.P2PSessionManager;
+import org.hivedrive.cmd.session.P2PSession;
 import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.tool.JSONUtils;
@@ -92,7 +92,7 @@ public class P2PSessionManagerTest {
 		
 		String body = JSONUtils.mapper().writeValueAsString(whoIsNode);
 		MockResponse whoAreYouResponse = new MockResponse()
-				.addHeader(P2PSessionManager.SIGN_HEADER_PARAM, 
+				.addHeader(P2PSession.SIGN_HEADER_PARAM, 
 						signatureService.signByClient(body))
 				.setBody(body)
 				.addHeader("Content-Type", "application/json");
@@ -126,13 +126,13 @@ public class P2PSessionManagerTest {
 			
 			String body = JSONUtils.mapper().writeValueAsString(nodeTo);
 			MockResponse mockedResponse = new MockResponse()
-					.addHeader(P2PSessionManager.SIGN_HEADER_PARAM, 
+					.addHeader(P2PSession.SIGN_HEADER_PARAM, 
 							signatureService.signByClient(body))
 					.setBody(body)
 					.addHeader("Content-Type", "application/json");
 			mockServer.enqueue(mockedResponse);
 			
-			P2PSessionManager p2pSessionManager = new P2PSessionManager(
+			P2PSession p2pSessionManager = new P2PSession(
 					userKeysService, signatureService);
 			p2pSessionManager.setUriBuilderFactory(new DefaultUriBuilderFactory(url.toString()));
 			boolean met = p2pSessionManager.meetWithNode();
@@ -152,7 +152,7 @@ public class P2PSessionManagerTest {
 			
 			NodeTO me = new NodeTO();
 			me.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
-			P2PSessionManager p2pSessionManager = new P2PSessionManager(
+			P2PSession p2pSessionManager = new P2PSession(
 					userKeysService, signatureService);
 			p2pSessionManager.setUriBuilderFactory(new DefaultUriBuilderFactory(url.toString()));
 			boolean registered = p2pSessionManager.registerToNode();

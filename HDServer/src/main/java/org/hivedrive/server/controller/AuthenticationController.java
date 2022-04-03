@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.PartEntity;
-import org.hivedrive.server.helpers.IPAddressHelper;
+import org.hivedrive.server.helpers.AddressService;
 import org.hivedrive.server.service.NodeKeysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,11 +22,14 @@ public class AuthenticationController {
 	@Autowired
 	private NodeKeysService serverKeysService;
 	
+	@Autowired
+	private AddressService addressHelper;
+	
 	@GetMapping("whoAreYou")
 	public ResponseEntity<NodeTO> get() throws IOException {
 		NodeTO nodeTO = new NodeTO();
-		nodeTO.setIpAddress(IPAddressHelper.getGlobalAddress());
-		nodeTO.setLocalIpAddress(IPAddressHelper.getLocalAddress());
+		nodeTO.setIpAddress(addressHelper.getGlobalAddress());
+		nodeTO.setLocalIpAddress(addressHelper.getLocalAddress());
 		nodeTO.setPublicKey(serverKeysService.getPublicAsymetricKeyAsString());
 		return new ResponseEntity<>(nodeTO, HttpStatus.OK);
 	}

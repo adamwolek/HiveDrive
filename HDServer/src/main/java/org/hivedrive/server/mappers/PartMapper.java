@@ -8,7 +8,7 @@ import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.entity.PartEntity;
-import org.hivedrive.server.helpers.IPAddressHelper;
+import org.hivedrive.server.helpers.AddressService;
 import org.hivedrive.server.service.NodeKeysService;
 import org.hivedrive.server.service.NodeService;
 import org.slf4j.Logger;
@@ -26,6 +26,9 @@ public class PartMapper {
 	
 	@Autowired
 	NodeKeysService nodeKeysService;
+	
+	@Autowired
+	AddressService addressHelper;
 
 	public PartEntity map(PartTO to) {
 		PartEntity entity = new PartEntity();
@@ -66,8 +69,8 @@ public class PartMapper {
 	private NodeTO getMe() {
 		NodeTO me = new NodeTO();
 		try {
-			me.setIpAddress(IPAddressHelper.getGlobalAddress());
-			me.setLocalIpAddress(IPAddressHelper.getLocalAddress());
+			me.setIpAddress(addressHelper.getGlobalAddress());
+			me.setLocalIpAddress(addressHelper.getLocalAddress());
 		} catch (Exception e) {
 			logger.error("Error: ", e);
 		}
