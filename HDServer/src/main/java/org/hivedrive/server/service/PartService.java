@@ -1,13 +1,11 @@
 package org.hivedrive.server.service;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
-import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.PartEntity;
 import org.hivedrive.server.mappers.PartMapper;

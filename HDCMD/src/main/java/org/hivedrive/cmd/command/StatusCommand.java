@@ -1,8 +1,5 @@
 package org.hivedrive.cmd.command;
 
-import java.io.File;
-
-import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.service.StatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

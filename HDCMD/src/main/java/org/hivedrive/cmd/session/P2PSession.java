@@ -1,12 +1,9 @@
 package org.hivedrive.cmd.session;
 
 import java.io.File;
-
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
@@ -19,10 +16,8 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.helper.StatusCode;
-import org.hivedrive.cmd.mapper.PartInfoToTOMapper;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.UserKeys;
-import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.UserKeysService;
 import org.hivedrive.cmd.status.PartStatus;
@@ -31,7 +26,6 @@ import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.cmd.tool.JSONUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilder;
 
@@ -39,26 +33,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.mizosoft.methanol.MultipartBodyPublisher;
-import com.github.mizosoft.methanol.MultipartBodyPublisher.Builder;
 import com.google.common.collect.Iterables;
 
 public class P2PSession {
 
 	private Logger logger = LoggerFactory.getLogger(P2PSession.class);
-	
-
 	private NodeTO correspondingNode;
-
 	private UserKeysService userKeysService;
-
 	private SignatureService signatureService;
 
-	public static String SENDER_ID_HEADER_PARAM = "x-sender-id";
-	public static String SIGN_HEADER_PARAM = "x-sign";
+	public static final String SENDER_ID_HEADER_PARAM = "x-sender-id";
+	public static final String SIGN_HEADER_PARAM = "x-sign";
+	private static final String ERROR = "Error: ";
 
 	private DefaultUriBuilderFactory uriBuilderFactory;
 
-	private UriBuilder whouAreYouEndpoint() {
+	private UriBuilder whoAreYouEndpoint() {
 		return uriBuilderFactory.builder().path("/whoAreYou");
 	}
 	private UriBuilder nodeEndpoint() {
@@ -107,11 +97,11 @@ public class P2PSession {
 
 	public boolean meetWithNode() {
 		try {
-			this.correspondingNode = get(whouAreYouEndpoint().build(), new TypeReference<NodeTO>() {
+			this.correspondingNode = get(whoAreYouEndpoint().build(), new TypeReference<NodeTO>() {
 			});
 			return true;
 		} catch (Exception e) {
-			logger.error("Error: ", e);
+			logger.error(ERROR, e);
 			return false;
 		}
 	}
@@ -120,7 +110,7 @@ public class P2PSession {
 		try {
 			return post(partEndpoint().build(), part);
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			logger.error("Error: ", e);
+			logger.error(ERROR, e);
 			return false;
 		}
 	}
@@ -132,12 +122,13 @@ public class P2PSession {
 					.path("/" + partId).build(), 
 					part);
 		} catch (IOException | URISyntaxException | InterruptedException e) {
-			logger.error("Error: ", e);
+			logger.error(ERROR, e);
 		}
 	}
 
 	private <T> T get(URI uri, TypeReference<T> typeReference)
 			throws URISyntaxException, IOException, InterruptedException {
+
 		logger.info("Sending get request: " + uri);
 		String publicKeyOfNode = getPublicKeyOfNode();
 		HttpRequest request = HttpRequest.newBuilder().uri(uri)
@@ -145,6 +136,9 @@ public class P2PSession {
 				.header(SENDER_ID_HEADER_PARAM, getSenderId())
 				.GET()
 				.build();
+
+
+		
 		HttpResponse<String> response = HttpClient.newBuilder().build().send(request,
 				BodyHandlers.ofString());
 
@@ -279,7 +273,7 @@ public class P2PSession {
 			});
 			return Iterables.getFirst(parts, null);
 		} catch (Exception e) {
-			logger.error("Error: ", e);
+			logger.error(ERROR, e);
 			return null;
 		}
 	}
@@ -302,7 +296,7 @@ public class P2PSession {
 					.build(), 
 					typeReference);
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			logger.error("Error: ", e);
+			logger.error(ERROR, e);
 			return null;
 		}
 	}
@@ -312,7 +306,7 @@ public class P2PSession {
 					.path("/" + part.getId()).build());
 			return fileData;
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			logger.error("Error: ", e);
+			logger.error(ERROR, e);
 			return null;
 		}
 		

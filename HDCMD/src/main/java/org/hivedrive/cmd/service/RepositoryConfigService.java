@@ -89,7 +89,7 @@ public class RepositoryConfigService {
 		return repositoryDirectory;
 	}
 
-	public void setRepositoryDirectory(File repositoryDirectory) throws StreamReadException, DatabindException, IOException {
+	public void setRepositoryDirectory(File repositoryDirectory) throws IOException {
 		File oldValue = this.repositoryDirectory;
 		this.repositoryDirectory = repositoryDirectory;
 		init();

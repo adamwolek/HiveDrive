@@ -6,27 +6,28 @@ import org.apache.commons.lang3.StringUtils;
 
 public class FileNameHelper {
 
-	public static File changeExtension(File source, String newExtension) {
-		String baseName = StringUtils.substringBeforeLast(source.getName(), ".");
-		File newFile = new File(source.getParentFile(), baseName + "." + newExtension);
-		return newFile;
-	}
+	private FileNameHelper() {}
 	
+	public static File changeExtension(File source, String newExtension) {
+		String baseName = getBaseName(source);
+		return new File(source.getParentFile(), baseName + "." + newExtension);
+	}
+
 	public static File removeExtension(File source) {
-		String baseName = StringUtils.substringBeforeLast(source.getName(), ".");
-		File newFile = new File(source.getParentFile(), baseName);
-		return newFile;
+		String baseName = getBaseName(source);
+		return new File(source.getParentFile(), baseName);
 	}
 	
 	public static File addExtension(File source, String newExtension) {
-		File newFile = new File(source.getAbsolutePath() + "." + newExtension);
-		return newFile;
+		return new File(source.getAbsolutePath() + "." + newExtension);
 	}
 	
 	public static File changeDirectory(File source, File newDirectory) {
-		File newFile = new File(newDirectory, source.getName());
-		return newFile;
+		return new File(newDirectory, source.getName());
 	}
-	
+
+	private static String getBaseName(File source) {
+		return StringUtils.substringBeforeLast(source.getName(), ".");
+	}
 	
 }

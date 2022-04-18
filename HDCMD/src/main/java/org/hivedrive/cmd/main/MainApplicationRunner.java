@@ -29,15 +29,15 @@ public class MainApplicationRunner implements CommandLineRunner, ExitCodeGenerat
 
 	
 	@Override
-    public void run(String... args) throws Exception {
+	public void run(String... args) throws Exception {
 		Object commandBean = context.getBean(args[0]);
-		if(commandBean != null) {
+		if (commandBean != null) {
 			String[] argsWithoutFirst = Arrays.copyOfRange(args, 1, args.length);
 			exitCode = new CommandLine(commandBean, factory).execute(argsWithoutFirst);
 		} else {
 			System.out.println("Cannot find required Command");
 		}
-    }
+	}
 	
 //    @Override
 //    public void run(String... args) throws Exception {

@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,10 +38,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
 @Lazy
@@ -133,8 +129,8 @@ public class ConnectionService {
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
 		if (true) {
 			CentralServerMetadata metadata = new CentralServerMetadata();
-			//metadata.setActiveNodes(Arrays.asList("localhost:8080"));
-			metadata.setActiveNodes(Arrays.asList("192.168.0.120:8080"));
+			metadata.setActiveNodes(Arrays.asList("localhost:8080"));
+//			metadata.setActiveNodes(Arrays.asList("192.168.0.120:8080"));
 			return metadata;
 		}
 
@@ -157,6 +153,7 @@ public class ConnectionService {
 			int copiesOfPart = 0;
 			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
+				//TODO: jesli dany node nie ma dosc miejsca na zapis, to trzeba go pominac
 				P2PSession sessionManager = newSession(node.getIpAddress());
 				PartTO partTO = PartInfoToTOMapper.create().map(part);
 				boolean requestSent = sessionManager.send(partTO);
@@ -235,25 +232,31 @@ public class ConnectionService {
 		return groupedParts.keys().stream()
 		.map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
 		.map(selectedPart -> {
-			try {
-				P2PSession session = newSession(
-						selectedPart.getNodeWhichContainsPart().getLocalIpAddress());
-				File directoryForParts = new File(workDirectory, "/parts");
-				File part = new File(directoryForParts, "part-" + selectedPart.getGroupId() 
-				+ "-" + selectedPart.getOrderInGroup());
-				byte[] data = session.getContent(selectedPart);
-				FileUtils.writeByteArrayToFile(part, data);
-				PartInfo partInfo = new PartInfo();
-				partInfo.setPart(part);
-				partInfo.setEncryptedFileMetadata(selectedPart.getEncryptedFileMetadata());
-				partInfo.setFileMetadata(FileMetadata.parseJSON(
-						encryptionService.decrypt(partInfo.getEncryptedFileMetadata())));
-				return partInfo;
-			} catch (Exception e) {
-				logger.error("Error: ", e);
-				return null;
-			}
+			return partInfo(workDirectory, selectedPart);
 		}).collect(Collectors.toList());
+	}
+
+
+
+	private PartInfo partInfo(File workDirectory, PartTO selectedPart) {
+		try {
+			P2PSession session = newSession(
+					selectedPart.getNodeWhichContainsPart().getLocalIpAddress());
+			File directoryForParts = new File(workDirectory, "/parts");
+			File part = new File(directoryForParts, "part-" + selectedPart.getGroupId() 
+			+ "-" + selectedPart.getOrderInGroup());
+			byte[] data = session.getContent(selectedPart);
+			FileUtils.writeByteArrayToFile(part, data);
+			PartInfo partInfo = new PartInfo();
+			partInfo.setPart(part);
+			partInfo.setEncryptedFileMetadata(selectedPart.getEncryptedFileMetadata());
+			partInfo.setFileMetadata(FileMetadata.parseJSON(
+					encryptionService.decrypt(partInfo.getEncryptedFileMetadata())));
+			return partInfo;
+		} catch (Exception e) {
+			logger.error("Error: ", e);
+			return null;
+		}
 	}
 
 

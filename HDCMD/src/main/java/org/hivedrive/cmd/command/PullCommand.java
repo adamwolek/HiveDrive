@@ -1,7 +1,9 @@
 package org.hivedrive.cmd.command;
 
-import java.io.File;
+import static org.hivedrive.cmd.helper.FileNameHelper.changeDirectory;
+import static org.hivedrive.cmd.helper.FileNameHelper.removeExtension;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,9 +13,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.StopWatch;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.service.FileCompresssingService;
@@ -28,15 +27,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import static org.hivedrive.cmd.helper.FileNameHelper.*;
 
 
 @Lazy
@@ -49,6 +45,13 @@ public class PullCommand implements Runnable {
 	
 	private Logger logger = LoggerFactory.getLogger(PullCommand.class);
 
+	private ConnectionService connectionService;
+	private SymetricEncryptionService encryptionService;
+	private FileSplittingService fileSplittingService; //TODO
+	private FileCompresssingService fileComporessingService;
+	private SignatureService signatureService; //TODO
+	private UserKeysService userKeysService;
+	private RepositoryConfigService repositoryConfigService;
 	private File workDirectory;
 	
 	@Autowired
@@ -66,15 +69,6 @@ public class PullCommand implements Runnable {
 		this.repositoryConfigService = repositoryConfigService;
 	}
 
-	private ConnectionService connectionService;
-	private SymetricEncryptionService encryptionService;
-	private FileSplittingService fileSplittingService;
-	private FileCompresssingService fileComporessingService;
-	private SignatureService signatureService;
-	private UserKeysService userKeysService;
-	private RepositoryConfigService repositoryConfigService;
-
-	
 	@Override
 	public void run() {
 		try {
@@ -135,7 +129,6 @@ public class PullCommand implements Runnable {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-
 	}
 	
 	private File mergeIntoOneFile(List<PartInfo> parts) {
@@ -148,7 +141,6 @@ public class PullCommand implements Runnable {
 			for (PartInfo part : parts) {
 				try (InputStream partIS = new FileInputStream(part.getPart())){
 					IOUtils.copy(partIS, mergedFileOS);
-					
 				} 
 			}
 			return wholeFile;
