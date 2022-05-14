@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 
 import org.hivedrive.cmd.model.RepositoryConfigFileData;
-import org.hivedrive.cmd.space.SpaceService;
 import org.hivedrive.cmd.tool.JSONUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -26,12 +25,9 @@ public class RepositoryConfigService {
 
 	private PropertyChangeSupport support;
 	
-//	private SpaceService spaceService; 
-	
 	@Autowired
 	public RepositoryConfigService() {
 		 support = new PropertyChangeSupport(this);
-//		 this.spaceService = new SpaceService(null, null, null);
 	}
 	
 	public void addPropertyChangeListener(PropertyChangeListener pcl) {
@@ -39,7 +35,6 @@ public class RepositoryConfigService {
     }
 	
 	private void init() throws IOException {
-//		this.repositoryDirectory = new File(System.getProperty("user.dir"));
 		if (getConfigFile().exists()) {
 			this.config = loadConfig();
 		}
@@ -50,11 +45,6 @@ public class RepositoryConfigService {
 		return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
 	}
 
-//	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
-//		int defaultSpace = spaceService.defaultSpace();
-//		initConfig(keyFile, repositoryName, newRepositoryDirectory, defaultSpace);
-//	}
-//	
 	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory, int space) {
 		try {
 			this.repositoryDirectory = newRepositoryDirectory;
@@ -81,8 +71,7 @@ public class RepositoryConfigService {
 
 	private File getConfigFile() {
 		File configFolder = getConfigFolder();
-		File configFile = new File(configFolder, "hivedriveConfig");
-		return configFile;
+		return new File(configFolder, "hivedriveConfig");
 	}
 
 	private File getConfigFolder() {
