@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.helper.StatusCode;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.UserKeysService;
 import org.hivedrive.cmd.status.PartStatus;
@@ -35,6 +36,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.mizosoft.methanol.MultipartBodyPublisher;
 import com.google.common.collect.Iterables;
 
+/**
+ * Session beetween my node and another node
+ *
+ */
 public class P2PSession {
 
 	private Logger logger = LoggerFactory.getLogger(P2PSession.class);
@@ -65,8 +70,11 @@ public class P2PSession {
 	}
 	private UriBuilder partContentEndpoint() {
 		return uriBuilderFactory.builder().path("/part/content");
-	}
-
+	} 
+	private UriBuilder spaceEndpoint() {
+		return uriBuilderFactory.builder().path("/space/default");
+	} 
+	
 	public P2PSession(NodeTO correspondingNode, UserKeysService userKeysService,
 			SignatureService signatureService) {
 		this(correspondingNode.getAccessibleIP(), userKeysService, signatureService);
@@ -103,6 +111,17 @@ public class P2PSession {
 		} catch (Exception e) {
 			logger.error(ERROR, e);
 			return false;
+		}
+	}
+	
+	public int getDefaultSpace() {
+		try {
+			return get(spaceEndpoint().build(), new TypeReference<Integer>() {
+			});
+		} catch (Exception e) {
+			logger.error(ERROR, e);
+			e.printStackTrace();
+			return 0;
 		}
 	}
 

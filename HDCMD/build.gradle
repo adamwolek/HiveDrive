@@ -13,6 +13,7 @@ plugins {
     id 'java'
     id 'java-library'
     id 'eclipse'
+    id "io.freefair.lombok" version "6.4.2"
 }
 
 group = 'org.hivedrive.cmd'

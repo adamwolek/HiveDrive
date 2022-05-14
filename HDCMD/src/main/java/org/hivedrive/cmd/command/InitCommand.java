@@ -1,3 +1,5 @@
+
+
 package org.hivedrive.cmd.command;
 
 import java.io.File;
@@ -6,6 +8,7 @@ import java.io.IOException;
 import javax.annotation.PostConstruct;
 
 import org.hivedrive.cmd.service.RepositoryConfigService;
+import org.hivedrive.cmd.space.SpaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -20,6 +23,9 @@ public class InitCommand implements Runnable {
 
 	@Autowired
 	private RepositoryConfigService config;
+	
+	@Autowired
+	private SpaceService spaceService;
 
 	@Option(names = { "-dir", "--directory" }, description = "")
 	private File repositoryDirectory = new File(System.getProperty("user.dir"));
@@ -29,6 +35,9 @@ public class InitCommand implements Runnable {
 
 	@Option(names = { "-k", "--key" }, description = "")
 	private File key;
+	
+	@Option(names = {"-s", "--space" }, description = "")
+	private Integer space;
 
 	@PostConstruct
 	public void init() {
@@ -41,7 +50,10 @@ public class InitCommand implements Runnable {
 	public void run() {
 		try {
 			config.setRepositoryDirectory(repositoryDirectory);
-			config.initConfig(key, repositoryName, repositoryDirectory);
+			if (space == null) {
+				space = spaceService.defaultSpace();
+			}
+			config.initConfig(key, repositoryName, repositoryDirectory, space);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

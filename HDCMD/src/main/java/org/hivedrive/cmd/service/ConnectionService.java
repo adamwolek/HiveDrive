@@ -50,7 +50,7 @@ public class ConnectionService {
 	private ConfigurationService config;
 	private UserKeysService userKeysService;
 	private SignatureService signatureService;
-	private Environment env;
+	private Environment env; //TODO: delete?
 	private NodeRepository nodeRepository;
 
 	private RepositoryConfigService repositoryConfigService;
@@ -95,6 +95,21 @@ public class ConnectionService {
 			.map(address -> new P2PSession(address, userKeysService, signatureService))
 			.filter(P2PSession::meetWithNode).map(P2PSession::getNode)
 			.map(this::mapToNewEntity).forEach(nodeRepository::save);
+	}
+	
+	public NodeTO getMyServerIP(String myPublicKey) {
+		List<NodeEntity> myNode = searchForMyNode(myPublicKey);
+		while (myNode.isEmpty()) {
+			meetMoreNodes();
+			myNode = searchForMyNode(myPublicKey);
+		}
+		return mapEntityToTO(myNode.get(0));
+	}
+	
+	private List<NodeEntity> searchForMyNode(String myPublicKey) {
+		return nodeRepository.getAllNodes().stream()
+				.filter(node -> node.getPublicKey().equals(myPublicKey))
+				.collect(Collectors.toList());
 	}
 
 	private void meetMoreNodes() {
@@ -264,5 +279,11 @@ public class ConnectionService {
 		return elements.get(new Random().nextInt(elements.size()));
 	}
 
+//	public int myServerDefaultSpace() {
+//		String publicKey = userKeysService.getKeys().getPublicAsymetricKeyAsString();
+//		NodeTO myServer = this.getMyServerIP(publicKey);
+//		P2PSession session = new P2PSession(myServer, userKeysService, signatureService);
+//		return session.getDefaultSpace();
+//	}
 
 }

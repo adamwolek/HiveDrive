@@ -5,17 +5,15 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 
-import javax.annotation.PostConstruct;
-
 import org.hivedrive.cmd.model.RepositoryConfigFileData;
+import org.hivedrive.cmd.space.SpaceService;
 import org.hivedrive.cmd.tool.JSONUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.core.exc.StreamWriteException;
 import com.fasterxml.jackson.databind.DatabindException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 @Lazy
@@ -28,28 +26,36 @@ public class RepositoryConfigService {
 
 	private PropertyChangeSupport support;
 	
+//	private SpaceService spaceService; 
+	
+	@Autowired
 	public RepositoryConfigService() {
 		 support = new PropertyChangeSupport(this);
+//		 this.spaceService = new SpaceService(null, null, null);
 	}
 	
 	public void addPropertyChangeListener(PropertyChangeListener pcl) {
         support.addPropertyChangeListener(pcl);
     }
 	
-	private void init() throws StreamReadException, DatabindException, IOException {
+	private void init() throws IOException {
 //		this.repositoryDirectory = new File(System.getProperty("user.dir"));
 		if (getConfigFile().exists()) {
 			this.config = loadConfig();
 		}
 	}
 
-	private RepositoryConfigFileData loadConfig()
-			throws StreamReadException, DatabindException, IOException {
+	private RepositoryConfigFileData loadConfig() throws IOException {
 		var mapper = JSONUtils.mapper();
 		return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
 	}
 
-	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
+//	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
+//		int defaultSpace = spaceService.defaultSpace();
+//		initConfig(keyFile, repositoryName, newRepositoryDirectory, defaultSpace);
+//	}
+//	
+	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory, int space) {
 		try {
 			this.repositoryDirectory = newRepositoryDirectory;
 			RepositoryConfigFileData config = createNewConfig(keyFile, repositoryName);
