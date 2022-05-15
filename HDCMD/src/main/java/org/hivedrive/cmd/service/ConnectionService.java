@@ -3,6 +3,8 @@ package org.hivedrive.cmd.service;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -38,6 +40,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 
@@ -142,12 +145,12 @@ public class ConnectionService {
 	}
 
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
-		if (true) {
-			CentralServerMetadata metadata = new CentralServerMetadata();
-			metadata.setActiveNodes(Arrays.asList("localhost:8080"));
+//		if (true) {
+//			CentralServerMetadata metadata = new CentralServerMetadata();
+//			metadata.setActiveNodes(Arrays.asList("localhost:8080"));
 //			metadata.setActiveNodes(Arrays.asList("192.168.0.120:8080"));
-			return metadata;
-		}
+//			return metadata;
+//		}
 
 		try {
 			String json = IOUtils.toString(config.getUrlToCentralMetadata(), "UTF-8");

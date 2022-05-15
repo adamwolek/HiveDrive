@@ -12,6 +12,11 @@ import javax.persistence.ManyToOne;
 
 import org.hivedrive.cmd.status.PartStatus;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+
 
 @Entity
 public class PartEntity {
@@ -26,8 +31,13 @@ public class PartEntity {
 	@ManyToOne
 	private NodeEntity node;
 
-	private File pathToPart;
+	private String spaceId;
+	private String pathToPart;
+	private Integer size;
+	
+	
 	private LocalDateTime createDate;
+	
 	private PartStatus status;
 	private String globalId;
 	/**
@@ -46,6 +56,24 @@ public class PartEntity {
 	private String encryptedFileMetadata;
 	
 	
+	
+	
+	public String getSpaceId() {
+		return spaceId;
+	}
+
+	public void setSpaceId(String spaceId) {
+		this.spaceId = spaceId;
+	}
+
+	public Integer getSize() {
+		return size;
+	}
+
+	public void setSize(Integer size) {
+		this.size = size;
+	}
+
 	public String getEncryptedFileMetadata() {
 		return encryptedFileMetadata;
 	}
@@ -62,11 +90,11 @@ public class PartEntity {
 		this.node = node;
 	}
 
-	public File getPathToPart() {
+	public String getPathToPart() {
 		return pathToPart;
 	}
 
-	public void setPathToPart(File pathToPart) {
+	public void setPathToPart(String pathToPart) {
 		this.pathToPart = pathToPart;
 	}
 

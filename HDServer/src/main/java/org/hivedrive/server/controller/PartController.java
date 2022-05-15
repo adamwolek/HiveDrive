@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
 import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.PartTO;
@@ -117,7 +118,28 @@ public class PartController {
 			File savedFile = partService.createFileForPart(part.get(), content.getBytes());
 			logger.info("Content for partId: " + partId + " received and saved in file: " + savedFile.getAbsolutePath());
 			return new ResponseEntity<>(HttpStatus.OK);
-		} else {
+		} else { 
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+	
+	@PutMapping(path = "/content/{partId}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+	ResponseEntity<Void> putContent(@PathVariable Long partId, @RequestPart(name = "part") MultipartFile content) throws IOException {
+		Optional<PartEntity> part = partRepository.findById(partId);
+		if(part.isPresent()) {
+			PartEntity partEntity = part.get();
+			File partFile = new File(partEntity.getPathToPart());
+			if(partFile.exists()) {
+				FileUtils.forceDelete(partFile);
+			}
+			partEntity.setSize(0);
+			partEntity.setPathToPart(null);
+			partEntity.setSpaceId(null);
+			partRepository.save(partEntity);
+			File savedFile = partService.createFileForPart(partEntity, content.getBytes());
+			logger.info("Content for partId: " + partId + " received and saved in file: " + savedFile.getAbsolutePath());
+			return new ResponseEntity<>(HttpStatus.OK);
+		} else { 
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
@@ -126,7 +148,7 @@ public class PartController {
 	ResponseEntity<Resource> getContent(@PathVariable Long partId) throws FileNotFoundException {
 		Optional<PartEntity> part = partRepository.findById(partId);
 		if(part.isPresent()) {
-			File file = part.get().getPathToPart();
+			File file = new File(part.get().getPathToPart());
 			InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
 			return ResponseEntity.ok().contentLength(file.length())
 					.contentType(MediaType.APPLICATION_OCTET_STREAM).body(resource);

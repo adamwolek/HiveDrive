@@ -1,6 +1,8 @@
 package org.hivedrive.server.repository;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.PartEntity;
@@ -30,5 +32,16 @@ public interface PartRepository extends CrudRepository<PartEntity, Long> {
 	Collection<PartEntity> findPart(
 			@Param("ownerId") String ownerId, 
 			@Param("repository") String repository);
+	
+	
+	@Query("SELECT SUM(part.size) FROM PartEntity part "
+			+ "WHERE part.spaceId LIKE :parentPath")
+	Long sizeForPath(@Param("parentPath") String parentPath);
+	
+	@Query("SELECT SUM(part.size) FROM PartEntity part ")
+	Long sizeOfAllParts();
+	
+	@Query("SELECT part.spaceId, SUM(part.size) FROM PartEntity part GROUP BY part.spaceId ")
+	List<Object[]> getUsageOfSpaces();
 
 }

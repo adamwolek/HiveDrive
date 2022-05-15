@@ -59,7 +59,8 @@ class PartMapperTest {
         nodeEntity.setPublicKey("qwertyuiopasdfgjkl");
         
         entity = new PartEntity();
-        entity.setPathToPart(new File("C:/User/Test/Documents/test.docx"));
+        entity.setPathToPart("C:/User/Test/Documents/test.docx");
+        entity.setSpaceId("C:/User/Test/Documents");
 //        entity.setStatus("test status");
         entity.setCreateDate(date);
         entity.setGlobalId("qwert");
@@ -78,7 +79,8 @@ class PartMapperTest {
         to2.setRepository("asdf");
         
         entity2 = new PartEntity();
-        entity2.setPathToPart(new File("C:/User/Test/Documents/test.docx"));
+        entity2.setPathToPart("C:/User/Test/Documents/test.docx");
+        entity2.setSpaceId("C:/User/Test/Documents");
 //        entity2.setStatus("test status 2");
         entity2.setCreateDate(date);
         entity2.setGlobalId("trewq");

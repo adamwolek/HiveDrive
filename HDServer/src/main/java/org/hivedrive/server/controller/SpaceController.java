@@ -1,5 +1,11 @@
 package org.hivedrive.server.controller;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.hivedrive.cmd.to.SpaceUsageTO;
+import org.hivedrive.server.repository.PartRepository;
 import org.hivedrive.server.service.SpaceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +22,11 @@ public class SpaceController {
 
 	private Logger logger = LoggerFactory.getLogger(SpaceController.class);
 	
+	@Autowired
 	private SpaceService spaceService;
+	
+	@Autowired
+	private PartRepository partRepository;
 
 	@Autowired
 	public SpaceController(SpaceService spaceService) {
@@ -31,6 +41,13 @@ public class SpaceController {
 			return new ResponseEntity<>(defaultSpace, HttpStatus.ACCEPTED);
 		}
 		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+	@GetMapping("/spaceUsage")
+	public ResponseEntity<Map<String, Long>> spaceUsage() {
+		Map<String, Long> usage = partRepository.getUsageOfSpaces().stream()
+		.collect(Collectors.toMap(pair -> (String)pair[0], pair -> (Long)pair[1]));
+		return new ResponseEntity<>(usage, HttpStatus.ACCEPTED);
 	}
 
 }
