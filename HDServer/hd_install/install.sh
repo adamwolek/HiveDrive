@@ -12,7 +12,7 @@ fi
 rm -rf /usr/share/hivedrive
 mkdir /usr/share/hivedrive
 cp -r install_resources/* /usr/share/hivedrive
-chmod +x /usr/share/hivedrive/updateHiveDrive.sh
+chmod +x /usr/share/hivedrive/runHiveDrive.sh
 
 #Creating service
 mv /usr/share/hivedrive/hivedrive.service /etc/systemd/system/
