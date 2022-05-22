@@ -24,16 +24,16 @@ public class RepositoryConfigService {
 	private RepositoryConfigFileData config;
 
 	private PropertyChangeSupport support;
-	
+
 	@Autowired
 	public RepositoryConfigService() {
-		 support = new PropertyChangeSupport(this);
+		support = new PropertyChangeSupport(this);
 	}
-	
+
 	public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        support.addPropertyChangeListener(pcl);
-    }
-	
+		support.addPropertyChangeListener(pcl);
+	}
+
 	private void init() throws IOException {
 		if (getConfigFile().exists()) {
 			this.config = loadConfig();
@@ -45,7 +45,7 @@ public class RepositoryConfigService {
 		return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
 	}
 
-	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory, int space) {
+	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
 		try {
 			this.repositoryDirectory = newRepositoryDirectory;
 			RepositoryConfigFileData config = createNewConfig(keyFile, repositoryName);
@@ -62,8 +62,7 @@ public class RepositoryConfigService {
 		return config;
 	}
 
-	private void save(RepositoryConfigFileData config)
-			throws StreamWriteException, DatabindException, IOException {
+	private void save(RepositoryConfigFileData config) throws StreamWriteException, DatabindException, IOException {
 		var mapper = JSONUtils.mapper();
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 		mapper.writeValue(getConfigFile(), config);

@@ -23,7 +23,7 @@ public class StatusService {
 	public String getNodeStatistics(String nodeAddress) {
 		String message = "";
 		try {
-			List<NodeEntity> allNodes = connectionService.getAllKnonwNodes(nodeAddress);
+			List<NodeEntity> allNodes = connectionService.getAllKnownNodes(nodeAddress);
 			message += "Node knows " + allNodes.size() + " another nodes";
 			message += "\n";
 			

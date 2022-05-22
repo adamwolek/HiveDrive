@@ -28,7 +28,7 @@ public class PartService {
 	ServerConfigService serverConfigService;
 
 	public PartEntity saveOrUpdate(PartTO to) {
-		PartEntity existingPart = partRepository.findPart(to.getOwnerId(), to.getRepository(), to.getGroupId(), to.getOrderInGroup());
+		PartEntity existingPart = partRepository.findPart(to.getOwnerId(), to.getRepository(), to.getGroupId(), to.getOrderInGroup(), to.getFileHash());
 		if(existingPart == null) {
 			PartEntity entity = mapper.map(to);
 			return partRepository.save(entity);
@@ -53,9 +53,14 @@ public class PartService {
 		.orElse(null);
 	}
 
-	public PartTO get(String ownerId, String repository, String groupId, Integer orderInGroup) {
-		PartEntity part = partRepository.findPart(ownerId, repository, groupId, orderInGroup);
+	public PartTO get(String ownerId, String repository, String groupId, Integer orderInGroup, String fileHash) {
+		PartEntity part = partRepository.findPart(ownerId, repository, groupId, orderInGroup, fileHash);
 		return mapper.map(part);
+	}
+	
+	public boolean doesExist(String fileHash) {
+		PartEntity part = partRepository.findPart(fileHash);
+		return part != null;
 	}
 	
 	public List<PartTO> findAllParts(){

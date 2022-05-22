@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ListMultimap;
@@ -46,20 +47,20 @@ import com.google.common.collect.Multimaps;
 public class ConnectionService {
 
 	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
-	
+
 	private ConfigurationService config;
 	private UserKeysService userKeysService;
 	private SignatureService signatureService;
-	private Environment env; //TODO: delete?
+	private Environment env; // TODO: delete?
 	private NodeRepository nodeRepository;
 
 	private RepositoryConfigService repositoryConfigService;
 
 	private SymetricEncryptionService encryptionService;
-	
+
 	@Autowired
 	public ConnectionService(ConfigurationService config, UserKeysService userKeysService,
-			SignatureService signatureService, Environment env, NodeRepository nodeRepository, 
+			SignatureService signatureService, Environment env, NodeRepository nodeRepository,
 			RepositoryConfigService repositoryConfigService, SymetricEncryptionService encryptionService) {
 		super();
 		this.config = config;
@@ -70,8 +71,6 @@ public class ConnectionService {
 		this.repositoryConfigService = repositoryConfigService;
 		this.encryptionService = encryptionService;
 	}
-
-
 
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
@@ -91,12 +90,11 @@ public class ConnectionService {
 	}
 
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
-		metadata.getActiveNodes().stream()
-			.map(address -> new P2PSession(address, userKeysService, signatureService))
-			.filter(P2PSession::meetWithNode).map(P2PSession::getNode)
-			.map(this::mapToNewEntity).forEach(nodeRepository::save);
+		metadata.getActiveNodes().stream().map(address -> new P2PSession(address, userKeysService, signatureService))
+				.filter(P2PSession::meetWithNode).map(P2PSession::getNode).map(this::mapToNewEntity)
+				.forEach(nodeRepository::save);
 	}
-	
+
 	public NodeTO getMyServerIP(String myPublicKey) {
 		List<NodeEntity> myNode = searchForMyNode(myPublicKey);
 		while (myNode.isEmpty()) {
@@ -105,18 +103,16 @@ public class ConnectionService {
 		}
 		return mapEntityToTO(myNode.get(0));
 	}
-	
+
 	private List<NodeEntity> searchForMyNode(String myPublicKey) {
-		return nodeRepository.getAllNodes().stream()
-				.filter(node -> node.getPublicKey().equals(myPublicKey))
+		return nodeRepository.getAllNodes().stream().filter(node -> node.getPublicKey().equals(myPublicKey))
 				.collect(Collectors.toList());
 	}
 
 	private void meetMoreNodes() {
 		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-			.map(node -> new P2PSession(node, userKeysService, signatureService))
-			.filter(P2PSession::meetWithNode).map(P2PSession::getNode)
-			.map(this::mapToNewEntity).forEach(nodeRepository::save);
+				.map(node -> new P2PSession(node, userKeysService, signatureService)).filter(P2PSession::meetWithNode)
+				.map(P2PSession::getNode).map(this::mapToNewEntity).forEach(nodeRepository::save);
 	}
 
 	private NodeEntity mapToNewEntity(NodeTO nodeTO) {
@@ -151,8 +147,7 @@ public class ConnectionService {
 
 		try {
 			String json = IOUtils.toString(config.getUrlToCentralMetadata(), "UTF-8");
-			CentralServerMetadata metadata = JSONUtils.mapper().readValue(json,
-					CentralServerMetadata.class);
+			CentralServerMetadata metadata = JSONUtils.mapper().readValue(json, CentralServerMetadata.class);
 			return metadata;
 		} catch (JsonProcessingException e) {
 			throw new ReadDataFromMetadataServerException(e);
@@ -168,7 +163,6 @@ public class ConnectionService {
 			int copiesOfPart = 0;
 			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
-				//TODO: jesli dany node nie ma dosc miejsca na zapis, to trzeba go pominac
 				P2PSession sessionManager = newSession(node.getIpAddress());
 				PartTO partTO = PartInfoToTOMapper.create().map(part);
 				boolean requestSent = sessionManager.send(partTO);
@@ -201,13 +195,12 @@ public class ConnectionService {
 		}
 	}
 
-	public List<NodeEntity> getAllKnonwNodes(String ipAddress)
+	public List<NodeEntity> getAllKnownNodes(String ipAddress)
 			throws URISyntaxException, IOException, InterruptedException {
 		P2PSession session = newSession(ipAddress);
 		return session.getAllNodes().stream().map(this::mapToNewEntity).map(nodeRepository::save)
 				.collect(Collectors.toList());
 	}
-
 
 	public List<PartTO> getAllPartsStoredOnNode(String ipAddress)
 			throws URISyntaxException, IOException, InterruptedException {
@@ -232,41 +225,55 @@ public class ConnectionService {
 			return ObjectUtils.compare(space1, space2);
 		};
 	}
-
-	public List<PartInfo> downloadParts(File workDirectory) {
-		List<PartTO> parts = nodeRepository.getAllNodes().stream()
-		.map(this::mapEntityToTO)
-		.map(node -> new P2PSession(node, userKeysService, signatureService))
-		.filter(P2PSession::meetWithNode)
-		.flatMap(session -> {
-			String repository = repositoryConfigService.getConfig().getRepositoryName();
-			return session.findPartsByRepository(repository).stream();
-		})
-		.collect(Collectors.toList());
-		ListMultimap<String, PartTO> groupedParts = Multimaps.index(parts, PartTO::getGlobalId);
-		return groupedParts.keys().stream()
-		.map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
-		.map(selectedPart -> {
-			return partInfo(workDirectory, selectedPart);
-		}).collect(Collectors.toList());
+	
+	public boolean isFilePushedAlready(File file) {
+		
+		List<NodeEntity> allNodes = nodeRepository.getAllNodes();
+		for (NodeEntity node : allNodes) {
+			NodeTO nodeTO = mapEntityToTO(node);
+			P2PSession p2pSession = new P2PSession(nodeTO, userKeysService, signatureService);
+			if (p2pSession.meetWithNode()) {
+				String fileHash = null;
+				try {
+					fileHash = DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				if (fileHash != null && p2pSession.doesFileExistGet(fileHash)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
-
+	public List<PartInfo> downloadParts(File workDirectory) {
+		List<PartTO> parts = nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
+				.map(node -> new P2PSession(node, userKeysService, signatureService)).filter(P2PSession::meetWithNode)
+				.flatMap(session -> {
+					String repository = repositoryConfigService.getConfig().getRepositoryName();
+					return session.findPartsByRepository(repository).stream();
+				}).collect(Collectors.toList());
+		ListMultimap<String, PartTO> groupedParts = Multimaps.index(parts, PartTO::getGlobalId);
+		return groupedParts.keys().stream().map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
+				.map(selectedPart -> {
+					return partInfo(workDirectory, selectedPart);
+				}).collect(Collectors.toList());
+	}
 
 	private PartInfo partInfo(File workDirectory, PartTO selectedPart) {
 		try {
-			P2PSession session = newSession(
-					selectedPart.getNodeWhichContainsPart().getLocalIpAddress());
+			P2PSession session = newSession(selectedPart.getNodeWhichContainsPart().getLocalIpAddress());
 			File directoryForParts = new File(workDirectory, "/parts");
-			File part = new File(directoryForParts, "part-" + selectedPart.getGroupId() 
-			+ "-" + selectedPart.getOrderInGroup());
+			File part = new File(directoryForParts,
+					"part-" + selectedPart.getGroupId() + "-" + selectedPart.getOrderInGroup());
 			byte[] data = session.getContent(selectedPart);
 			FileUtils.writeByteArrayToFile(part, data);
 			PartInfo partInfo = new PartInfo();
 			partInfo.setPart(part);
 			partInfo.setEncryptedFileMetadata(selectedPart.getEncryptedFileMetadata());
-			partInfo.setFileMetadata(FileMetadata.parseJSON(
-					encryptionService.decrypt(partInfo.getEncryptedFileMetadata())));
+			partInfo.setFileMetadata(
+					FileMetadata.parseJSON(encryptionService.decrypt(partInfo.getEncryptedFileMetadata())));
 			return partInfo;
 		} catch (Exception e) {
 			logger.error("Error: ", e);
@@ -274,16 +281,8 @@ public class ConnectionService {
 		}
 	}
 
-
 	private PartTO randomElement(List<PartTO> elements) {
 		return elements.get(new Random().nextInt(elements.size()));
 	}
-
-//	public int myServerDefaultSpace() {
-//		String publicKey = userKeysService.getKeys().getPublicAsymetricKeyAsString();
-//		NodeTO myServer = this.getMyServerIP(publicKey);
-//		P2PSession session = new P2PSession(myServer, userKeysService, signatureService);
-//		return session.getDefaultSpace();
-//	}
 
 }

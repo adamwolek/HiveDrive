@@ -34,7 +34,6 @@ import com.google.common.collect.Multimaps;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-
 @Lazy
 @Component("pull")
 @Command(name = "pull", mixinStandardHelpOptions = true, version = "0.1", description = "Prints the checksum (MD5 by default) of a file to STDOUT.")
@@ -42,23 +41,23 @@ public class PullCommand implements Runnable {
 
 	@Option(names = { "-dir", "--directory" }, description = "")
 	private File repositoryDirectory = new File(System.getProperty("user.dir"));
-	
+
 	private Logger logger = LoggerFactory.getLogger(PullCommand.class);
 
 	private ConnectionService connectionService;
 	private SymetricEncryptionService encryptionService;
-	private FileSplittingService fileSplittingService; //TODO
+	private FileSplittingService fileSplittingService; // TODO
 	private FileCompresssingService fileComporessingService;
-	private SignatureService signatureService; //TODO
+	private SignatureService signatureService; // TODO
 	private UserKeysService userKeysService;
 	private RepositoryConfigService repositoryConfigService;
 	private File workDirectory;
-	
+
 	@Autowired
-	public PullCommand(ConnectionService connectionService,
-			SymetricEncryptionService encryptionService, FileSplittingService fileSplittingService,
-			FileCompresssingService fileComporessingService, SignatureService signatureService,
-			UserKeysService userKeysService, RepositoryConfigService repositoryConfigService) {
+	public PullCommand(ConnectionService connectionService, SymetricEncryptionService encryptionService,
+			FileSplittingService fileSplittingService, FileCompresssingService fileComporessingService,
+			SignatureService signatureService, UserKeysService userKeysService,
+			RepositoryConfigService repositoryConfigService) {
 		super();
 		this.connectionService = connectionService;
 		this.encryptionService = encryptionService;
@@ -73,16 +72,16 @@ public class PullCommand implements Runnable {
 	public void run() {
 		try {
 			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
-			
+
 			userKeysService.loadKeys();
-			
+
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
 			List<File> downloadedParts = downloadParts();
 			logger.info("Downloaded " + downloadedParts.size() + " files");
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
+		} finally {        
 			try {
 				FileUtils.forceDelete(workDirectory);
 			} catch (IOException e) {
@@ -91,27 +90,22 @@ public class PullCommand implements Runnable {
 		}
 	}
 
-
 	private List<File> downloadParts() {
-		ImmutableListMultimap<String, PartInfo> groupedParts = Multimaps.index(connectionService.downloadParts(workDirectory), part -> part.getFileMetadata().getFileId());
+		ImmutableListMultimap<String, PartInfo> groupedParts = Multimaps
+				.index(connectionService.downloadParts(workDirectory), part -> part.getFileMetadata().getFileId());
 //		for (String fileId : groupedParts.keys()) {
 //			ImmutableList<PartInfo> parts = groupedParts.get(fileId);
 //			File encryptedFile = mergeIntoOneFile(parts);
 //			File packedFile = decryptFile(encryptedFile);
 //			File rawFile = unpackFile(packedFile);
 //		}
-		return groupedParts.keys().stream()
-		.map(fileId -> groupedParts.get(fileId))
-		.map(this::mergeIntoOneFile)
-		.map(this::decryptFile)
-		.map(this::unpackFile)
-		.collect(Collectors.toList());
+		return groupedParts.keys().stream().map(fileId -> groupedParts.get(fileId)).map(this::mergeIntoOneFile)
+				.map(this::decryptFile).map(this::unpackFile).collect(Collectors.toList());
 	}
 
 	private File unpackFile(File source) {
 		try {
-			File rawFile = changeDirectory(removeExtension(source), 
-					repositoryConfigService.getRepositoryDirectory());
+			File rawFile = changeDirectory(removeExtension(source), repositoryConfigService.getRepositoryDirectory());
 			fileComporessingService.uncompressFile(source, rawFile);
 			FileUtils.forceDelete(source);
 			return rawFile;
@@ -119,7 +113,7 @@ public class PullCommand implements Runnable {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private File decryptFile(File source) {
 		try {
 			File decryptedFile = new File(source.getParentFile(), source.getName() + ".zip");
@@ -130,18 +124,18 @@ public class PullCommand implements Runnable {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private File mergeIntoOneFile(List<PartInfo> parts) {
 		PartInfo anyPart = Iterables.getFirst(parts, null);
 //		if(true) {
 //			anyPart.getPart();
 //		}
 		File wholeFile = declareWholeFile(anyPart);
-		try (FileOutputStream mergedFileOS = new FileOutputStream(wholeFile)){
+		try (FileOutputStream mergedFileOS = new FileOutputStream(wholeFile)) {
 			for (PartInfo part : parts) {
-				try (InputStream partIS = new FileInputStream(part.getPart())){
+				try (InputStream partIS = new FileInputStream(part.getPart())) {
 					IOUtils.copy(partIS, mergedFileOS);
-				} 
+				}
 			}
 			return wholeFile;
 		} catch (Exception e) {
@@ -150,10 +144,9 @@ public class PullCommand implements Runnable {
 		}
 	}
 
-
 	private File declareWholeFile(PartInfo anyPart) {
 		File wholeFile = new File(workDirectory, anyPart.getFileMetadata().getFileId());
-		if(wholeFile.exists()) {
+		if (wholeFile.exists()) {
 			try {
 				FileUtils.forceDelete(wholeFile);
 			} catch (IOException e) {
@@ -162,6 +155,5 @@ public class PullCommand implements Runnable {
 		}
 		return wholeFile;
 	}
-	
-	
+
 }

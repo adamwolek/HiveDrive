@@ -32,9 +32,6 @@ public class InitCommand implements Runnable {
 	@Option(names = { "-k", "--key" }, description = "")
 	private File key;
 	
-	@Option(names = {"-s", "--space" }, description = "")
-	private Integer space;
-
 	@PostConstruct
 	public void init() {
 		if (repositoryName == null) {
@@ -46,7 +43,7 @@ public class InitCommand implements Runnable {
 	public void run() {
 		try {
 			config.setRepositoryDirectory(repositoryDirectory);
-			config.initConfig(key, repositoryName, repositoryDirectory, space);
+			config.initConfig(key, repositoryName, repositoryDirectory);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

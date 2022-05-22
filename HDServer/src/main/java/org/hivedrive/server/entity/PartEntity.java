@@ -31,6 +31,10 @@ public class PartEntity {
 	private PartStatus status;
 	private String globalId;
 	/**
+	 * File hash before encryption and compression
+	 */
+	private String fileHash;
+	/**
 	 * Name of repository created by repository owner
 	 */
 	private String repository;
@@ -126,6 +130,14 @@ public class PartEntity {
 
 	public void setOrderInGroup(Integer orderInGroup) {
 		this.orderInGroup = orderInGroup;
+	}
+
+	public String getHash() {
+		return fileHash;
+	}
+
+	public void setHash(String hash) {
+		this.fileHash = hash;
 	}
 
 }

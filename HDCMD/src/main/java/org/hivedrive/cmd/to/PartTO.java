@@ -13,6 +13,10 @@ public class PartTO {
 	private PartStatus status;
 	private String globalId;
 	/**
+	 * File hash before encryption and compression of file
+	 */
+	private String fileHash;
+	/**
 	 * Name of repository created by repository owner
 	 */
 	private String repository;
@@ -121,5 +125,13 @@ public class PartTO {
 	public void setOwnerId(String ownerId) {
 		this.ownerId = ownerId;
 		refreshGlobalId();
+	}
+
+	public String getFileHash() {
+		return fileHash;
+	}
+	
+	public void setFileHash(String fileHash) {
+		this.fileHash = fileHash;
 	}
 }

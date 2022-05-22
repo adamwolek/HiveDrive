@@ -94,14 +94,20 @@ public class PartController {
 	ResponseEntity<Collection<PartTO>> get(
 			@RequestParam(name = "repository") String repository, 
 			@RequestParam(name = "groupId", required = false) String groupId,
-			@RequestParam(name = "orderInGroup", required = false) Integer orderInGroup) {
+			@RequestParam(name = "orderInGroup", required = false) Integer orderInGroup,
+			@RequestParam(name = "fileHash", required = false) String fileHash) {
 		if(groupId == null && orderInGroup == null) {
 			Collection<PartTO> parts = partService.get(senderInfo.getSenderPublicKey(), repository);
 			return new ResponseEntity<>(parts, HttpStatus.OK);
 		} else {
-			PartTO part = partService.get(senderInfo.getSenderPublicKey(), repository, groupId, orderInGroup);
+			PartTO part = partService.get(senderInfo.getSenderPublicKey(), repository, groupId, orderInGroup, fileHash);
 			return new ResponseEntity<>(Lists.newArrayList(part), HttpStatus.OK);
 		}
+	}
+	
+	@GetMapping("/{fileHash}/exists")
+	ResponseEntity<Boolean> doesExists(@RequestParam(name= "fileHash") String fileHash) {
+		return new ResponseEntity<>(partService.doesExist(fileHash), HttpStatus.OK);
 	}
 	
 	@GetMapping("/all")

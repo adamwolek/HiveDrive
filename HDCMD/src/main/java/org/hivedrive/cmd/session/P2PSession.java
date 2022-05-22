@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.helper.StatusCode;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.UserKeys;
-import org.hivedrive.cmd.service.ConnectionService;
 import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.UserKeysService;
 import org.hivedrive.cmd.status.PartStatus;
@@ -27,12 +26,11 @@ import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.cmd.tool.JSONUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.mizosoft.methanol.MultipartBodyPublisher;
 import com.google.common.collect.Iterables;
 
@@ -65,14 +63,14 @@ public class P2PSession {
 	private UriBuilder allPartEndpoint() {
 		return uriBuilderFactory.builder().path("/part/all");
 	}
+	private UriBuilder doesFileExistEndpoint(String fileHash) {
+		return uriBuilderFactory.builder().path("/part/" + fileHash + "/exist");
+	}
 	private UriBuilder allNodeEndpoint() {
 		return uriBuilderFactory.builder().path("/node/all");
 	}
 	private UriBuilder partContentEndpoint() {
 		return uriBuilderFactory.builder().path("/part/content");
-	} 
-	private UriBuilder spaceEndpoint() {
-		return uriBuilderFactory.builder().path("/space/default");
 	} 
 	
 	public P2PSession(NodeTO correspondingNode, UserKeysService userKeysService,
@@ -114,15 +112,15 @@ public class P2PSession {
 		}
 	}
 	
-	public int getDefaultSpace() {
+	public boolean doesFileExistGet(String hashFile) {
+		TypeReference<Boolean> typeReference = new TypeReference<Boolean>() {
+		};
 		try {
-			return get(spaceEndpoint().build(), new TypeReference<Integer>() {
-			});
-		} catch (Exception e) {
-			logger.error(ERROR, e);
+			return get(doesFileExistEndpoint(hashFile).build(), typeReference);
+		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
-			return 0;
 		}
+		return false;
 	}
 
 	public boolean send(PartTO part) {
@@ -155,8 +153,6 @@ public class P2PSession {
 				.header(SENDER_ID_HEADER_PARAM, getSenderId())
 				.GET()
 				.build();
-
-
 		
 		HttpResponse<String> response = HttpClient.newBuilder().build().send(request,
 				BodyHandlers.ofString());
@@ -186,12 +182,9 @@ public class P2PSession {
 		return "";
 	}
 
-	private void verifyResponseSignature(String publicKeyOfNode, HttpResponse<String> response)
-			throws JsonMappingException, JsonProcessingException {
-		if (correspondingNode != null && StringUtils.isNotBlank(response.body())) {
-			if (publicKeyOfNode == null) {
-				publicKeyOfNode = correspondingNode.getPublicKey();
-			}
+	private void verifyResponseSignature(String publicKeyOfNode, HttpResponse<String> response) {
+		if (correspondingNode != null && StringUtils.isNotBlank(response.body()) && publicKeyOfNode == null) {
+			publicKeyOfNode = correspondingNode.getPublicKey();
 		}
 	}
 

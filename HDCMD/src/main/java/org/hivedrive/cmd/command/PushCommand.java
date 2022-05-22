@@ -78,13 +78,17 @@ public class PushCommand implements Runnable {
 	public void run() {
 		try {
 			logger.info("Repository: " + repositoryDirectory.getAbsolutePath());
+			Collection<File> allFiles = getAllFiles();
+			Collection<File> filesToPush = getAllFiles().stream()
+				.filter(file -> !connectionService.isFilePushedAlready(file))
+				.collect(Collectors.toList());
 			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
 
 			userKeysService.loadKeys();
 
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
-			List<PartInfo> parts = generatePartsForRepository();
+			List<PartInfo> parts = generatePartsForRepository(filesToPush);
 			sendParts(parts);
 			logger.info("Sending finished");
 		} catch (Exception e) {
@@ -104,32 +108,17 @@ public class PushCommand implements Runnable {
 		logger.info("Sent " + parts.size() + " files.");
 	}
 
-	private List<PartInfo> generatePartsForRepository() throws NoSuchFileException, DirectoryNotEmptyException, IOException {
+	private List<PartInfo> generatePartsForRepository(Collection<File> filesToPush) throws NoSuchFileException, DirectoryNotEmptyException, IOException {
 		List<PartInfo> parts = new ArrayList<>();
-
-		IOFileFilter filter = new IOFileFilter() {
-
-			@Override
-			public boolean accept(File dir, String name) {
-				return false;
-			}
-
-			@Override
-			public boolean accept(File file) {
-				List<String> excludedNames = Arrays.asList(".hivedrive", ".temp");
-				return !(excludedNames.contains(file.getName()));
-			}
-		};
 
 		File directoryToSplit = new File(workDirectory, "/parts");
 		directoryToSplit.mkdir();
-		Collection<File> allFiles = FileUtils.listFiles(repositoryConfigService.getRepositoryDirectory(), filter,
-				filter);
+
 		int sentFiles = 0;
-		for (File sourceFile : allFiles) {
+		for (File sourceFile : filesToPush) {
 			stopWatch = StopWatch.createStarted();
 			sentFiles++;
-			double currentPercentage = 100 * sentFiles / (double) allFiles.size();
+			double currentPercentage = 100 * sentFiles / (double) filesToPush.size();
 			log(currentPercentage + "%");
 
 			File packedFile = packFile(sourceFile);
@@ -145,6 +134,26 @@ public class PushCommand implements Runnable {
 		}
 
 		return parts;
+	}
+
+	private Collection<File> getAllFiles() {
+		IOFileFilter filter = new IOFileFilter() {
+
+			@Override
+			public boolean accept(File dir, String name) {
+				return false;
+			}
+
+			@Override
+			public boolean accept(File file) {
+				List<String> excludedNames = Arrays.asList(".hivedrive", ".temp");
+				return !(excludedNames.contains(file.getName()));
+			}
+		};
+		
+		Collection<File> allFiles = FileUtils.listFiles(this.repositoryDirectory, filter,
+				filter);
+		return allFiles;
 	}
 
 	private List<PartInfo> createPartsObjectsFromFile(List<File> partedFile, File sourceFile) {

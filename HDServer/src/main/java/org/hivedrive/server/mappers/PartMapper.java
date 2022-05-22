@@ -41,6 +41,7 @@ public class PartMapper {
 		entity.setRepository(to.getRepository());
 		entity.setGlobalId(to.getGlobalId());
 		entity.setEncryptedFileMetadata(to.getEncryptedFileMetadata());
+		entity.setHash(to.getFileHash());
 		NodeEntity node = nodeService.getNodeEntityByPublicKey(to.getOwnerId());
 		entity.setNode(node);
 		return entity;
@@ -63,6 +64,7 @@ public class PartMapper {
 		to.setOwnerId(entity.getNode().getPublicKey());
 		to.setNodeWhichContainsPart(getMe());
 		to.setEncryptedFileMetadata(entity.getEncryptedFileMetadata());
+		to.setFileHash(entity.getHash());
 		return to;
 	}
 
