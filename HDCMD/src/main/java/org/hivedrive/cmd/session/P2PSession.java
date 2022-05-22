@@ -45,11 +45,13 @@ public class P2PSession {
 	private KeysService userKeysService;
 	private SignatureService signatureService;
 
+	public static final String SENDER_TYPE_HEADER_PARAM = "x-sender-type";
 	public static final String SENDER_ID_HEADER_PARAM = "x-sender-id";
 	public static final String SIGN_HEADER_PARAM = "x-sign";
 	private static final String ERROR = "Error: ";
 
 	private DefaultUriBuilderFactory uriBuilderFactory;
+	private String senderType;
 
 	private UriBuilder whoAreYouEndpoint() {
 		return uriBuilderFactory.builder().path("/whoAreYou");
@@ -73,29 +75,58 @@ public class P2PSession {
 		return uriBuilderFactory.builder().path("/part/content");
 	} 
 	
-	public P2PSession(NodeTO correspondingNode, UserKeysService userKeysService,
+	public static P2PSession fromClient(NodeTO correspondingNode, UserKeysService userKeysService,
 			SignatureService signatureService) {
-		this(correspondingNode.getAccessibleIP(), userKeysService, signatureService);
+		return new P2PSession(correspondingNode.getAccessibleIP(), 
+				userKeysService, signatureService, "client");
 	}
-
-	public P2PSession(String address, UserKeysService userKeysService,
+	
+	public static P2PSession fromClient(String address, UserKeysService userKeysService,
 			SignatureService signatureService) {
+		return new P2PSession(address, userKeysService, signatureService, "client");
+	}
+	
+	public static P2PSession fromClient(UserKeysService userKeysService, SignatureService signatureService) {
+		return new P2PSession(userKeysService, signatureService, "client");
+	}
+	
+	public static P2PSession fromNode(NodeTO correspondingNode, UserKeysService userKeysService,
+			SignatureService signatureService) {
+		return new P2PSession(correspondingNode.getAccessibleIP(), 
+				userKeysService, signatureService, "node");
+	}
+	
+	public static P2PSession fromNode(String address, UserKeysService userKeysService,
+			SignatureService signatureService) {
+		return new P2PSession(address, userKeysService, signatureService, "node");
+	}
+	
+	public static P2PSession fromNode(UserKeysService userKeysService, SignatureService signatureService) {
+		return new P2PSession(userKeysService, signatureService, "node");
+	}
+	
+
+	private P2PSession(String address, UserKeysService userKeysService,
+			SignatureService signatureService, String senderType) {
 		this.uriBuilderFactory = new DefaultUriBuilderFactory("http://" + address);
 		this.userKeysService = userKeysService;
 		this.signatureService = signatureService;
+		this.senderType = senderType;
 	}
 
-	public P2PSession(UserKeysService userKeysService, SignatureService signatureService) {
+	private P2PSession(UserKeysService userKeysService, 
+			SignatureService signatureService, String senderType) {
 		this.userKeysService = userKeysService;
 		this.signatureService = signatureService;
+		this.senderType = senderType;
 	}
 
-	public boolean registerToNode() throws URISyntaxException, IOException, InterruptedException {
-		UserKeys keys = userKeysService.getKeys();
-		NodeTO me = new NodeTO();
-		me.setPublicKey(keys.getPublicAsymetricKeyAsString());
-		return post(nodeEndpoint().build(), me);
-	}
+//	public boolean registerToNode() throws URISyntaxException, IOException, InterruptedException {
+//		UserKeys keys = userKeysService.getKeys();
+//		NodeTO me = new NodeTO();
+//		me.setPublicKey(keys.getPublicAsymetricKeyAsString());
+//		return post(nodeEndpoint().build(), me);
+//	}
 
 	public NodeTO getNode() {
 		return correspondingNode;
@@ -150,6 +181,7 @@ public class P2PSession {
 		String publicKeyOfNode = getPublicKeyOfNode();
 		HttpRequest request = HttpRequest.newBuilder().uri(uri)
 				.timeout(Duration.ofSeconds(10))
+				.header(SENDER_TYPE_HEADER_PARAM, this.senderType)
 				.header(SENDER_ID_HEADER_PARAM, getSenderId())
 				.GET()
 				.build();
@@ -157,10 +189,6 @@ public class P2PSession {
 		HttpResponse<String> response = HttpClient.newBuilder().build().send(request,
 				BodyHandlers.ofString());
 
-		if (response.statusCode() == StatusCode.UNAUTHORIZED) {
-			registerToNode();
-			return get(uri, typeReference);
-		}
 		verifyResponseSignature(publicKeyOfNode, response);
 
 		String json = response.body();
@@ -195,6 +223,7 @@ public class P2PSession {
 		HttpRequest request = HttpRequest.newBuilder()
 				.uri(uri)
 				.timeout(timeoutForRequests())
+				.header(SENDER_TYPE_HEADER_PARAM, this.senderType)
 				.header(SIGN_HEADER_PARAM, signOf(json))
 				.header(SENDER_ID_HEADER_PARAM,
 						userKeysService.getKeys().getPublicAsymetricKeyAsString())
@@ -202,10 +231,6 @@ public class P2PSession {
 				.POST(BodyPublishers.ofString(json)).build();
 		HttpResponse<String> response = HttpClient.newBuilder().build()
 				.send(request, BodyHandlers.ofString());
-		if (response.statusCode() == StatusCode.UNAUTHORIZED) {
-			registerToNode();
-			return post(uri, object);
-		}
 		return response.statusCode() == StatusCode.ACCEPTED;
 	}
 
@@ -218,15 +243,13 @@ public class P2PSession {
 		String publicKeyOfNode = getPublicKeyOfNode();
 		HttpRequest request = HttpRequest.newBuilder().uri(uri)
 				.timeout(Duration.ofSeconds(10))
+				.header(SENDER_TYPE_HEADER_PARAM, this.senderType)
 				.header(SENDER_ID_HEADER_PARAM, getSenderId())
+				.header(SENDER_TYPE_HEADER_PARAM, this.senderType)
 				.GET()
 				.build();
 		HttpResponse<byte[]> response = HttpClient.newBuilder().build().send(request,
 				BodyHandlers.ofByteArray());
-		if (response.statusCode() == StatusCode.UNAUTHORIZED) {
-			registerToNode();
-			return getMultipart(uri);
-		}
 		return response.body();
 	}
 	
@@ -239,6 +262,7 @@ public class P2PSession {
 		var request = HttpRequest.newBuilder()
 				.uri(uri)
 				.timeout(timeoutForRequests())
+				.header(SENDER_TYPE_HEADER_PARAM, this.senderType)
 				.header(SIGN_HEADER_PARAM, signOf(content))
 				.header(SENDER_ID_HEADER_PARAM,
 						userKeysService.getKeys().getPublicAsymetricKeyAsString())

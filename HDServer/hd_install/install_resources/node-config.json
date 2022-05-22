@@ -4,6 +4,9 @@
 			"path":"/home/cc/hivedrive/parts",
 			"size":"1GB"
 		}
+	],
+	"centralServers":[
+		"192.128.0.122"
 	]
 	
 }

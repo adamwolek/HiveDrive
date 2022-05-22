@@ -128,6 +128,11 @@ public class ServerConfigService {
 		return this.spacesForSave;
 	}
 
+	public List<String> getCentralServers() {
+		return localConfig.getCentralServers();
+	}
+
+	
 	
 	
 }

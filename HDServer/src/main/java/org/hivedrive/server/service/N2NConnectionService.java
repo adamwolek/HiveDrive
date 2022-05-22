@@ -37,7 +37,7 @@ public class N2NConnectionService {
 	private Logger logger = LoggerFactory.getLogger(N2NConnectionService.class);
 	
 	@Autowired
-	private LocalConfiguration localConfiguration;
+	private ServerConfigService serverConfigService;
 	
 	@Autowired
 	private UserKeysService userKeysService;
@@ -49,7 +49,7 @@ public class N2NConnectionService {
 	private NodeRepository nodeRepository;
 	
 	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
-		List<CentralServerMetadata> centralServersMetadata = localConfiguration.getCentralServers().stream()
+		List<CentralServerMetadata> centralServersMetadata = serverConfigService.getCentralServers().stream()
 		.map(this::createUrl)
 		.map(this::downloadMetadata)
 		.collect(Collectors.toList());
@@ -79,7 +79,7 @@ public class N2NConnectionService {
 			logger.info("Register to node at address " + address);
 			return address;
 		})
-		.map(address -> new P2PSession(address, userKeysService, signatureService))
+		.map(address -> P2PSession.fromNode(address, userKeysService, signatureService))
 		.filter(P2PSession::meetWithNode)
 		.map(P2PSession::getNode)
 		.map(this::mapToNewEntity)
@@ -88,7 +88,7 @@ public class N2NConnectionService {
 	
 	private void meetMoreNodes() {
 		nodeRepository.findAll().stream().map(this::mapEntityToTO)
-			.map(node -> new P2PSession(node, userKeysService, signatureService))
+			.map(node -> P2PSession.fromNode(node, userKeysService, signatureService))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getAllNodes)
 			.flatMap(Collection::stream)

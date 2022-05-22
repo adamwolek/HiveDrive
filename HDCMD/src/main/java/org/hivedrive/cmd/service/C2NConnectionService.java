@@ -93,7 +93,7 @@ public class C2NConnectionService {
 
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
 		metadata.getActiveNodes().stream()
-			.map(address -> new P2PSession(address, userKeysService, signatureService))
+			.map(address -> P2PSession.fromClient(address, userKeysService, signatureService))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getNode)
 			.map(this::mapToNewEntity)
@@ -116,7 +116,7 @@ public class C2NConnectionService {
 
 	private void meetMoreNodes() {
 		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-			.map(node -> new P2PSession(node, userKeysService, signatureService))
+			.map(node -> P2PSession.fromClient(node, userKeysService, signatureService))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getAllNodes)
 			.flatMap(Collection::stream)
@@ -213,7 +213,7 @@ public class C2NConnectionService {
 	}
 
 	private P2PSession newSession(String ipAddress) {
-		return new P2PSession(ipAddress, userKeysService, signatureService);
+		return P2PSession.fromClient(ipAddress, userKeysService, signatureService);
 	}
 
 	private Queue<NodeEntity> getBestNodes(PartInfo part) {
@@ -235,7 +235,7 @@ public class C2NConnectionService {
 		List<NodeEntity> allNodes = nodeRepository.getAllNodes();
 		for (NodeEntity node : allNodes) {
 			NodeTO nodeTO = mapEntityToTO(node);
-			P2PSession p2pSession = new P2PSession(nodeTO, userKeysService, signatureService);
+			P2PSession p2pSession = P2PSession.fromClient(nodeTO, userKeysService, signatureService);
 			if (p2pSession.meetWithNode()) {
 				String fileHash = null;
 				try {
@@ -253,7 +253,8 @@ public class C2NConnectionService {
 
 	public List<PartInfo> downloadParts(File workDirectory) {
 		List<PartTO> parts = nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-				.map(node -> new P2PSession(node, userKeysService, signatureService)).filter(P2PSession::meetWithNode)
+				.map(node -> P2PSession.fromClient(node, userKeysService, signatureService))
+				.filter(P2PSession::meetWithNode)
 				.flatMap(session -> {
 					String repository = repositoryConfigService.getConfig().getRepositoryName();
 					return session.findPartsByRepository(repository).stream();

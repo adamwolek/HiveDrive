@@ -2,8 +2,11 @@
 	"spaces":[
 		{
 			"path":"/home/cc/temp/parts",
-			"size":"10GB"
+			"size":"1GB"
 		}
+	],
+	"centralServers":[
+		"192.128.0.122"
 	]
 	
 }
