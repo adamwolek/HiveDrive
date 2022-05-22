@@ -1,4 +1,17 @@
+# Installation
+
+Budowanie, pakowanie i wysyłanie na serwer lokalny paczki instalacyjnej (wykonujemy po każdej zmianie kodu):
+
+``` sh
+./packInstallPackage.sh
+```
+
+``` sh
+./packInstallPackage.sh
+```
+
 # Documentation
+
 http://localhost:8080/swagger-ui.html
 
 # Sources

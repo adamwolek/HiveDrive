@@ -6,7 +6,7 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 User=adam
-ExecStart=/bin/bash /usr/share/hivedrive/updateHiveDrive.sh
+ExecStart=/bin/bash /usr/share/hivedrive/runHiveDrive.sh
 
 [Install]
 WantedBy=multi-user.target

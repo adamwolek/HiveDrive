@@ -5,10 +5,17 @@ import java.time.LocalDateTime;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.hivedrive.cmd.status.PartStatus;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+
 public class PartTO {
 
 	private Long id;
 	
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
 	private LocalDateTime createDate;
 	private PartStatus status;
 	private String globalId;

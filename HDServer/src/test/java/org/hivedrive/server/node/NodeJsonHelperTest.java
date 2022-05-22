@@ -63,7 +63,7 @@ class NodeJsonHelperTest {
         
         //then
         assertEquals(to.getStatus(), result.getStatus());
-        assertEquals(to.getAccessibleIP(), result.getIpAddress());
+        assertEquals(to.getIpAddress(), result.getIpAddress());
         assertEquals(to.getPublicKey(), result.getPublicKey());
     }
     
