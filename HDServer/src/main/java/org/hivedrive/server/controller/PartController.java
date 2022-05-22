@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
-import org.hivedrive.cmd.service.ConnectionService;
+import org.hivedrive.cmd.service.C2NConnectionService;
 import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
@@ -43,7 +43,7 @@ import com.google.common.collect.Lists;
 @RequestMapping("/part")
 public class PartController {
 
-	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
+	private Logger logger = LoggerFactory.getLogger(C2NConnectionService.class);
 	
 	private PartService partService;
 	private SenderInfo senderInfo;

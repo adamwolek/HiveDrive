@@ -1,4 +1,4 @@
-package org.hivedrive.cmd.service;
+package org.hivedrive.cmd.service.common;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,21 +16,17 @@ import org.springframework.stereotype.Service;
 public class SignatureService {
 
 	@Autowired
-	private UserKeysService userKeysService;
+	private KeysService userKeysService;
 
-	public String signByClient(String textToSign) {
-		return sign(textToSign, userKeysService.getKeys().getPrivateAsymetricKey());
+	public String signStringUsingDefaultKeys(String textToSign) {
+		return signString(textToSign, userKeysService.getKeys().getPrivateAsymetricKey());
 	}
 
-	public String sign(String textToSign, PrivateKey privateAsymetricKey) {
-		return signByClient(textToSign.getBytes());
+	public String signFileUsingDefaultKeys(File file) {
+		return signFile(file, userKeysService.getKeys().getPrivateAsymetricKey());
 	}
 
-	public String signByClient(File file) {
-		return sign(file, userKeysService.getKeys().getPrivateAsymetricKey());
-	}
-
-	public String sign(File file, PrivateKey privateAsymetricKey) {
+	public String signFile(File file, PrivateKey privateAsymetricKey) {
 		try (FileInputStream fis = new FileInputStream(file)) {
 			Signature sig = Signature.getInstance("SHA1WithRSA");
 			sig.initSign(privateAsymetricKey);
@@ -46,10 +42,14 @@ public class SignatureService {
 		}
 	}
 
-	public String signByClient(byte[] dataToSign) {
+	public String signUsingDefaultKeys(byte[] dataToSign) {
 		return sign(dataToSign, userKeysService.getKeys().getPrivateAsymetricKey());
 	}
 
+	public String signString(String textToSign, PrivateKey privateAsymetricKey) {
+		return sign(textToSign.getBytes(), privateAsymetricKey);
+	}
+	
 	public String sign(byte[] dataToSign, PrivateKey privateAsymetricKey) {
 		try {
 			Signature sig = Signature.getInstance("SHA1WithRSA");

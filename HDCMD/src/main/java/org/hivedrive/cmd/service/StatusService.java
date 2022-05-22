@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
 public class StatusService {
 
 	
-	private ConnectionService connectionService;
+	private C2NConnectionService connectionService;
 	
 	@Autowired
-	public StatusService(ConnectionService connectionService) {
+	public StatusService(C2NConnectionService connectionService) {
 		this.connectionService = connectionService;
 	}
 

@@ -16,6 +16,7 @@ import org.apache.commons.io.FileUtils;
 import org.hivedrive.cmd.exception.DecryptionFailedException;
 import org.hivedrive.cmd.exception.EncryptionFailedException;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class AsymetricEncryptionService {
 
 	@PostConstruct
 	public void init() {
-		userKeysService.addPropertyChangeListener(event -> {
+		userKeysService.onKeysLoaded(() -> {
 			UserKeys keys = userKeysService.getKeys();
 			if (keys != null) {
 				this.privateAsymetricKey = keys.getPrivateAsymetricKey();

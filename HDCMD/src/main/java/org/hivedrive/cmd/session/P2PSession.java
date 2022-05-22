@@ -1,6 +1,7 @@
 package org.hivedrive.cmd.session;
 
 import java.io.File;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,9 +19,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.helper.StatusCode;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.UserKeys;
-import org.hivedrive.cmd.service.ConnectionService;
-import org.hivedrive.cmd.service.SignatureService;
-import org.hivedrive.cmd.service.UserKeysService;
+import org.hivedrive.cmd.service.C2NConnectionService;
+import org.hivedrive.cmd.service.common.KeysService;
+import org.hivedrive.cmd.service.common.SignatureService;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
@@ -44,7 +46,7 @@ public class P2PSession {
 
 	private Logger logger = LoggerFactory.getLogger(P2PSession.class);
 	private NodeTO correspondingNode;
-	private UserKeysService userKeysService;
+	private KeysService userKeysService;
 	private SignatureService signatureService;
 
 	public static final String SENDER_ID_HEADER_PARAM = "x-sender-id";
@@ -260,24 +262,34 @@ public class P2PSession {
 
 	
 	private String signOf(byte[] content) {
-		return signatureService.signByClient(content);
+		return signatureService.signUsingDefaultKeys(content);
 	}
 
 	private String signOf(String text) {
-		return signatureService.signByClient(text);
+		return signatureService.signStringUsingDefaultKeys(text);
 	}
 
 
-	public List<NodeTO> getAllNodes() throws URISyntaxException, IOException, InterruptedException {
-		TypeReference<List<NodeTO>> typeReference = new TypeReference<List<NodeTO>>() {
-		};
-		return get(allNodeEndpoint().build(), typeReference);
+	public List<NodeTO> getAllNodes() {
+		try {
+			TypeReference<List<NodeTO>> typeReference = new TypeReference<List<NodeTO>>() {
+			};
+			return get(allNodeEndpoint().build(), typeReference);
+		} catch (Exception e) {
+			logger.error(ERROR, e);
+			return null;
+		}
 	}
 
 	public List<PartTO> getAllParts() throws URISyntaxException, IOException, InterruptedException {
-		TypeReference<List<PartTO>> typeReference = new TypeReference<List<PartTO>>() {
-		};
-		return get(allPartEndpoint().build(), typeReference);
+		try {
+			TypeReference<List<PartTO>> typeReference = new TypeReference<List<PartTO>>() {
+			};
+			return get(allPartEndpoint().build(), typeReference);
+		} catch (Exception e) {
+			logger.error(ERROR, e);
+			return null;
+		}
 	}
 
 	public PartTO downloadPart(PartInfo part) {

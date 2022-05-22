@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.common.SignatureService;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +35,7 @@ class SignatureServiceTest {
 	void checkSignature() {
 		String text = RandomStringUtils.random(10000);
 		
-		String signature = signatureService.signByClient(text);
+		String signature = signatureService.signStringUsingDefaultKeys(text);
 		
 		boolean result = signatureService.verifySign(
 				signature, text, userKeysService.getKeys().getPublicAsymetricKeyAsString());
@@ -47,11 +49,10 @@ class SignatureServiceTest {
 		UserKeys secondPair = userKeysService.generateNewKeys();
 		String text = RandomStringUtils.random(10000);
 		
-		String signature = signatureService.sign(text, firstPair.getPrivateAsymetricKey());
+		String signature = signatureService.signString(text, firstPair.getPrivateAsymetricKey());
 		
 		boolean result = signatureService.verifySign(
 				signature, text, secondPair.getPublicAsymetricKeyAsString());
-		
 		assertFalse(result);
 	}
 

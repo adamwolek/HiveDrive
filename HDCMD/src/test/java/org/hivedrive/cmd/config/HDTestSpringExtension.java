@@ -1,6 +1,6 @@
 package org.hivedrive.cmd.config;
 
-import org.hivedrive.cmd.service.UserKeysService;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.beans.factory.annotation.Autowired;

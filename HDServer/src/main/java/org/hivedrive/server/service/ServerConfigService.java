@@ -11,6 +11,8 @@ import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.Streams;
+import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.server.config.LocalConfiguration;
 import org.hivedrive.server.config.SpaceConfig;
 import org.hivedrive.server.repository.PartRepository;
@@ -41,29 +43,56 @@ public class ServerConfigService {
 	@Autowired
 	private PartRepository partRepository;
 	
+	@Autowired
+	private UserKeysService userKeysService;
+	
 	@Value("${hdConfigPath}")
     private File hdConfigPath;
 	
+	@Value("${keysPath}")
+    private File keysPath;
+
+	private LocalConfiguration localConfig;
+	
 	@PostConstruct
 	void init() {
+		this.localConfig = loadLocalConfig();
+		this.spacesForSave = extractSpaces();
+		loadKeys();
+	}
+
+	private void loadKeys() {
+		if(keysPath.exists()) {
+			userKeysService.loadKeys(keysPath);
+		} else {
+			userKeysService.generateNewKeys();
+			userKeysService.saveKeptKeys(hdConfigPath);
+		}
+		
+	}
+
+	
+	private LocalConfiguration loadLocalConfig() {
 		try {
 			if(hdConfigPath != null) {
-				this.spacesForSave = this.mapToSpacesToSave(hdConfigPath);
+				return loadConfig(hdConfigPath);
 			} else {
-				this.spacesForSave = Stream.of(new File(getJarPath()).listFiles())
+				return Stream.of(new File(getJarPath()).listFiles())
 					.filter(file -> file.getName().equals("node-config.json"))
 					.findAny()
-					.map(this::mapToSpacesToSave)
+					.map(this::loadConfig)
 					.get();
 			}
 		} catch (Exception e) {
 			logger.error("Can't load local configuration. Shutdown node .", e);
 			((ConfigurableApplicationContext) context).close();
+			return null;
 		}
 	}
+	
 
-	private List<SpaceForSave> mapToSpacesToSave(File file) {
-		return loadConfig(file).getSpaces().stream()
+	private List<SpaceForSave> extractSpaces() {
+		return localConfig.getSpaces().stream()
 		.map(space -> {
 			var spaceToSave = new SpaceForSave(partRepository);
 			spaceToSave.setDirectory(new File(space.getPath()));
@@ -78,6 +107,12 @@ public class ServerConfigService {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	
+	
+	public void setCentralServers(List<String> centralServers) {
+		localConfig.setCentralServers(centralServers);
 	}
 
 	private String getJarPath() throws URISyntaxException {

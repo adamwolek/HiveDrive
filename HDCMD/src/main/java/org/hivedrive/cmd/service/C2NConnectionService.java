@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,6 +28,8 @@ import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.NodeEntity;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.repository.NodeRepository;
+import org.hivedrive.cmd.service.common.SignatureService;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
 import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.hivedrive.cmd.to.NodeTO;
@@ -46,9 +49,9 @@ import com.google.common.collect.Multimaps;
 
 @Lazy
 @Service
-public class ConnectionService {
+public class C2NConnectionService {
 
-	private Logger logger = LoggerFactory.getLogger(ConnectionService.class);
+	private Logger logger = LoggerFactory.getLogger(C2NConnectionService.class);
 	
 	private ConfigurationService config;
 	private UserKeysService userKeysService;
@@ -61,7 +64,7 @@ public class ConnectionService {
 	private SymetricEncryptionService encryptionService;
 	
 	@Autowired
-	public ConnectionService(ConfigurationService config, UserKeysService userKeysService,
+	public C2NConnectionService(ConfigurationService config, UserKeysService userKeysService,
 			SignatureService signatureService, Environment env, NodeRepository nodeRepository, 
 			RepositoryConfigService repositoryConfigService, SymetricEncryptionService encryptionService) {
 		super();
@@ -78,7 +81,7 @@ public class ConnectionService {
 
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
-		userKeysService.addPropertyChangeListener(event -> {
+		userKeysService.onKeysLoaded(() -> {
 			try {
 				this.manualInit();
 			} catch (URISyntaxException | IOException | InterruptedException e) {
@@ -96,8 +99,10 @@ public class ConnectionService {
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
 		metadata.getActiveNodes().stream()
 			.map(address -> new P2PSession(address, userKeysService, signatureService))
-			.filter(P2PSession::meetWithNode).map(P2PSession::getNode)
-			.map(this::mapToNewEntity).forEach(nodeRepository::save);
+			.filter(P2PSession::meetWithNode)
+			.map(P2PSession::getNode)
+			.map(this::mapToNewEntity)
+			.forEach(nodeRepository::save);
 	}
 	
 	public NodeTO getMyServerIP(String myPublicKey) {
@@ -118,8 +123,11 @@ public class ConnectionService {
 	private void meetMoreNodes() {
 		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
 			.map(node -> new P2PSession(node, userKeysService, signatureService))
-			.filter(P2PSession::meetWithNode).map(P2PSession::getNode)
-			.map(this::mapToNewEntity).forEach(nodeRepository::save);
+			.filter(P2PSession::meetWithNode)
+			.map(P2PSession::getAllNodes)
+			.flatMap(Collection::stream)
+			.map(this::mapToNewEntity)
+			.forEach(nodeRepository::save);
 	}
 
 	private NodeEntity mapToNewEntity(NodeTO nodeTO) {
@@ -145,13 +153,6 @@ public class ConnectionService {
 	}
 
 	private CentralServerMetadata downloadMetadata() throws URISyntaxException {
-//		if (true) {
-//			CentralServerMetadata metadata = new CentralServerMetadata();
-//			metadata.setActiveNodes(Arrays.asList("localhost:8080"));
-//			metadata.setActiveNodes(Arrays.asList("192.168.0.120:8080"));
-//			return metadata;
-//		}
-
 		try {
 			String json = IOUtils.toString(config.getUrlToCentralMetadata(), "UTF-8");
 			CentralServerMetadata metadata = JSONUtils.mapper().readValue(json,
@@ -207,7 +208,9 @@ public class ConnectionService {
 	public List<NodeEntity> getAllKnonwNodes(String ipAddress)
 			throws URISyntaxException, IOException, InterruptedException {
 		P2PSession session = newSession(ipAddress);
-		return session.getAllNodes().stream().map(this::mapToNewEntity).map(nodeRepository::save)
+		return session.getAllNodes().stream()
+				.map(this::mapToNewEntity)
+				.map(nodeRepository::save)
 				.collect(Collectors.toList());
 	}
 

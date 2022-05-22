@@ -5,7 +5,7 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-User=adam
+User=cc
 ExecStart=/bin/bash /usr/share/hivedrive/runHiveDrive.sh
 
 [Install]

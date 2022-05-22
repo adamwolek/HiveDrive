@@ -2,7 +2,9 @@ package org.hivedrive.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
+@ComponentScan({"org.hivedrive.server", "org.hivedrive.cmd.service.common"})
 @SpringBootApplication
 public class HiveDriveServerApplication {
 

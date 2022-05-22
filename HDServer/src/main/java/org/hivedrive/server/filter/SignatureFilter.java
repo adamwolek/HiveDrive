@@ -2,6 +2,7 @@ package org.hivedrive.server.filter;
 
 import java.io.IOException;
 
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -9,8 +10,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.server.controller.SenderInfo;
-import org.hivedrive.server.service.SignatureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 
 @Component
 @Order(1)
-public class AuthenticationFilter implements Filter {
+public class SignatureFilter implements Filter {
 
 	public static String SENDER_ID_HEADER_PARAM = "x-sender-id";
 	public static String SIGN_HEADER_PARAM = "x-sign";

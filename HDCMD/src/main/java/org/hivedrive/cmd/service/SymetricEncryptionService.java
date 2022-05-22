@@ -17,6 +17,7 @@ import javax.crypto.spec.IvParameterSpec;
 
 import org.apache.commons.io.IOUtils;
 import org.hivedrive.cmd.exception.EncryptionFailedException;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class SymetricEncryptionService {
 
 	@PostConstruct
 	private void init() {
-		userKeysService.addPropertyChangeListener(event -> {
+		userKeysService.onKeysLoaded(() -> {
 			this.secretKey = userKeysService.getKeys().getPrivateSymetricKey();
 			try {
 				this.cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");

@@ -1,6 +1,7 @@
 package org.hivedrive.cmd.command;
 
 import static org.hivedrive.cmd.helper.FileNameHelper.addExtension;
+
 import static org.hivedrive.cmd.helper.FileNameHelper.changeDirectory;
 import static org.hivedrive.cmd.helper.FileNameHelper.changeExtension;
 
@@ -21,13 +22,13 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.time.StopWatch;
 import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.PartInfo;
-import org.hivedrive.cmd.service.ConnectionService;
+import org.hivedrive.cmd.service.C2NConnectionService;
 import org.hivedrive.cmd.service.FileCompresssingService;
 import org.hivedrive.cmd.service.FileSplittingService;
 import org.hivedrive.cmd.service.RepositoryConfigService;
-import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.SymetricEncryptionService;
-import org.hivedrive.cmd.service.UserKeysService;
+import org.hivedrive.cmd.service.common.SignatureService;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class PushCommand implements Runnable {
 	private Logger logger = LoggerFactory.getLogger(PushCommand.class);
 
 	@Autowired
-	public PushCommand(ConnectionService connectionService, SymetricEncryptionService encryptionService,
+	public PushCommand(C2NConnectionService connectionService, SymetricEncryptionService encryptionService,
 			FileSplittingService fileSplittingService, FileCompresssingService fileComporessingService,
 			SignatureService signatureService, UserKeysService userKeysService,
 			RepositoryConfigService repositoryConfigService) {
@@ -62,7 +63,7 @@ public class PushCommand implements Runnable {
 		this.repositoryConfigService = repositoryConfigService;
 	}
 
-	private ConnectionService connectionService;
+	private C2NConnectionService connectionService;
 	private SymetricEncryptionService encryptionService;
 	private FileSplittingService fileSplittingService;
 	private FileCompresssingService fileComporessingService;
@@ -79,8 +80,6 @@ public class PushCommand implements Runnable {
 		try {
 			logger.info("Repository: " + repositoryDirectory.getAbsolutePath());
 			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
-
-			userKeysService.loadKeys();
 
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
@@ -155,7 +154,7 @@ public class PushCommand implements Runnable {
 			partInfo.setPart(partOfFile);
 			partInfo.setOwnerPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
 
-			String fileSign = signatureService.signByClient(partOfFile);
+			String fileSign = signatureService.signFileUsingDefaultKeys(partOfFile);
 			partInfo.setFileSign(fileSign);
 
 			FileMetadata metadata = createFileMetadata(fileId, partOfFile);

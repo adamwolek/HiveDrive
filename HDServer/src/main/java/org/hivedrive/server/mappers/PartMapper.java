@@ -2,14 +2,16 @@ package org.hivedrive.server.mappers;
 
 import java.util.Collection;
 
+
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.entity.PartEntity;
 import org.hivedrive.server.helpers.AddressService;
-import org.hivedrive.server.service.NodeKeysService;
 import org.hivedrive.server.service.NodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +27,7 @@ public class PartMapper {
 	NodeService nodeService;
 	
 	@Autowired
-	NodeKeysService nodeKeysService;
+	UserKeysService userKeysService;
 	
 	@Autowired
 	AddressService addressHelper;
@@ -74,7 +76,7 @@ public class PartMapper {
 		} catch (Exception e) {
 			logger.error("Error: ", e);
 		}
-		me.setPublicKey(nodeKeysService.getPublicAsymetricKeyAsString());
+		me.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
 		return me;
 	}
 

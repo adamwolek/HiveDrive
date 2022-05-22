@@ -1,6 +1,7 @@
 package org.hivedrive.cmd.command.outdated;
 
 import java.io.File;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -17,9 +18,9 @@ import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.service.FileCompresssingService;
 import org.hivedrive.cmd.service.FileSplittingService;
-import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.SymetricEncryptionService;
-import org.hivedrive.cmd.service.UserKeysService;
+import org.hivedrive.cmd.service.common.SignatureService;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -103,7 +104,7 @@ class SynchronizeCommand implements Runnable {
 			partInfo.setPart(part);
 			partInfo.setOwnerPublicKey(keys.getPublicAsymetricKeyAsString());
 
-			String fileSign = signatureService.signByClient(part);
+			String fileSign = signatureService.signFileUsingDefaultKeys(part);
 			partInfo.setFileSign(fileSign);
 
 			FileMetadata metadata = createFileMetadata(fileId, part);
