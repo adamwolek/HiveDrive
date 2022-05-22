@@ -11,7 +11,7 @@ fi
 #Copying to installation folder
 rm -rf /usr/share/hivedrive
 mkdir /usr/share/hivedrive
-cp -r install_resources/* /usr/share/hivedrive
+cp -r /home/cc/hivedrive/hd_install/install_resources/* /usr/share/hivedrive
 chmod +x /usr/share/hivedrive/runHiveDrive.sh
 
 #Creating service
@@ -19,5 +19,7 @@ mv /usr/share/hivedrive/hivedrive.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable hivedrive.service
 systemctl start hivedrive.service
+systemctl status hivedrive.service
+
 
 

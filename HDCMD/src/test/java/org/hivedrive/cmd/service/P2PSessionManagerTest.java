@@ -2,6 +2,7 @@ package org.hivedrive.cmd.service;
 
 import static org.junit.Assert.assertNotNull;
 
+
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -15,6 +16,8 @@ import org.checkerframework.checker.nullness.qual.AssertNonNullIfNonNull;
 import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.common.SignatureService;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
 import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.hivedrive.cmd.to.NodeTO;
@@ -57,7 +60,7 @@ public class P2PSessionManagerTest {
 	SignatureService signatureService;
 	
 	@Autowired
-	ConnectionService connectionService;
+	C2NConnectionService connectionService;
 	
 	@BeforeEach
 	private void beforeTest() {
@@ -93,7 +96,7 @@ public class P2PSessionManagerTest {
 		String body = JSONUtils.mapper().writeValueAsString(whoIsNode);
 		MockResponse whoAreYouResponse = new MockResponse()
 				.addHeader(P2PSession.SIGN_HEADER_PARAM, 
-						signatureService.signByClient(body))
+						signatureService.signStringUsingDefaultKeys(body))
 				.setBody(body)
 				.addHeader("Content-Type", "application/json");
 		node.enqueue(whoAreYouResponse);
@@ -127,7 +130,7 @@ public class P2PSessionManagerTest {
 			String body = JSONUtils.mapper().writeValueAsString(nodeTo);
 			MockResponse mockedResponse = new MockResponse()
 					.addHeader(P2PSession.SIGN_HEADER_PARAM, 
-							signatureService.signByClient(body))
+							signatureService.signStringUsingDefaultKeys(body))
 					.setBody(body)
 					.addHeader("Content-Type", "application/json");
 			mockServer.enqueue(mockedResponse);

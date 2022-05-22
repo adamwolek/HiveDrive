@@ -14,16 +14,15 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hivedrive.cmd.model.PartInfo;
-import org.hivedrive.cmd.service.ConnectionService;
+import org.hivedrive.cmd.service.C2NConnectionService;
 import org.hivedrive.cmd.service.FileCompresssingService;
 import org.hivedrive.cmd.service.FileSplittingService;
 import org.hivedrive.cmd.service.RepositoryConfigService;
-import org.hivedrive.cmd.service.SignatureService;
 import org.hivedrive.cmd.service.SymetricEncryptionService;
-import org.hivedrive.cmd.service.UserKeysService;
+import org.hivedrive.cmd.service.common.SignatureService;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +43,7 @@ public class PullCommand implements Runnable {
 
 	private Logger logger = LoggerFactory.getLogger(PullCommand.class);
 
-	private ConnectionService connectionService;
+	private C2NConnectionService connectionService;
 	private SymetricEncryptionService encryptionService;
 	private FileSplittingService fileSplittingService; // TODO
 	private FileCompresssingService fileComporessingService;
@@ -53,11 +52,10 @@ public class PullCommand implements Runnable {
 	private RepositoryConfigService repositoryConfigService;
 	private File workDirectory;
 
-	@Autowired
-	public PullCommand(ConnectionService connectionService, SymetricEncryptionService encryptionService,
-			FileSplittingService fileSplittingService, FileCompresssingService fileComporessingService,
-			SignatureService signatureService, UserKeysService userKeysService,
-			RepositoryConfigService repositoryConfigService) {
+	public PullCommand(C2NConnectionService connectionService,
+			SymetricEncryptionService encryptionService, FileSplittingService fileSplittingService,
+			FileCompresssingService fileComporessingService, SignatureService signatureService,
+			UserKeysService userKeysService, RepositoryConfigService repositoryConfigService) {
 		super();
 		this.connectionService = connectionService;
 		this.encryptionService = encryptionService;
@@ -72,9 +70,6 @@ public class PullCommand implements Runnable {
 	public void run() {
 		try {
 			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
-
-			userKeysService.loadKeys();
-
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
 			List<File> downloadedParts = downloadParts();

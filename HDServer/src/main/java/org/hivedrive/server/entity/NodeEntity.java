@@ -19,6 +19,12 @@ public class NodeEntity {
 
 	private String ipAddress;
 
+	private String localIpAddress;
+	
+	private Long freeSpace;
+	
+	private Long usedSpace;
+	
 	public String getPublicKey() {
 		return publicKey;
 	}
@@ -42,5 +48,39 @@ public class NodeEntity {
 	public void setIpAddress(String ipAddress) {
 		this.ipAddress = ipAddress;
 	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getLocalIpAddress() {
+		return localIpAddress;
+	}
+
+	public void setLocalIpAddress(String localIpAddress) {
+		this.localIpAddress = localIpAddress;
+	}
+
+	public Long getFreeSpace() {
+		return freeSpace;
+	}
+
+	public void setFreeSpace(Long freeSpace) {
+		this.freeSpace = freeSpace;
+	}
+
+	public Long getUsedSpace() {
+		return usedSpace;
+	}
+
+	public void setUsedSpace(Long usedSpace) {
+		this.usedSpace = usedSpace;
+	}
+	
+	
 
 }

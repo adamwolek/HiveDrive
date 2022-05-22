@@ -1,4 +1,4 @@
-package org.hivedrive.cmd.service;
+package org.hivedrive.cmd.service.common;
 
 
 import java.beans.PropertyChangeEvent;
@@ -10,7 +10,9 @@ import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.crypto.KeyGenerator;
@@ -30,32 +32,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Lazy
 @Service
-public class UserKeysService {
+public class UserKeysService implements KeysService {
 
-	@Autowired
-	private RepositoryConfigService configService;
-
-	private PropertyChangeSupport support;
+	List<Runnable> listeners = new ArrayList<>();
 	
 	private UserKeys keys;
 	
 	public UserKeysService() {
-		support = new PropertyChangeSupport(this);
 	}
 
-	@PostConstruct
-	public void loadKeys() {
-		configService.addPropertyChangeListener(event -> {
-			if (configService.getConfig() != null) {
-				File keysFile = new File(configService.getConfig().getKeysPath());
-				setKeys(load(keysFile));
-			}
-		});
-	}
+	public void loadKeys(File keysFile) {
+		setKeys(load(keysFile));
+}
 
-	public void addPropertyChangeListener(PropertyChangeListener pcl) {
-		support.addPropertyChangeListener(pcl);
-    }
+//	public void addPropertyChangeListener(PropertyChangeListener pcl) {
+//		support.addPropertyChangeListener("keys", pcl);
+//    }
+	public void onKeysLoaded(Runnable onKeysLoaded) {
+		listeners.add(onKeysLoaded);
+	}
 	
 	private UserKeys load(File clientKeys) {
 		try {
@@ -65,7 +60,7 @@ public class UserKeysService {
 		}
 	}
 
-	public void save(File clientKeys) {
+	public void saveKeptKeys(File clientKeys) {
 		try {
 			JSONUtils.write(clientKeys, keys);
 		} catch (Exception e) {
@@ -112,6 +107,7 @@ public class UserKeysService {
 		return keyPair;
 	}
 
+	@Override
 	public UserKeys getKeys() {
 		return keys;
 	}
@@ -119,8 +115,12 @@ public class UserKeysService {
 	public void setKeys(UserKeys keys) {
 		UserKeys oldValue = this.keys;
 		this.keys = keys;
-		support.firePropertyChange("keys", oldValue, this.keys);
-		
+		for(Runnable listener : listeners) {
+			listener.run();
+		}
+//		PropertyChangeListener[] propertyChangeListeners = support.getPropertyChangeListeners();
+//		support.firePropertyChange(new PropertyChangeEvent(this, "keys", oldValue, this.keys));
+//		support.firePropertyChange("keys", oldValue, this.keys);
 	}
 
 }

@@ -6,6 +6,7 @@ import static org.hivedrive.cmd.service.CryptographicTestHelper.*;
 import org.apache.commons.io.FileUtils;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

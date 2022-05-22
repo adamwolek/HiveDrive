@@ -1,11 +1,10 @@
 package org.hivedrive.cmd.service;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 
 import org.hivedrive.cmd.model.RepositoryConfigFileData;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.tool.JSONUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -23,17 +22,9 @@ public class RepositoryConfigService {
 
 	private RepositoryConfigFileData config;
 
-	private PropertyChangeSupport support;
-
 	@Autowired
-	public RepositoryConfigService() {
-		support = new PropertyChangeSupport(this);
-	}
-
-	public void addPropertyChangeListener(PropertyChangeListener pcl) {
-		support.addPropertyChangeListener(pcl);
-	}
-
+	private UserKeysService userKeysService;
+	
 	private void init() throws IOException {
 		if (getConfigFile().exists()) {
 			this.config = loadConfig();
@@ -84,10 +75,11 @@ public class RepositoryConfigService {
 	}
 
 	public void setRepositoryDirectory(File repositoryDirectory) throws IOException {
-		File oldValue = this.repositoryDirectory;
 		this.repositoryDirectory = repositoryDirectory;
 		init();
-		support.firePropertyChange("repositoryDirectory", oldValue, this.repositoryDirectory);
+		if(config != null) {
+			userKeysService.loadKeys(new File(config.getKeysPath()));
+		}
 	}
 
 	public RepositoryConfigFileData getConfig() {

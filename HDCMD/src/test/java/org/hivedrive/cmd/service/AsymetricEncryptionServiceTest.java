@@ -12,6 +12,7 @@ import org.hivedrive.cmd.config.HDTestSpringExtension;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.exception.DecryptionFailedException;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.common.UserKeysService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
