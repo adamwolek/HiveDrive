@@ -24,7 +24,7 @@ public class NodeRepository {
 			nodes.add(node);
 			return node;
 		} else {
-			existingNode.setIpAddress(node.getIpAddress());
+			existingNode.setAddress(node.getAddress());
 			existingNode.setStatus(node.getStatus());
 			existingNode.setFreeSpace(node.getFreeSpace());
 			existingNode.setUsedSpace(node.getUsedSpace());

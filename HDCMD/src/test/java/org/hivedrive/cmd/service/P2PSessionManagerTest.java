@@ -16,6 +16,7 @@ import org.checkerframework.checker.nullness.qual.AssertNonNullIfNonNull;
 import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.model.UserKeys;
+import org.hivedrive.cmd.service.common.AddressService;
 import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
@@ -62,6 +63,9 @@ public class P2PSessionManagerTest {
 	@Autowired
 	C2NConnectionService connectionService;
 	
+	@Autowired
+	AddressService addressService;
+	
 	@BeforeEach
 	private void beforeTest() {
 		userKeysService.setKeys(userKeysService.generateNewKeys());
@@ -91,7 +95,7 @@ public class P2PSessionManagerTest {
 	private void preapareNode(MockWebServer node) throws JsonProcessingException {
 		NodeTO whoIsNode = new NodeTO();
 		whoIsNode.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
-		whoIsNode.setIpAddress("localhost");
+		whoIsNode.setAddress("localhost:8080");
 		
 		String body = JSONUtils.mapper().writeValueAsString(whoIsNode);
 		MockResponse whoAreYouResponse = new MockResponse()
@@ -125,7 +129,7 @@ public class P2PSessionManagerTest {
 			
 			NodeTO nodeTo = new NodeTO();
 			nodeTo.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
-			nodeTo.setIpAddress(mockServer.getHostName());
+			nodeTo.setAddress(mockServer.getHostName() + ":" +  mockServer.getPort());
 			
 			String body = JSONUtils.mapper().writeValueAsString(nodeTo);
 			MockResponse mockedResponse = new MockResponse()
@@ -136,7 +140,7 @@ public class P2PSessionManagerTest {
 			mockServer.enqueue(mockedResponse);
 			
 			P2PSession p2pSessionManager = P2PSession.fromClient(
-					userKeysService, signatureService);
+					userKeysService, signatureService, addressService);
 			p2pSessionManager.setUriBuilderFactory(new DefaultUriBuilderFactory(url.toString()));
 			boolean met = p2pSessionManager.meetWithNode();
 			

@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.util.DigestUtils;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -165,13 +166,23 @@ public class PushCommand implements Runnable {
 
 			String fileSign = signatureService.signFileUsingDefaultKeys(partOfFile);
 			partInfo.setFileSign(fileSign);
-
+			
+			partInfo.setFileHash(getHash(sourceFile));
+			
 			FileMetadata metadata = createFileMetadata(fileId, partOfFile);
 			partInfo.setFileMetadata(metadata);
 			String encrypedFileMetadata = encryptionService.encrypt(metadata.toJSON());
 			partInfo.setEncryptedFileMetadata(encrypedFileMetadata);
 			return partInfo;
 		}).collect(Collectors.toList());
+	}
+
+	private String getHash(File sourceFile) {
+		try {
+			return DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(sourceFile));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private FileMetadata createFileMetadata(String fileId, File file) {

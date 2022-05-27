@@ -4,11 +4,12 @@ import java.util.Collection;
 import java.util.List;
 
 import org.hivedrive.server.entity.PartEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
-public interface PartRepository extends CrudRepository<PartEntity, Long> {
+public interface PartRepository extends JpaRepository<PartEntity, Long> {
 
 	@Override
 	PartEntity save(PartEntity part);
@@ -17,14 +18,12 @@ public interface PartRepository extends CrudRepository<PartEntity, Long> {
 			+ "WHERE part.node.publicKey = :ownerId "
 			+ "AND part.repository = :repository "
 			+ "AND part.groupId = :groupId "
-			+ "AND part.orderInGroup = :orderInGroup "
-			+ "AND part.fileHash = :fileHash")
+			+ "AND part.orderInGroup = :orderInGroup ")
 	PartEntity findPart(
 			@Param("ownerId") String ownerId, 
 			@Param("repository") String repository, 
 			@Param("groupId") String groupId, 
-			@Param("orderInGroup") Integer orderInGroup,
-			@Param("fileHash") String fileHash);
+			@Param("orderInGroup") Integer orderInGroup);
 
 	@Query("FROM PartEntity part "
 			+ "WHERE part.node.publicKey = :ownerId "

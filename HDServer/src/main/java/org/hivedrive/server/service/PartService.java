@@ -35,7 +35,11 @@ public class PartService {
 	private ServerConfigService serverConfigService;
 
 	public PartEntity saveOrUpdate(PartTO to) {
-		PartEntity existingPart = partRepository.findPart(to.getOwnerId(), to.getRepository(), to.getGroupId(), to.getOrderInGroup(), to.getFileHash());
+		PartEntity existingPart = partRepository.findPart(
+				to.getOwnerId(), 
+				to.getRepository(), 
+				to.getGroupId(), 
+				to.getOrderInGroup());
 		if(existingPart == null) {
 			PartEntity entity = mapper.map(to);
 			entity.setCreateDate(LocalDateTime.now());
@@ -61,8 +65,15 @@ public class PartService {
 		.orElse(null);
 	}
 
-	public PartTO get(String ownerId, String repository, String groupId, Integer orderInGroup, String fileHash) {
-		PartEntity part = partRepository.findPart(ownerId, repository, groupId, orderInGroup, fileHash);
+	public PartTO get(String ownerId, String repository, String groupId, Integer orderInGroup) {
+		PartEntity part = partRepository.findPart(ownerId, repository, groupId, orderInGroup);
+		System.out.println("ownerId: " + ownerId + "\n" +
+				"repository: " + repository + "\n" +
+				"groupId: " + groupId + "\n" +
+				"orderInGroup: " + orderInGroup);
+		if(part == null) {
+			return null;
+		}
 		return mapper.map(part);
 	}
 	

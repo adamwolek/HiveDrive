@@ -16,6 +16,7 @@ public class PartInfoToTOMapper {
 		to.setRepository(part.getFileMetadata().getRepository());
 		to.setOwnerId(part.getOwnerPublicKey());
 		to.setEncryptedFileMetadata(part.getEncryptedFileMetadata());
+		to.setFileHash(part.getFileHash());
 		return to;
 	}
 	

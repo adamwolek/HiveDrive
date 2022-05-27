@@ -50,12 +50,12 @@ class NodeControllerTest {
 	        
 	        to = new NodeTO();
 	        to.setStatus("test status");
-	        to.setIpAddress("127.0.0.1");
+	        to.setAddress("127.0.0.1:8080");
 	        to.setPublicKey("qwertyuiopasdfgjkl");
 	        
 	        to2 = new NodeTO();
 	        to2.setStatus("test status 2");
-	        to2.setIpAddress("127.0.0.1");
+	        to2.setAddress("127.0.0.1:8080");
 	        to2.setPublicKey("asdfghjklzxcvbnm");
 	        
 	        tos = new ArrayList<>();

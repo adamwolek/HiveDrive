@@ -8,23 +8,11 @@ public class NodeEntity {
 
 	private String status;
 	 
-	private String ipAddress;
-	
-	private String localIpAddress;
+	private String address;
 	
 	private Long freeSpace;
 	
 	private Long usedSpace;
-
-	
-	
-	public String getLocalIpAddress() {
-		return localIpAddress;
-	}
-
-	public void setLocalIpAddress(String localIpAddress) {
-		this.localIpAddress = localIpAddress;
-	}
 
 	public String getPublicKey() {
 		return publicKey;
@@ -42,12 +30,14 @@ public class NodeEntity {
 		this.status = status;
 	}
 
-	public String getIpAddress() {
-		return ipAddress;
+	
+
+	public String getAddress() {
+		return address;
 	}
 
-	public void setIpAddress(String ipAddress) {
-		this.ipAddress = ipAddress;
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
 	public Long getFreeSpace() {
@@ -68,7 +58,7 @@ public class NodeEntity {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(ipAddress);
+		return Objects.hash(address);
 	}
 
 	@Override
@@ -80,7 +70,7 @@ public class NodeEntity {
 		if (getClass() != obj.getClass())
 			return false;
 		NodeEntity other = (NodeEntity) obj;
-		return Objects.equals(ipAddress, other.ipAddress);
+		return Objects.equals(address, other.address);
 	}
 	
 	

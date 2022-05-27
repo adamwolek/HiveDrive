@@ -1,30 +1,57 @@
 package org.hivedrive.server.entity;
 
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 @Entity
 public class NodeEntity {
 
+	public static String NEW_STATUS = "new";
+	
 	@Id
 	@GeneratedValue
 	private Long id;
 
-	@Column(columnDefinition = "LONGTEXT")
+//	@Id
+//	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(unique = true, columnDefinition = "varchar(4096)")
 	private String publicKey;
 
 	private String status;
 
-	private String ipAddress;
+	private String address;
 
-	private String localIpAddress;
-	
 	private Long freeSpace;
 	
 	private Long usedSpace;
 	
+	@OneToMany(fetch = FetchType.EAGER)
+	private List<ClientEntity> clients;
+	
+	
+	
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public List<ClientEntity> getClients() {
+		return clients;
+	}
+
+	public void setClients(List<ClientEntity> clients) {
+		this.clients = clients;
+	}
+
 	public String getPublicKey() {
 		return publicKey;
 	}
@@ -41,29 +68,15 @@ public class NodeEntity {
 		this.status = status;
 	}
 
-	public String getIpAddress() {
-		return ipAddress;
+
+	public String getAddress() {
+		return address;
 	}
 
-	public void setIpAddress(String ipAddress) {
-		this.ipAddress = ipAddress;
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getLocalIpAddress() {
-		return localIpAddress;
-	}
-
-	public void setLocalIpAddress(String localIpAddress) {
-		this.localIpAddress = localIpAddress;
-	}
 
 	public Long getFreeSpace() {
 		return freeSpace;

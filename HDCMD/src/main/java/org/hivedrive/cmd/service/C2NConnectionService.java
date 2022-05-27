@@ -25,6 +25,7 @@ import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.NodeEntity;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.repository.NodeRepository;
+import org.hivedrive.cmd.service.common.AddressService;
 import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
@@ -59,11 +60,13 @@ public class C2NConnectionService {
 	private RepositoryConfigService repositoryConfigService;
 
 	private SymetricEncryptionService encryptionService;
+	private AddressService addressService;
 
 	@Autowired
 	public C2NConnectionService(ConfigurationService config, UserKeysService userKeysService,
 			SignatureService signatureService, Environment env, NodeRepository nodeRepository, 
-			RepositoryConfigService repositoryConfigService, SymetricEncryptionService encryptionService) {
+			RepositoryConfigService repositoryConfigService, 
+			SymetricEncryptionService encryptionService, AddressService addressService) {
 		super();
 		this.config = config;
 		this.userKeysService = userKeysService;
@@ -72,6 +75,7 @@ public class C2NConnectionService {
 		this.nodeRepository = nodeRepository;
 		this.repositoryConfigService = repositoryConfigService;
 		this.encryptionService = encryptionService;
+		this.addressService = addressService;
 	}
 
 	@PostConstruct
@@ -93,7 +97,8 @@ public class C2NConnectionService {
 
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
 		metadata.getActiveNodes().stream()
-			.map(address -> P2PSession.fromClient(address, userKeysService, signatureService))
+			.map(address -> P2PSession.fromClient(
+					address, userKeysService, signatureService, addressService))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getNode)
 			.map(this::mapToNewEntity)
@@ -116,7 +121,7 @@ public class C2NConnectionService {
 
 	private void meetMoreNodes() {
 		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-			.map(node -> P2PSession.fromClient(node, userKeysService, signatureService))
+			.map(node -> P2PSession.fromClient(node, userKeysService, signatureService, addressService))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getAllNodes)
 			.flatMap(Collection::stream)
@@ -127,8 +132,7 @@ public class C2NConnectionService {
 	private NodeEntity mapToNewEntity(NodeTO nodeTO) {
 		NodeEntity entity = new NodeEntity();
 		entity.setPublicKey(nodeTO.getPublicKey());
-		entity.setIpAddress(nodeTO.getAccessibleIP());
-		entity.setLocalIpAddress(nodeTO.getLocalIpAddress());
+		entity.setAddress(nodeTO.getAddress());
 		entity.setStatus(nodeTO.getStatus());
 		entity.setFreeSpace(nodeTO.getFreeSpace());
 		entity.setUsedSpace(nodeTO.getUsedSpace());
@@ -138,8 +142,7 @@ public class C2NConnectionService {
 	private NodeTO mapEntityToTO(NodeEntity entity) {
 		NodeTO nodeTO = new NodeTO();
 		nodeTO.setPublicKey(entity.getPublicKey());
-		nodeTO.setIpAddress(entity.getIpAddress());
-		nodeTO.setLocalIpAddress(entity.getLocalIpAddress());
+		nodeTO.setAddress(entity.getAddress());
 		nodeTO.setStatus(entity.getStatus());
 		nodeTO.setFreeSpace(entity.getFreeSpace());
 		nodeTO.setUsedSpace(entity.getUsedSpace());
@@ -165,7 +168,7 @@ public class C2NConnectionService {
 			int copiesOfPart = 0;
 			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
 				NodeEntity node = nodes.poll();
-				P2PSession sessionManager = newSession(node.getIpAddress());
+				P2PSession sessionManager = newSession(node.getAddress());
 				PartTO partTO = PartInfoToTOMapper.create().map(part);
 				boolean requestSent = sessionManager.send(partTO);
 				if (requestSent) {
@@ -213,7 +216,7 @@ public class C2NConnectionService {
 	}
 
 	private P2PSession newSession(String ipAddress) {
-		return P2PSession.fromClient(ipAddress, userKeysService, signatureService);
+		return P2PSession.fromClient(ipAddress, userKeysService, signatureService, addressService);
 	}
 
 	private Queue<NodeEntity> getBestNodes(PartInfo part) {
@@ -235,7 +238,8 @@ public class C2NConnectionService {
 		List<NodeEntity> allNodes = nodeRepository.getAllNodes();
 		for (NodeEntity node : allNodes) {
 			NodeTO nodeTO = mapEntityToTO(node);
-			P2PSession p2pSession = P2PSession.fromClient(nodeTO, userKeysService, signatureService);
+			P2PSession p2pSession = P2PSession.fromClient(
+					nodeTO, userKeysService, signatureService, addressService);
 			if (p2pSession.meetWithNode()) {
 				String fileHash = null;
 				try {
@@ -253,7 +257,8 @@ public class C2NConnectionService {
 
 	public List<PartInfo> downloadParts(File workDirectory) {
 		List<PartTO> parts = nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-				.map(node -> P2PSession.fromClient(node, userKeysService, signatureService))
+				.map(node -> P2PSession.fromClient(
+						node, userKeysService, signatureService, addressService))
 				.filter(P2PSession::meetWithNode)
 				.flatMap(session -> {
 					String repository = repositoryConfigService.getConfig().getRepositoryName();
@@ -268,7 +273,7 @@ public class C2NConnectionService {
 
 	private PartInfo partInfo(File workDirectory, PartTO selectedPart) {
 		try {
-			P2PSession session = newSession(selectedPart.getNodeWhichContainsPart().getLocalIpAddress());
+			P2PSession session = newSession(selectedPart.getNodeWhichContainsPart().getAddress());
 			File directoryForParts = new File(workDirectory, "/parts");
 			File part = new File(directoryForParts,
 					"part-" + selectedPart.getGroupId() + "-" + selectedPart.getOrderInGroup());

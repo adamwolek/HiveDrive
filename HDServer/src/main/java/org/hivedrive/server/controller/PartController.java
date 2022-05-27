@@ -95,13 +95,12 @@ public class PartController {
 	ResponseEntity<Collection<PartTO>> get(
 			@RequestParam(name = "repository") String repository, 
 			@RequestParam(name = "groupId", required = false) String groupId,
-			@RequestParam(name = "orderInGroup", required = false) Integer orderInGroup,
-			@RequestParam(name = "fileHash", required = false) String fileHash) {
+			@RequestParam(name = "orderInGroup", required = false) Integer orderInGroup) {
 		if(groupId == null && orderInGroup == null) {
 			Collection<PartTO> parts = partService.get(senderInfo.getSenderPublicKey(), repository);
 			return new ResponseEntity<>(parts, HttpStatus.OK);
 		} else {
-			PartTO part = partService.get(senderInfo.getSenderPublicKey(), repository, groupId, orderInGroup, fileHash);
+			PartTO part = partService.get(senderInfo.getSenderPublicKey(), repository, groupId, orderInGroup);
 			return new ResponseEntity<>(Lists.newArrayList(part), HttpStatus.OK);
 		}
 	}

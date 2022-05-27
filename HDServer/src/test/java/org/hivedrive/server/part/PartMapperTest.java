@@ -55,7 +55,7 @@ class PartMapperTest {
         
         NodeEntity nodeEntity = new NodeEntity();
         nodeEntity.setStatus("test status");
-        nodeEntity.setIpAddress("127.0.0.1");
+        nodeEntity.setAddress("127.0.0.1:8080");
         nodeEntity.setPublicKey("qwertyuiopasdfgjkl");
         
         entity = new PartEntity();

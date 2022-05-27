@@ -37,12 +37,12 @@ class NodeServiceTest {
 	        
 	        to = new NodeTO();
 	        to.setStatus("test status");
-	        to.setIpAddress("127.0.0.1");
+	        to.setAddress("127.0.0.1:8080");
 	        to.setPublicKey("qwertyuiopasdfgjkl");
 	        
 	        entity = new NodeEntity();
 	        entity.setStatus("test status");
-	        entity.setIpAddress("127.0.0.1");
+	        entity.setAddress("127.0.0.1:8080");
 	        entity.setPublicKey("qwertyuiopasdfgjkl");
 	        
 	        publicKey = "qwertyuiopasdfgjkl";
@@ -57,8 +57,8 @@ class NodeServiceTest {
 	        
 	        //then
 	        assertEquals(to.getStatus(), result.getStatus());
-	        assertEquals(to.getIpAddress(), result.getIpAddress());
-	        assertEquals(to.getIpAddress(), result.getIpAddress());
+	        assertEquals(to.getAddress(), result.getAddress());
+	        assertEquals(to.getAddress(), result.getAddress());
 	        assertEquals(to.getPublicKey(), result.getPublicKey());
 	    }
 	    
@@ -117,7 +117,7 @@ class NodeServiceTest {
 	    	//then
 	    	assertEquals(1, result.size());
 	    	assertEquals(to.getStatus(), result.get(0).getStatus());
-	        assertEquals(to.getAccessibleIP(), result.get(0).getAccessibleIP());
+	        assertEquals(to.getAddress(), result.get(0).getAddress());
 	        assertEquals(to.getPublicKey(), result.get(0).getPublicKey());
 	    }
 	    
@@ -127,7 +127,7 @@ class NodeServiceTest {
 	    	//given
 	    	NodeTO to2 = new NodeTO();
 	        to2.setStatus("test status 2");
-	        to2.setIpAddress("127.0.0.1");
+	        to2.setAddress("127.0.0.1:8080");
 	        to2.setPublicKey("asdfghjklzxcvbnm");
 	    	
 	    	//when

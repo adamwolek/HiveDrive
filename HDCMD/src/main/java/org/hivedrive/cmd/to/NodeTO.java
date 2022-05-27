@@ -13,10 +13,8 @@ public class NodeTO {
 	 */
 	private String status;
 
-	private String ipAddress;
+	private String address;
 	
-	private String localIpAddress;
-
 	/**
 	 * Amount of space (in GB) where files can be saved
 	 */
@@ -26,14 +24,6 @@ public class NodeTO {
 	 * Amount of space (in GB) where files have been already saved
 	 */
 	private Long usedSpace;
-
-	public String getLocalIpAddress() {
-		return localIpAddress;
-	}
-
-	public void setLocalIpAddress(String localIpAddress) {
-		this.localIpAddress = localIpAddress;
-	}
 
 	public String getPublicKey() {
 		return publicKey;
@@ -51,12 +41,14 @@ public class NodeTO {
 		this.status = status;
 	}
 
-	public String getIpAddress() {
-		return ipAddress;
+
+	
+	public String getAddress() {
+		return address;
 	}
 
-	public void setIpAddress(String ipAddress) {
-		this.ipAddress = ipAddress;
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
 	public Long getFreeSpace() {
@@ -75,9 +67,4 @@ public class NodeTO {
 		this.usedSpace = usedSpace;
 	}
 	
-	@JsonIgnore
-	public String getAccessibleIP() {
-		return localIpAddress;
-	}
-
 }

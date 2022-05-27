@@ -16,11 +16,6 @@ public class FileMetadata {
 	private String fileId;
 	private int partIndex;
 	
-
-	
-
-	
-	
 	public String getRepository() {
 		return repository;
 	}

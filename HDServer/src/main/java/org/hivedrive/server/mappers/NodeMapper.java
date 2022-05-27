@@ -14,7 +14,7 @@ public class NodeMapper {
 		NodeEntity entity = new NodeEntity();
 		entity.setStatus(to.getStatus());
 		entity.setPublicKey(to.getPublicKey());
-		entity.setIpAddress(to.getIpAddress());
+		entity.setAddress(to.getAddress());
 		return entity;
 	}
 	
@@ -30,7 +30,7 @@ public class NodeMapper {
 		NodeTO to = new NodeTO();
 		to.setStatus(entity.getStatus());
 		to.setPublicKey(entity.getPublicKey());
-		to.setIpAddress(entity.getIpAddress());
+		to.setAddress(entity.getAddress());
 		return to;
 	}
 	

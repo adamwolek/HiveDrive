@@ -14,6 +14,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
 import org.hivedrive.cmd.exception.ReadDataFromMetadataServerException;
 import org.hivedrive.cmd.service.C2NConnectionService;
+import org.hivedrive.cmd.service.common.AddressService;
 import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
@@ -46,7 +47,10 @@ public class N2NConnectionService {
 	private SignatureService signatureService;
 	
 	@Autowired
-	private NodeRepository nodeRepository;
+	private AddressService addressService;
+	
+	@Autowired
+	private NodeService nodeService;
 	
 	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
 		List<CentralServerMetadata> centralServersMetadata = serverConfigService.getCentralServers().stream()
@@ -79,28 +83,29 @@ public class N2NConnectionService {
 			logger.info("Register to node at address " + address);
 			return address;
 		})
-		.map(address -> P2PSession.fromNode(address, userKeysService, signatureService))
+		.map(address -> P2PSession.fromNode(
+				address, userKeysService, signatureService, addressService))
 		.filter(P2PSession::meetWithNode)
 		.map(P2PSession::getNode)
 		.map(this::mapToNewEntity)
-		.forEach(nodeRepository::save);
+		.forEach(nodeService::saveOrUpdate);
 	}
 	
 	private void meetMoreNodes() {
-		nodeRepository.findAll().stream().map(this::mapEntityToTO)
-			.map(node -> P2PSession.fromNode(node, userKeysService, signatureService))
+		nodeService.findAll().stream().map(this::mapEntityToTO)
+			.map(node -> P2PSession.fromNode(
+					node, userKeysService, signatureService, addressService))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getAllNodes)
 			.flatMap(Collection::stream)
 			.map(this::mapToNewEntity)
-			.forEach(nodeRepository::save);
+			.forEach(nodeService::saveOrUpdate);
 	}
 	
 	private NodeTO mapEntityToTO(NodeEntity entity) {
 		NodeTO nodeTO = new NodeTO();
 		nodeTO.setPublicKey(entity.getPublicKey());
-		nodeTO.setIpAddress(entity.getIpAddress());
-		nodeTO.setLocalIpAddress(entity.getLocalIpAddress());
+		nodeTO.setAddress(entity.getAddress());
 		nodeTO.setStatus(entity.getStatus());
 		nodeTO.setFreeSpace(entity.getFreeSpace());
 		nodeTO.setUsedSpace(entity.getUsedSpace());
@@ -110,7 +115,7 @@ public class N2NConnectionService {
 	private NodeEntity mapToNewEntity(NodeTO nodeTO) {
 		NodeEntity entity = new NodeEntity();
 		entity.setPublicKey(nodeTO.getPublicKey());
-		entity.setIpAddress(nodeTO.getAccessibleIP());
+		entity.setAddress(nodeTO.getAddress());
 		entity.setStatus(nodeTO.getStatus());
 		entity.setFreeSpace(nodeTO.getFreeSpace());
 		entity.setUsedSpace(nodeTO.getUsedSpace());
@@ -119,7 +124,7 @@ public class N2NConnectionService {
 
 	private URL createUrl(String address) {
 		try {
-			return new URL(address);
+			return new URL("http://" + address + "/metadata.json");
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}

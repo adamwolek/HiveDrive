@@ -32,12 +32,12 @@ class NodeJsonHelperTest {
         //given
         to = new NodeTO();
         to.setStatus("test status");
-        to.setIpAddress("127.0.0.1");
+        to.setAddress("127.0.0.1:8080");
         to.setPublicKey("qwertyuiopasdfgjkl");
         
         entity = new NodeEntity();
         entity.setStatus("test status");
-        entity.setIpAddress("127.0.0.1");
+        entity.setAddress("127.0.0.1:8080");
         entity.setPublicKey("qwertyuiopasdfgjkl");
         
         json = "{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"ipAddress\":\"127.0.0.1\"}";
@@ -63,7 +63,7 @@ class NodeJsonHelperTest {
         
         //then
         assertEquals(to.getStatus(), result.getStatus());
-        assertEquals(to.getIpAddress(), result.getIpAddress());
+        assertEquals(to.getAddress(), result.getAddress());
         assertEquals(to.getPublicKey(), result.getPublicKey());
     }
     
@@ -73,7 +73,7 @@ class NodeJsonHelperTest {
     	//given
     	NodeTO to2 = new NodeTO();
     	to2.setStatus("test status 2");
-	    to2.setIpAddress("127.0.0.1");
+	    to2.setAddress("127.0.0.1:8080");
 	    to2.setPublicKey("asdfghjklzxcvbnm");
 	    
 	    List<NodeTO> tos = new ArrayList<>();
@@ -95,7 +95,7 @@ class NodeJsonHelperTest {
     	//given
     	NodeTO to2 = new NodeTO();
     	to2.setStatus("test status 2");
-	    to2.setIpAddress("127.0.0.1");
+	    to2.setAddress("127.0.0.1:8080");
 	    to2.setPublicKey("asdfghjklzxcvbnm");
 	    
 	    List<NodeTO> tos = new ArrayList<>();
@@ -110,10 +110,10 @@ class NodeJsonHelperTest {
         //then
         assertEquals(2, result.size());
         assertEquals(to.getStatus(), result.get(0).getStatus());
-        assertEquals(to.getAccessibleIP(), result.get(0).getAccessibleIP());
+        assertEquals(to.getAddress(), result.get(0).getAddress());
         assertEquals(to.getPublicKey(), result.get(0).getPublicKey());
         assertEquals(to2.getStatus(), result.get(1).getStatus());
-        assertEquals(to2.getIpAddress(), result.get(1).getIpAddress());
+        assertEquals(to2.getAddress(), result.get(1).getAddress());
         assertEquals(to2.getPublicKey(), result.get(1).getPublicKey());
     }
 

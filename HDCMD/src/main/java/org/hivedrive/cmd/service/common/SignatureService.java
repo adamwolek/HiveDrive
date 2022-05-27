@@ -6,6 +6,7 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.util.Base64;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.model.UserKeys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -64,6 +65,11 @@ public class SignatureService {
 	}
 
 	public boolean verifySign(String signature, String dataToVerify, String publicKey) {
+		if(StringUtils.isBlank(signature) 
+				|| StringUtils.isBlank(dataToVerify) 
+				|| StringUtils.isBlank(publicKey)) {
+			return false;
+		}
 		byte[] signInBytes = Base64.getDecoder().decode(signature);
 		return verifySign(signInBytes, dataToVerify.getBytes(), publicKey);
 	}
