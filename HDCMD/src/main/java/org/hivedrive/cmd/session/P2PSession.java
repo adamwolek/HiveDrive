@@ -13,6 +13,8 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.helper.StatusCode;
@@ -28,6 +30,9 @@ import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.cmd.tool.JSONUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilder;
 
@@ -39,12 +44,21 @@ import com.google.common.collect.Iterables;
  * Session beetween my node and another node
  *
  */
+@Component
+@Scope("prototype")
 public class P2PSession {
 
 	private Logger logger = LoggerFactory.getLogger(P2PSession.class);
 	private NodeTO correspondingNode;
+	
+	@Autowired
 	private KeysService userKeysService;
+	
+	@Autowired
 	private SignatureService signatureService;
+	
+	@Autowired
+	private AddressService addressService;
 
 	public static final String SENDER_TYPE_HEADER_PARAM = "x-sender-type";
 	public static final String SENDER_ID_HEADER_PARAM = "x-sender-id";
@@ -79,64 +93,25 @@ public class P2PSession {
 		return uriBuilderFactory.builder().path("/part/content");
 	} 
 	
-	public static P2PSession fromClient(NodeTO correspondingNode, UserKeysService userKeysService,
-			SignatureService signatureService, AddressService addressService) {
-		return new P2PSession(correspondingNode.getAddress(), 
-				userKeysService, signatureService, addressService, "client");
-	}
-	
-	public static P2PSession fromClient(String address, UserKeysService userKeysService,
-			SignatureService signatureService, AddressService addressService) {
-		return new P2PSession(address, userKeysService, signatureService, addressService, "client");
-	}
-	
-	public static P2PSession fromClient(UserKeysService userKeysService, 
-			SignatureService signatureService, AddressService addressService) {
-		return new P2PSession(userKeysService, signatureService, addressService, "client");
-	}
-	
-	public static P2PSession fromNode(NodeTO correspondingNode, UserKeysService userKeysService,
-			SignatureService signatureService, AddressService addressService) {
-		return new P2PSession(correspondingNode.getAddress(), 
-				userKeysService, signatureService, addressService, "node");
-	}
-	
-	public static P2PSession fromNode(String address, UserKeysService userKeysService,
-			SignatureService signatureService, AddressService addressService) {
-		return new P2PSession(address, userKeysService, signatureService, addressService, "node");
-	}
-	
-	public static P2PSession fromNode(UserKeysService userKeysService, 
-			SignatureService signatureService, AddressService addressService) {
-		return new P2PSession(userKeysService, signatureService, addressService, "node");
-	}
-	
-
-	private P2PSession(String address, UserKeysService userKeysService,
-			SignatureService signatureService, AddressService addressService, String senderType) {
+	public P2PSession fromClientToAddress(String address) {
 		this.address = address;
 		this.uriBuilderFactory = new DefaultUriBuilderFactory("http://" + address);
-		this.userKeysService = userKeysService;
-		this.signatureService = signatureService;
-		this.senderType = senderType;
-		this.senderAddress = addressService.getGlobalAddress();
+		this.senderType = "client";
+		return this;
+	}
+	
+	public P2PSession fromNodeToAddress(String address) {
+		this.address = address;
+		this.uriBuilderFactory = new DefaultUriBuilderFactory("http://" + address);
+		this.senderType = "node";
+		return this;
 	}
 
-	private P2PSession(UserKeysService userKeysService, 
-			SignatureService signatureService, AddressService addressService, String senderType) {
-		this.userKeysService = userKeysService;
-		this.signatureService = signatureService;
-		this.senderType = senderType;
+	@PostConstruct
+	private void init() {
 		this.senderAddress = addressService.getGlobalAddress();
 	}
 	
-//	public boolean registerToNode() throws URISyntaxException, IOException, InterruptedException {
-//		UserKeys keys = userKeysService.getKeys();
-//		NodeTO me = new NodeTO();
-//		me.setPublicKey(keys.getPublicAsymetricKeyAsString());
-//		return post(nodeEndpoint().build(), me);
-//	}
-
 	public NodeTO getNode() {
 		return correspondingNode;
 	}

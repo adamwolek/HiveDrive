@@ -27,6 +27,7 @@ import org.hivedrive.server.repository.NodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -41,17 +42,11 @@ public class N2NConnectionService {
 	private ServerConfigService serverConfigService;
 	
 	@Autowired
-	private UserKeysService userKeysService;
-	
-	@Autowired
-	private SignatureService signatureService;
-	
-	@Autowired
-	private AddressService addressService;
-	
-	@Autowired
 	private NodeService nodeService;
 	
+	@Autowired
+	private ApplicationContext appContext;
+
 	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
 		List<CentralServerMetadata> centralServersMetadata = serverConfigService.getCentralServers().stream()
 		.map(this::createUrl)
@@ -83,8 +78,7 @@ public class N2NConnectionService {
 			logger.info("Register to node at address " + address);
 			return address;
 		})
-		.map(address -> P2PSession.fromNode(
-				address, userKeysService, signatureService, addressService))
+		.map(address -> appContext.getBean(P2PSession.class).fromNodeToAddress(address))
 		.filter(P2PSession::meetWithNode)
 		.map(P2PSession::getNode)
 		.map(this::mapToNewEntity)
@@ -93,8 +87,7 @@ public class N2NConnectionService {
 	
 	private void meetMoreNodes() {
 		nodeService.findAll().stream().map(this::mapEntityToTO)
-			.map(node -> P2PSession.fromNode(
-					node, userKeysService, signatureService, addressService))
+			.map(node -> appContext.getBean(P2PSession.class).fromNodeToAddress(node.getAddress()))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getAllNodes)
 			.flatMap(Collection::stream)

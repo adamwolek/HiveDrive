@@ -25,8 +25,6 @@ import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.NodeEntity;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.repository.NodeRepository;
-import org.hivedrive.cmd.service.common.AddressService;
-import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
 import org.hivedrive.cmd.to.CentralServerMetadata;
@@ -36,6 +34,7 @@ import org.hivedrive.cmd.tool.JSONUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -51,31 +50,28 @@ public class C2NConnectionService {
 
 	private Logger logger = LoggerFactory.getLogger(C2NConnectionService.class);
 	
+	private ApplicationContext appContext;
 	private ConfigurationService config;
 	private UserKeysService userKeysService;
-	private SignatureService signatureService;
 	private Environment env; // TODO: delete?
 	private NodeRepository nodeRepository;
 
 	private RepositoryConfigService repositoryConfigService;
-
 	private SymetricEncryptionService encryptionService;
-	private AddressService addressService;
 
 	@Autowired
 	public C2NConnectionService(ConfigurationService config, UserKeysService userKeysService,
-			SignatureService signatureService, Environment env, NodeRepository nodeRepository, 
+			Environment env, NodeRepository nodeRepository, ApplicationContext appContext,
 			RepositoryConfigService repositoryConfigService, 
-			SymetricEncryptionService encryptionService, AddressService addressService) {
+			SymetricEncryptionService encryptionService) {
 		super();
 		this.config = config;
 		this.userKeysService = userKeysService;
-		this.signatureService = signatureService;
 		this.env = env;
 		this.nodeRepository = nodeRepository;
+		this.appContext = appContext;
 		this.repositoryConfigService = repositoryConfigService;
 		this.encryptionService = encryptionService;
-		this.addressService = addressService;
 	}
 
 	@PostConstruct
@@ -97,8 +93,7 @@ public class C2NConnectionService {
 
 	private void saveInitialKnownNodes(CentralServerMetadata metadata) {
 		metadata.getActiveNodes().stream()
-			.map(address -> P2PSession.fromClient(
-					address, userKeysService, signatureService, addressService))
+			.map(address -> appContext.getBean(P2PSession.class).fromClientToAddress(address))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getNode)
 			.map(this::mapToNewEntity)
@@ -121,7 +116,7 @@ public class C2NConnectionService {
 
 	private void meetMoreNodes() {
 		nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-			.map(node -> P2PSession.fromClient(node, userKeysService, signatureService, addressService))
+			.map(node -> appContext.getBean(P2PSession.class).fromClientToAddress(node.getAddress()))
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getAllNodes)
 			.flatMap(Collection::stream)
@@ -216,7 +211,7 @@ public class C2NConnectionService {
 	}
 
 	private P2PSession newSession(String ipAddress) {
-		return P2PSession.fromClient(ipAddress, userKeysService, signatureService, addressService);
+		return appContext.getBean(P2PSession.class).fromClientToAddress(ipAddress);
 	}
 
 	private Queue<NodeEntity> getBestNodes(PartInfo part) {
@@ -238,8 +233,8 @@ public class C2NConnectionService {
 		List<NodeEntity> allNodes = nodeRepository.getAllNodes();
 		for (NodeEntity node : allNodes) {
 			NodeTO nodeTO = mapEntityToTO(node);
-			P2PSession p2pSession = P2PSession.fromClient(
-					nodeTO, userKeysService, signatureService, addressService);
+			P2PSession p2pSession = appContext.getBean(P2PSession.class)
+					.fromClientToAddress(nodeTO.getAddress());
 			if (p2pSession.meetWithNode()) {
 				String fileHash = null;
 				try {
@@ -257,8 +252,7 @@ public class C2NConnectionService {
 
 	public List<PartInfo> downloadParts(File workDirectory) {
 		List<PartTO> parts = nodeRepository.getAllNodes().stream().map(this::mapEntityToTO)
-				.map(node -> P2PSession.fromClient(
-						node, userKeysService, signatureService, addressService))
+				.map(node -> appContext.getBean(P2PSession.class).fromClientToAddress(node.getAddress()))
 				.filter(P2PSession::meetWithNode)
 				.flatMap(session -> {
 					String repository = repositoryConfigService.getConfig().getRepositoryName();

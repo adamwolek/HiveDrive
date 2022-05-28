@@ -4,7 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
-@ComponentScan({"org.hivedrive.server", "org.hivedrive.cmd.service.common"})
+@ComponentScan({
+	"org.hivedrive.server", 
+	"org.hivedrive.cmd.service.common", 
+	"org.hivedrive.cmd.session"})
 @SpringBootApplication
 public class HiveDriveServerApplication {
 

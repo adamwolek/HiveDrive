@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -50,6 +51,9 @@ import okio.Buffer;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfig.class)
 public class P2PSessionManagerTest {
+	
+	@Autowired
+	private ApplicationContext appContext;
 	
 	@Autowired
 	ConfigurationService configurationService;
@@ -139,8 +143,7 @@ public class P2PSessionManagerTest {
 					.addHeader("Content-Type", "application/json");
 			mockServer.enqueue(mockedResponse);
 			
-			P2PSession p2pSessionManager = P2PSession.fromClient(
-					userKeysService, signatureService, addressService);
+			P2PSession p2pSessionManager = appContext.getBean(P2PSession.class);
 			p2pSessionManager.setUriBuilderFactory(new DefaultUriBuilderFactory(url.toString()));
 			boolean met = p2pSessionManager.meetWithNode();
 			
