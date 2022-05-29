@@ -144,7 +144,7 @@ public class P2PSessionManagerTest {
 			mockServer.enqueue(mockedResponse);
 			
 			P2PSession p2pSessionManager = appContext.getBean(P2PSession.class);
-			p2pSessionManager.setUriBuilderFactory(new DefaultUriBuilderFactory(url.toString()));
+			p2pSessionManager.fromClientToAddress(url.toString());
 			boolean met = p2pSessionManager.meetWithNode();
 			
 			assertTrue(met);

@@ -53,7 +53,6 @@ public class C2NConnectionService {
 	private ApplicationContext appContext;
 	private ConfigurationService config;
 	private UserKeysService userKeysService;
-	private Environment env; // TODO: delete?
 	private NodeRepository nodeRepository;
 
 	private RepositoryConfigService repositoryConfigService;
@@ -61,13 +60,12 @@ public class C2NConnectionService {
 
 	@Autowired
 	public C2NConnectionService(ConfigurationService config, UserKeysService userKeysService,
-			Environment env, NodeRepository nodeRepository, ApplicationContext appContext,
+			 NodeRepository nodeRepository, ApplicationContext appContext,
 			RepositoryConfigService repositoryConfigService, 
 			SymetricEncryptionService encryptionService) {
 		super();
 		this.config = config;
 		this.userKeysService = userKeysService;
-		this.env = env;
 		this.nodeRepository = nodeRepository;
 		this.appContext = appContext;
 		this.repositoryConfigService = repositoryConfigService;

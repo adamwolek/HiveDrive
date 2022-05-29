@@ -23,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -31,6 +32,7 @@ import org.springframework.web.context.WebApplicationContext;
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @AutoConfigureTestDatabase(replace = Replace.ANY)
 @DisplayName("NodeControllerTest")
+@ActiveProfiles("test")
 class NodeControllerTest {
 
 	   @Autowired
@@ -61,7 +63,7 @@ class NodeControllerTest {
 	        tos = new ArrayList<>();
 	        tos.add(to);
 	        
-	        tosJson  = "[{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"ipAddress\":\"127.0.0.1\"}]";
+	        tosJson  = "[{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"address\":\"127.0.0.1:8080\"}]";
 	    }
 
 	    @Test
@@ -95,7 +97,7 @@ class NodeControllerTest {
 	    @DisplayName("get existed")
 	    void getExistedTest() throws Exception {
 	    	//given
-	    	String json = "{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"ipAddress\":\"127.0.0.1\"}";
+	    	String json = "{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"address\":\"127.0.0.1:8080\"}";
 	    	
 	    	//when
 	    	mockMvc.perform(

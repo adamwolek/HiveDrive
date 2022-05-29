@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,12 +29,17 @@ public class OnStartListener implements ApplicationListener<ApplicationReadyEven
 	@Autowired
 	private N2NConnectionService connectionService;
 	
+	@Autowired
+	Environment env;
+	
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		try {
-			connectionService.manualInit();
-		} catch (Exception e) {
-			logger.error("Error: ", e);
+		if(env.acceptsProfiles(Profiles.of("prod"))) {
+			try {
+				connectionService.manualInit();
+			} catch (Exception e) {
+				logger.error("Error: ", e);
+			}
 		}
 	}
 }

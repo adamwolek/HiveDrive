@@ -16,11 +16,13 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureTestDatabase(replace = Replace.ANY)
 @DisplayName("NodeJsonHelperTest")
+@ActiveProfiles("test")
 class NodeJsonHelperTest {
 	
 	NodeTO to;
@@ -40,7 +42,7 @@ class NodeJsonHelperTest {
         entity.setAddress("127.0.0.1:8080");
         entity.setPublicKey("qwertyuiopasdfgjkl");
         
-        json = "{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"ipAddress\":\"127.0.0.1\"}";
+        json = "{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"address\":\"127.0.0.1:8080\"}";
     }
 	
 	@Test
@@ -80,7 +82,7 @@ class NodeJsonHelperTest {
 	    tos.add(to);
 	    tos.add(to2);
 	    
-	    String jsonList = "[{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"ipAddress\":\"127.0.0.1\"},{\"publicKey\":\"asdfghjklzxcvbnm\",\"status\":\"test status 2\",\"ipAddress\":\"127.0.0.1\"}]";
+	    String jsonList = "[{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"address\":\"127.0.0.1:8080\"},{\"publicKey\":\"asdfghjklzxcvbnm\",\"status\":\"test status 2\",\"address\":\"127.0.0.1:8080\"}]";
     	
     	//when
         String result = NodeJsonHelper.toJson(tos);
@@ -102,7 +104,7 @@ class NodeJsonHelperTest {
 	    tos.add(to);
 	    tos.add(to2);
 	    
-	    String jsonList = "[{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"ipAddress\":\"127.0.0.1\"},{\"publicKey\":\"asdfghjklzxcvbnm\",\"status\":\"test status 2\",\"ipAddress\":\"127.0.0.1\"}]";
+	    String jsonList = "[{\"publicKey\":\"qwertyuiopasdfgjkl\",\"status\":\"test status\",\"address\":\"127.0.0.1:8080\"},{\"publicKey\":\"asdfghjklzxcvbnm\",\"status\":\"test status 2\",\"address\":\"127.0.0.1:8080\"}]";
     	
     	//when
         List<NodeTO> result = NodeJsonHelper.fromJsonToList(jsonList);
