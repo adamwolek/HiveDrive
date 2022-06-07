@@ -62,11 +62,11 @@ public class MeetFriendsFilter implements Filter {
 				.filter(client -> client.getPublicKey().equals(senderId))
 				.findAny()
 				.ifPresentOrElse(existingClient -> {
-					existingClient.setIpAddress(addressOfSender);
+					existingClient.setAddress(addressOfSender);
 				}, () -> {
 					ClientEntity newClient = new ClientEntity();
 					newClient.setPublicKey(senderId);
-					newClient.setIpAddress(addressOfSender);
+					newClient.setAddress(addressOfSender);
 					newClient.setStatus(ClientEntity.NEW_STATUS);
 					clientRepository.save(newClient);
 					
@@ -77,6 +77,7 @@ public class MeetFriendsFilter implements Filter {
 		} 
     	chain.doFilter(request, response);
     }
+
 
 	private String getAddressOfSender(HttpServletRequest httpRequest) {
 		String addressOfClient = httpRequest.getHeader(P2PSession.SENDER_ADDRESS_HEADER_PARAM);

@@ -25,6 +25,7 @@ import org.hivedrive.cmd.service.common.KeysService;
 import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.status.PartStatus;
+import org.hivedrive.cmd.to.NodeSummary;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.cmd.tool.JSONUtils;
@@ -88,6 +89,9 @@ public class P2PSessionImpl implements P2PSession {
 	private UriBuilder partContentEndpoint() {
 		return uriBuilderFactory.builder().path("/part/content");
 	} 
+	private UriBuilder nodeSummaryEndpoint() {
+		return uriBuilderFactory.builder().path("/space/summary");
+	} 
 	
 	@Override
 	public P2PSession fromClientToAddress(String address) {
@@ -110,7 +114,7 @@ public class P2PSessionImpl implements P2PSession {
 
 	@PostConstruct
 	private void init() {
-		this.senderAddress = addressService.getGlobalAddress();
+		this.senderAddress = addressService.getMyAddress();
 	}
 	
 	@Override
@@ -120,6 +124,7 @@ public class P2PSessionImpl implements P2PSession {
 
 	@Override
 	public boolean meetWithNode() {
+		logger.info("Meet with node at address " + address);
 		try {
 			NodeTO receivedNode = get(whoAreYouEndpoint().build(), new TypeReference<NodeTO>() {
 			});
@@ -170,6 +175,7 @@ public class P2PSessionImpl implements P2PSession {
 
 	@Override
 	public List<NodeTO> getAllNodes() {
+		logger.info("Get all known nodes from node at address " + address);
 		try {
 			TypeReference<List<NodeTO>> typeReference = new TypeReference<List<NodeTO>>() {
 			};
@@ -241,6 +247,18 @@ public class P2PSessionImpl implements P2PSession {
 			return null;
 		}
 		
+	}
+	
+	@Override
+	public NodeSummary getSummary() {
+		try {
+			TypeReference<NodeSummary> typeReference = new TypeReference<NodeSummary>() {
+			};
+			return get(nodeSummaryEndpoint().build(), typeReference);
+		} catch (Exception e) {
+			logger.error(ERROR, e);
+			return null;
+		}
 	}
 
 	private <T> T get(URI uri, TypeReference<T> typeReference)

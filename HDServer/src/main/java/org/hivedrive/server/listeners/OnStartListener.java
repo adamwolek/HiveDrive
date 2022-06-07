@@ -12,6 +12,7 @@ import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
 import org.hivedrive.server.repository.NodeRepository;
 import org.hivedrive.server.service.N2NConnectionService;
+import org.hivedrive.server.service.NodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ public class OnStartListener implements ApplicationListener<ApplicationReadyEven
 	private N2NConnectionService connectionService;
 	
 	@Autowired
+	private NodeService nodeService;
+	
+	@Autowired
 	Environment env;
 	
 	@Override
@@ -41,5 +45,8 @@ public class OnStartListener implements ApplicationListener<ApplicationReadyEven
 				logger.error("Error: ", e);
 			}
 		}
+		
+		nodeService.saveOrUpdate(nodeService.getMe());
+		
 	}
 }

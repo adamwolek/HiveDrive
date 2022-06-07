@@ -64,21 +64,10 @@ public class PartMapper {
 		to.setRepository(entity.getRepository());
 		to.setGlobalId(entity.getGlobalId());
 		to.setOwnerId(entity.getNode().getPublicKey());
-		to.setNodeWhichContainsPart(getMe());
+		to.setNodeWhichContainsPart(nodeService.getMe());
 		to.setEncryptedFileMetadata(entity.getEncryptedFileMetadata());
 		to.setFileHash(entity.getHash());
 		return to;
-	}
-
-	private NodeTO getMe() {
-		NodeTO me = new NodeTO();
-		try {
-			me.setAddress(addressHelper.getGlobalAddress());
-		} catch (Exception e) {
-			logger.error("Error: ", e);
-		}
-		me.setPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
-		return me;
 	}
 
 	public List<PartTO> mapToTOs(Collection<PartEntity> tos) {

@@ -39,15 +39,23 @@ public class N2NConnectionService {
 	private Logger logger = LoggerFactory.getLogger(N2NConnectionService.class);
 	
 	@Autowired
+	private UserKeysService userKeysService;
+	
+	@Autowired
 	private ServerConfigService serverConfigService;
 	
 	@Autowired
 	private NodeService nodeService;
 	
 	@Autowired
+	private AddressService addressService;
+	
+	@Autowired
 	private ApplicationContext appContext;
 
 	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
+		
+		
 		List<CentralServerMetadata> centralServersMetadata = serverConfigService.getCentralServers().stream()
 		.map(this::createUrl)
 		.map(this::downloadMetadata)
@@ -74,10 +82,7 @@ public class N2NConnectionService {
 		.map(CentralServerMetadata::getActiveNodes)
 		.flatMap(Collection::stream)
 		.distinct()
-		.map(address -> {
-			logger.info("Register to node at address " + address);
-			return address;
-		})
+		.filter(this::isNotMe)
 		.map(address -> appContext.getBean(P2PSession.class).fromNodeToAddress(address))
 		.filter(P2PSession::meetWithNode)
 		.map(P2PSession::getNode)
@@ -91,8 +96,18 @@ public class N2NConnectionService {
 			.filter(P2PSession::meetWithNode)
 			.map(P2PSession::getAllNodes)
 			.flatMap(Collection::stream)
+			.filter(this::isNotMe)
 			.map(this::mapToNewEntity)
 			.forEach(nodeService::saveOrUpdate);
+	}
+	
+	private boolean isNotMe(NodeTO node) {
+		String myPublicKey = userKeysService.getKeys().getPublicAsymetricKeyAsString();
+		return !myPublicKey.equals(node.getPublicKey());
+	}
+	
+	private boolean isNotMe(String address) {
+		return !address.equals(addressService.getMyAddress());
 	}
 	
 	private NodeTO mapEntityToTO(NodeEntity entity) {
@@ -122,6 +137,7 @@ public class N2NConnectionService {
 			throw new RuntimeException(e);
 		}
 	}
+
 	
 	
 

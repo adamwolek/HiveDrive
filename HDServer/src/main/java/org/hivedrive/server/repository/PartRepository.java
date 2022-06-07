@@ -49,5 +49,7 @@ public interface PartRepository extends JpaRepository<PartEntity, Long> {
 	@Query("SELECT part.spaceId, SUM(part.size) FROM PartEntity part GROUP BY part.spaceId ")
 	List<Object[]> getUsageOfSpaces();
 
+	@Query("SELECT COUNT(part.size) FROM PartEntity part WHERE part.spaceId = :spaceId ")
+	Long countPartsBySpace(@Param("spaceId") String spaceId);
 
 }

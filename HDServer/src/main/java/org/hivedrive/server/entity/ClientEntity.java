@@ -19,7 +19,7 @@ public class ClientEntity {
 
 	private String status;
 
-	private String ipAddress;
+	private String address;
 
 	public Long getId() {
 		return id;
@@ -45,13 +45,14 @@ public class ClientEntity {
 		this.status = status;
 	}
 
-	public String getIpAddress() {
-		return ipAddress;
+	public String getAddress() {
+		return address;
 	}
 
-	public void setIpAddress(String ipAddress) {
-		this.ipAddress = ipAddress;
-	} 
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
 	
 	
 	

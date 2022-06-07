@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import org.hivedrive.cmd.model.PartInfo;
+import org.hivedrive.cmd.to.NodeSummary;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
 import org.springframework.web.util.DefaultUriBuilderFactory;
@@ -42,5 +43,7 @@ public interface P2PSession {
 	P2PSession fromNodeToAddress(String address);
 
 	boolean isAccepted(PartTO part);
+
+	NodeSummary getSummary();
 
 }

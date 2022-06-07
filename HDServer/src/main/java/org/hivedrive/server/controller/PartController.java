@@ -43,7 +43,7 @@ import com.google.common.collect.Lists;
 @RequestMapping("/part")
 public class PartController {
 
-	private Logger logger = LoggerFactory.getLogger(C2NConnectionService.class);
+	private Logger logger = LoggerFactory.getLogger(PartController.class);
 	
 	private PartService partService;
 	private SenderInfo senderInfo;
