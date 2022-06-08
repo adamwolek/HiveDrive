@@ -154,26 +154,42 @@ public class C2NConnectionService {
 		}
 	}
 
-	public void sendParts(List<PartInfo> parts) {
-		int partIndex = 1;
-		for (PartInfo part : parts) {
-			Queue<NodeEntity> nodes = getBestNodes(part);
-			int copiesOfPart = 0;
-			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
-				NodeEntity node = nodes.poll();
-				P2PSession sessionManager = newSession(node.getAddress());
-				PartTO partTO = PartInfoToTOMapper.create().map(part);
-				boolean requestSent = sessionManager.send(partTO);
-				if (requestSent) {
-					Long partId = waitForAcceptance(part, sessionManager);
-					sessionManager.sendContent(partId, part.getPart());
-					copiesOfPart++;
-				}
+	public void sendPart(PartInfo part) {
+		Queue<NodeEntity> nodes = getBestNodes(part);
+		int copiesOfPart = 0;
+		while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
+			NodeEntity node = nodes.poll();
+			P2PSession sessionManager = newSession(node.getAddress());
+			PartTO partTO = PartInfoToTOMapper.create().map(part);
+			boolean requestSent = sessionManager.send(partTO);
+			if (requestSent) {
+				Long partId = waitForAcceptance(part, sessionManager);
+				sessionManager.sendContent(partId, part.getPart());
+				copiesOfPart++;
 			}
-			logger.info("Part " + partIndex + " sent");
-			partIndex++;
 		}
 	}
+	
+//	public void sendParts(List<PartInfo> parts) {
+//		int partIndex = 1;
+//		for (PartInfo part : parts) {
+//			Queue<NodeEntity> nodes = getBestNodes(part);
+//			int copiesOfPart = 0;
+//			while (!nodes.isEmpty() && copiesOfPart < config.getBestNumberOfCopies()) {
+//				NodeEntity node = nodes.poll();
+//				P2PSession sessionManager = newSession(node.getAddress());
+//				PartTO partTO = PartInfoToTOMapper.create().map(part);
+//				boolean requestSent = sessionManager.send(partTO);
+//				if (requestSent) {
+//					Long partId = waitForAcceptance(part, sessionManager);
+//					sessionManager.sendContent(partId, part.getPart());
+//					copiesOfPart++;
+//				}
+//			}
+//			logger.info("Part " + partIndex + " sent");
+//			partIndex++;
+//		}
+//	}
 
 	private Long waitForAcceptance(PartInfo part, P2PSession sessionManager) {
 		int triesCount = 0;
@@ -227,25 +243,23 @@ public class C2NConnectionService {
 	}
 	
 	public boolean isFilePushedAlready(File file) {
-		
-		List<NodeEntity> allNodes = nodeRepository.getAllNodes();
-		for (NodeEntity node : allNodes) {
-			NodeTO nodeTO = mapEntityToTO(node);
-			P2PSession p2pSession = appContext.getBean(P2PSession.class)
-					.fromClientToAddress(nodeTO.getAddress());
-			if (p2pSession.meetWithNode()) {
-				String fileHash = null;
-				try {
-					fileHash = DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				if (fileHash != null && p2pSession.doesFileExistGet(fileHash)) {
-					return true;
-				}
-			}
+		return nodeRepository.getAllNodes().stream()
+		.map(this::mapEntityToTO)
+		.map(NodeTO::getAddress)
+		.map(address -> appContext.getBean(P2PSession.class)
+					.fromClientToAddress(address))
+		.filter(P2PSession::meetWithNode)
+		.anyMatch(p2pSession -> p2pSession.doesFileExistGet(fileHash(file)));
+	}
+
+	private String fileHash(File file) {
+		String fileHash = null;
+		try {
+			fileHash = DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		return false;
+		return fileHash;
 	}
 
 	public List<PartInfo> downloadParts(File workDirectory) {
@@ -257,30 +271,29 @@ public class C2NConnectionService {
 					return session.findPartsByRepository(repository).stream();
 				}).collect(Collectors.toList());
 		ListMultimap<String, PartTO> groupedParts = Multimaps.index(parts, PartTO::getGlobalId);
-		return groupedParts.keys().stream().map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
-				.map(selectedPart -> {
-					return partInfo(workDirectory, selectedPart);
-				}).collect(Collectors.toList());
+		return groupedParts.keys().stream()
+				.map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
+				.map(selectedPart -> partInfo(workDirectory, selectedPart))
+				.collect(Collectors.toList());
 	}
 
 	private PartInfo partInfo(File workDirectory, PartTO selectedPart) {
+		P2PSession session = newSession(selectedPart.getNodeWhichContainsPart().getAddress());
+		File directoryForParts = new File(workDirectory, "/parts");
+		File part = new File(directoryForParts,
+				"part-" + selectedPart.getGroupId() + "-" + selectedPart.getOrderInGroup());
+		byte[] data = session.getContent(selectedPart);
 		try {
-			P2PSession session = newSession(selectedPart.getNodeWhichContainsPart().getAddress());
-			File directoryForParts = new File(workDirectory, "/parts");
-			File part = new File(directoryForParts,
-					"part-" + selectedPart.getGroupId() + "-" + selectedPart.getOrderInGroup());
-			byte[] data = session.getContent(selectedPart);
 			FileUtils.writeByteArrayToFile(part, data);
-			PartInfo partInfo = new PartInfo();
-			partInfo.setPart(part);
-			partInfo.setEncryptedFileMetadata(selectedPart.getEncryptedFileMetadata());
-			partInfo.setFileMetadata(
-					FileMetadata.parseJSON(encryptionService.decrypt(partInfo.getEncryptedFileMetadata())));
-			return partInfo;
-		} catch (Exception e) {
-			logger.error("Error: ", e);
-			return null;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
+		PartInfo partInfo = new PartInfo();
+		partInfo.setPart(part);
+		partInfo.setEncryptedFileMetadata(selectedPart.getEncryptedFileMetadata());
+		partInfo.setFileMetadata(
+				FileMetadata.parseJSON(encryptionService.decrypt(partInfo.getEncryptedFileMetadata())));
+		return partInfo;
 	}
 
 	private PartTO randomElement(List<PartTO> elements) {

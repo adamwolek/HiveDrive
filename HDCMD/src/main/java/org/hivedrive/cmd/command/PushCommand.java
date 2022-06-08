@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -22,6 +23,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.time.StopWatch;
 import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.PartInfo;
+import org.hivedrive.cmd.model.TempFile;
 import org.hivedrive.cmd.service.C2NConnectionService;
 import org.hivedrive.cmd.service.FileCompresssingService;
 import org.hivedrive.cmd.service.FileSplittingService;
@@ -80,16 +82,18 @@ public class PushCommand implements Runnable {
 	public void run() {
 		try {
 			logger.info("Repository: " + repositoryDirectory.getAbsolutePath());
-			Collection<File> allFiles = getAllFiles();
-			Collection<File> filesToPush = getAllFiles().stream()
-				.filter(file -> !connectionService.isFilePushedAlready(file))
-				.collect(Collectors.toList());
 			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
-
 			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
 			workDirectory.mkdir();
-			List<PartInfo> parts = generatePartsForRepository(filesToPush);
-			sendParts(parts);
+			
+			getAllFiles().stream()
+			.filter(file -> !connectionService.isFilePushedAlready(file))
+			.map(TempFile::new)
+			.map(this::packFile)
+			.map(this::encryptFile)
+			.flatMap(encryptedFile -> splitFileToDirectory(encryptedFile, new File(workDirectory, "/parts")))
+			.map(file -> createPartsObjectsFromFile(file.getTempFile(), fileId(file), getHash(file)))
+			.forEach(part -> connectionService.sendPart(part));
 			logger.info("Sending finished");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -102,39 +106,13 @@ public class PushCommand implements Runnable {
 		}
 	}
 
-	private void sendParts(List<PartInfo> parts) {
-		//TODO: sprawdzić czy można wysylac pliki - tj. czy odpowiednia ilosc miejsca jest mozliwa do zapisu
-		connectionService.sendParts(parts);
-		logger.info("Sent " + parts.size() + " files.");
+
+	private String fileId(TempFile file) {
+		String fileId = repositoryConfigService.getRepositoryDirectory()
+				.toURI().relativize(file.getTempFile().toURI()).getPath();
+		return fileId;
 	}
 
-	private List<PartInfo> generatePartsForRepository(Collection<File> filesToPush) throws NoSuchFileException, DirectoryNotEmptyException, IOException {
-		List<PartInfo> parts = new ArrayList<>();
-
-		File directoryToSplit = new File(workDirectory, "/parts");
-		directoryToSplit.mkdir();
-
-		int sentFiles = 0;
-		for (File sourceFile : filesToPush) {
-			stopWatch = StopWatch.createStarted();
-			sentFiles++;
-			double currentPercentage = 100 * sentFiles / (double) filesToPush.size();
-			log(currentPercentage + "%");
-
-			File packedFile = packFile(sourceFile);
-			File encryptedFile = encryptFile(packedFile);
-			Files.delete(packedFile.toPath());
-
-			List<File> partedFile = splitFileToDirectory(encryptedFile, directoryToSplit);
-			Files.delete(encryptedFile.toPath());
-
-			List<PartInfo> partsFromFile = createPartsObjectsFromFile(partedFile, sourceFile);
-			parts.addAll(partsFromFile);
-			logger.info("File " + sentFiles + " splitted into " + partsFromFile.size() + " parts");
-		}
-
-		return parts;
-	}
 
 	private Collection<File> getAllFiles() {
 		IOFileFilter filter = new IOFileFilter() {
@@ -156,30 +134,26 @@ public class PushCommand implements Runnable {
 		return allFiles;
 	}
 
-	private List<PartInfo> createPartsObjectsFromFile(List<File> partedFile, File sourceFile) {
-		String fileId = repositoryConfigService.getRepositoryDirectory().toURI().relativize(sourceFile.toURI())
-				.getPath();
-		return partedFile.stream().map(partOfFile -> {
-			PartInfo partInfo = new PartInfo();
-			partInfo.setPart(partOfFile);
-			partInfo.setOwnerPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
+	private PartInfo createPartsObjectsFromFile(File partOfFile, String fileId, String hash) {
+		PartInfo partInfo = new PartInfo();
+		partInfo.setPart(partOfFile);
+		partInfo.setOwnerPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
 
-			String fileSign = signatureService.signFileUsingDefaultKeys(partOfFile);
-			partInfo.setFileSign(fileSign);
-			
-			partInfo.setFileHash(getHash(sourceFile));
-			
-			FileMetadata metadata = createFileMetadata(fileId, partOfFile);
-			partInfo.setFileMetadata(metadata);
-			String encrypedFileMetadata = encryptionService.encrypt(metadata.toJSON());
-			partInfo.setEncryptedFileMetadata(encrypedFileMetadata);
-			return partInfo;
-		}).collect(Collectors.toList());
+		String fileSign = signatureService.signFileUsingDefaultKeys(partOfFile);
+		partInfo.setFileSign(fileSign);
+		
+		partInfo.setFileHash(hash);
+		
+		FileMetadata metadata = createFileMetadata(fileId, partOfFile);
+		partInfo.setFileMetadata(metadata);
+		String encrypedFileMetadata = encryptionService.encrypt(metadata.toJSON());
+		partInfo.setEncryptedFileMetadata(encrypedFileMetadata);
+		return partInfo;
 	}
 
-	private String getHash(File sourceFile) {
+	private String getHash(TempFile file) {
 		try {
-			return DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(sourceFile));
+			return DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file.getTempFile()));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -194,24 +168,47 @@ public class PushCommand implements Runnable {
 		return metadata;
 	}
 
-	private List<File> splitFileToDirectory(File encryptedFile, File directoryToSplit) {
-		log(stopWatch.formatTime() + " - Splitting");
-		return fileSplittingService.splitFileIntoDirectory(encryptedFile, directoryToSplit);
+	private Stream<TempFile> splitFileToDirectory(TempFile encryptedFile, File directoryToSplit) {
+		try {
+			directoryToSplit.mkdir();
+			log(stopWatch.formatTime() + " - Splitting");
+			Stream<TempFile> spliitedFile = fileSplittingService
+					.splitFileIntoDirectory(encryptedFile.getTempFile(), directoryToSplit).stream()
+					.map(part -> {
+						TempFile partFile = encryptedFile.clone();
+						partFile.setTempFile(part);
+						return partFile;
+					});
+			FileUtils.forceDelete(encryptedFile.getTempFile());
+			return spliitedFile;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	private File packFile(File file) {
-		log(stopWatch.formatTime() + " - Packing");
-		File zip = changeDirectory(changeExtension(file, "zip"), workDirectory);
-		fileComporessingService.compressFile(file, zip);
-		return zip;
+	private TempFile packFile(TempFile tempFile) {
+		try {
+			log(stopWatch.formatTime() + " - Packing");
+			File file = tempFile.getTempFile();
+			File zip = changeDirectory(changeExtension(file, "zip"), workDirectory);
+			fileComporessingService.compressFile(file, zip);
+			FileUtils.forceDelete(file);
+			tempFile.setTempFile(zip);
+			return tempFile;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	private File encryptFile(File file) {
+	private TempFile encryptFile(TempFile tempFile) {
 		log(stopWatch.formatTime() + " - Encrypting");
 		try {
+			File file = tempFile.getTempFile();
 			File encryptedFile = addExtension(file, "enc");
 			encryptionService.encrypt(file, encryptedFile);
-			return encryptedFile;
+			FileUtils.forceDelete(file);
+			tempFile.setTempFile(encryptedFile);
+			return tempFile;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
