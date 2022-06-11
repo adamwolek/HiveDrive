@@ -1,10 +1,8 @@
 package org.hivedrive.cmd.repository;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.hivedrive.cmd.model.NodeEntity;
 import org.springframework.stereotype.Component;
@@ -12,10 +10,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class NodeRepository {
 
-	private List<NodeEntity> nodes = new ArrayList<>();
+	private List<NodeEntity> nodes = Collections.synchronizedList(new ArrayList<>());
 
 	public List<NodeEntity> getAllNodes() {
-		return this.nodes;
+		return new ArrayList<>(this.nodes);
 	}
 
 	public NodeEntity save(NodeEntity node) {

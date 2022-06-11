@@ -15,12 +15,11 @@ import org.hivedrive.server.entity.ClientEntity;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.exception.NodeIsNotRegisteredException;
 import org.hivedrive.server.repository.ClientRepository;
-import org.hivedrive.server.repository.NodeRepository;
 import org.hivedrive.server.service.NodeService;
+import org.hivedrive.server.service.ServerConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 
 @Component
 @Order(2)
@@ -32,6 +31,10 @@ public class MeetFriendsFilter implements Filter {
 	
 	@Autowired
 	private ClientRepository clientRepository;
+	
+	@Autowired
+	private ServerConfigService serverConfigService;
+	
 	
 	@Override
     public void doFilter(
@@ -51,13 +54,7 @@ public class MeetFriendsFilter implements Filter {
 				entity.setStatus(NodeEntity.NEW_STATUS);
 				nodeService.saveOrUpdate(entity);
 			} else if(senderType.equals("client")) {
-				NodeEntity relatedNode = nodeService.findNode(senderId);
-				if(relatedNode == null) {
-					throw new NodeIsNotRegisteredException("Sender id: " + senderId);
-				}
-				if(relatedNode.getClients() == null) {
-					relatedNode.setClients(new ArrayList<>());
-				}
+				NodeEntity relatedNode = getRelatedNode(senderId);
 				relatedNode.getClients().stream()
 				.filter(client -> client.getPublicKey().equals(senderId))
 				.findAny()
@@ -77,6 +74,24 @@ public class MeetFriendsFilter implements Filter {
 		} 
     	chain.doFilter(request, response);
     }
+
+
+	private NodeEntity getRelatedNode(String senderId) {
+		NodeEntity relatedNode = nodeService.findNode(senderId);
+		if(relatedNode == null) {
+			if(serverConfigService.isTestMode()) { //Create node ad-hoc
+				relatedNode = new NodeEntity();
+				relatedNode.setPublicKey(senderId);
+				nodeService.saveOrUpdate(relatedNode);
+			} else {
+				throw new NodeIsNotRegisteredException("Sender id: " + senderId);
+			}
+		}
+		if(relatedNode.getClients() == null) {
+			relatedNode.setClients(new ArrayList<>());
+		}
+		return relatedNode;
+	}
 
 
 	private String getAddressOfSender(HttpServletRequest httpRequest) {

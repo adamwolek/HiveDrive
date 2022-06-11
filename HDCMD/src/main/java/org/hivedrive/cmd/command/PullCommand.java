@@ -81,6 +81,9 @@ public class PullCommand implements Runnable {
 	}
 
 	private void downloadMissingFiles(File workDirectory) {
+		hashesInLocalRepo = getAllFiles(repositoryDirectory).stream()
+				.map(file -> fileHash(file))
+				.collect(Collectors.toSet());
 		File directoryForParts = new File(workDirectory, "/parts");
 		ImmutableListMultimap<String, PartInfo> groupedParts = allRemoteParts.stream()
 		.filter(this::validatePart)
@@ -107,10 +110,6 @@ public class PullCommand implements Runnable {
 		.forEach(file -> {
 			deleteFile(file);
 		});
-		
-		hashesInLocalRepo = getAllFiles(repositoryDirectory).stream()
-		.map(file -> fileHash(file))
-		.collect(Collectors.toSet());
 	}
 	
 	private void deleteFile(File localFile) {
