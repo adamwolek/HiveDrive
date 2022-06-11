@@ -25,15 +25,19 @@ public class RepositoryConfigService {
 	@Autowired
 	private UserKeysService userKeysService;
 	
-	private void init() throws IOException {
+	private void init() {
 		if (getConfigFile().exists()) {
 			this.config = loadConfig();
 		}
 	}
 
-	private RepositoryConfigFileData loadConfig() throws IOException {
+	private RepositoryConfigFileData loadConfig()  {
 		var mapper = JSONUtils.mapper();
-		return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
+		try {
+			return mapper.readValue(getConfigFile(), RepositoryConfigFileData.class);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void initConfig(File keyFile, String repositoryName, File newRepositoryDirectory) {
@@ -74,7 +78,7 @@ public class RepositoryConfigService {
 		return repositoryDirectory;
 	}
 
-	public void setRepositoryDirectory(File repositoryDirectory) throws IOException {
+	public void setRepositoryDirectory(File repositoryDirectory)  {
 		this.repositoryDirectory = repositoryDirectory;
 		init();
 		if(config != null) {

@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.time.StopWatch;
+import org.hivedrive.cmd.helper.LocalRepoOperationsHelper;
 import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.TempFile;
@@ -52,49 +55,59 @@ public class PushCommand implements Runnable {
 	private Logger logger = LoggerFactory.getLogger(PushCommand.class);
 
 	@Autowired
-	public PushCommand(C2NConnectionService connectionService, SymetricEncryptionService encryptionService,
-			FileSplittingService fileSplittingService, FileCompresssingService fileComporessingService,
-			SignatureService signatureService, UserKeysService userKeysService,
-			RepositoryConfigService repositoryConfigService) {
-		super();
-		this.connectionService = connectionService;
-		this.encryptionService = encryptionService;
-		this.fileSplittingService = fileSplittingService;
-		this.fileComporessingService = fileComporessingService;
-		this.signatureService = signatureService;
-		this.userKeysService = userKeysService;
-		this.repositoryConfigService = repositoryConfigService;
-	}
-
 	private C2NConnectionService connectionService;
+	
+	@Autowired
 	private SymetricEncryptionService encryptionService;
+	
+	@Autowired
 	private FileSplittingService fileSplittingService;
+	
+	@Autowired
 	private FileCompresssingService fileComporessingService;
+	
+	@Autowired
 	private SignatureService signatureService;
+	
+	@Autowired
 	private UserKeysService userKeysService;
+	
+	@Autowired
 	private RepositoryConfigService repositoryConfigService;
-
-	private StopWatch stopWatch;
-
-	private File workDirectory;
 
 	@Override
 	public void run() {
-		try {
-			logger.info("Repository: " + repositoryDirectory.getAbsolutePath());
-			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
-			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
-			workDirectory.mkdir();
+		repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
+		execInTempDirectory(workDirectory -> {
+			AtomicLong howManyOriginFilesSent = new AtomicLong();
 			
-			getAllFiles().stream()
+			LocalRepoOperationsHelper
+					.getAllFiles(this.repositoryDirectory).stream()
 			.filter(file -> !connectionService.isFilePushedAlready(file))
 			.map(TempFile::new)
-			.map(this::packFile)
+			.map(file -> this.packFile(file, workDirectory))
 			.map(this::encryptFile)
-			.flatMap(encryptedFile -> splitFileToDirectory(encryptedFile, new File(workDirectory, "/parts")))
-			.map(file -> createPartsObjectsFromFile(file.getTempFile(), fileId(file), getHash(file)))
-			.forEach(part -> connectionService.sendPart(part));
-			logger.info("Sending finished");
+			.flatMap(encryptedFile -> { 
+				howManyOriginFilesSent.incrementAndGet();
+				return splitFileToDirectory(encryptedFile, new File(workDirectory, "/parts"));
+			})
+			.map(file -> createPartsObjectsFromFile(
+					file.getTempFile(), fileId(file), getHash(file.getOriginFile())))
+			.forEach(connectionService::sendPart);
+			
+			if(howManyOriginFilesSent.get() == 0) {
+				logger.info("All files in network are up-to-date");
+			} else {
+				logger.info("Sent " + howManyOriginFilesSent.get() + " files");
+			}
+		});
+	}
+	
+	private void execInTempDirectory(Consumer<File> actionInTempDirectory) {
+		File workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
+		workDirectory.mkdir();
+		try {
+			actionInTempDirectory.accept(workDirectory);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -106,32 +119,10 @@ public class PushCommand implements Runnable {
 		}
 	}
 
-
 	private String fileId(TempFile file) {
 		String fileId = repositoryConfigService.getRepositoryDirectory()
-				.toURI().relativize(file.getTempFile().toURI()).getPath();
+				.toURI().relativize(file.getOriginFile().toURI()).getPath();
 		return fileId;
-	}
-
-
-	private Collection<File> getAllFiles() {
-		IOFileFilter filter = new IOFileFilter() {
-
-			@Override
-			public boolean accept(File dir, String name) {
-				return false;
-			}
-
-			@Override
-			public boolean accept(File file) {
-				List<String> excludedNames = Arrays.asList(".hivedrive", ".temp");
-				return !(excludedNames.contains(file.getName()));
-			}
-		};
-		
-		Collection<File> allFiles = FileUtils.listFiles(this.repositoryDirectory, filter,
-				filter);
-		return allFiles;
 	}
 
 	private PartInfo createPartsObjectsFromFile(File partOfFile, String fileId, String hash) {
@@ -151,9 +142,9 @@ public class PushCommand implements Runnable {
 		return partInfo;
 	}
 
-	private String getHash(TempFile file) {
+	private String getHash(File file) {
 		try {
-			return DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file.getTempFile()));
+			return DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -171,7 +162,6 @@ public class PushCommand implements Runnable {
 	private Stream<TempFile> splitFileToDirectory(TempFile encryptedFile, File directoryToSplit) {
 		try {
 			directoryToSplit.mkdir();
-			log(stopWatch.formatTime() + " - Splitting");
 			Stream<TempFile> spliitedFile = fileSplittingService
 					.splitFileIntoDirectory(encryptedFile.getTempFile(), directoryToSplit).stream()
 					.map(part -> {
@@ -186,13 +176,11 @@ public class PushCommand implements Runnable {
 		}
 	}
 
-	private TempFile packFile(TempFile tempFile) {
+	private TempFile packFile(TempFile tempFile, File workDirectory) {
 		try {
-			log(stopWatch.formatTime() + " - Packing");
-			File file = tempFile.getTempFile();
-			File zip = changeDirectory(changeExtension(file, "zip"), workDirectory);
-			fileComporessingService.compressFile(file, zip);
-			FileUtils.forceDelete(file);
+			File originFile = tempFile.getOriginFile();
+			File zip = changeDirectory(changeExtension(originFile, "zip"), workDirectory);
+			fileComporessingService.compressFile(originFile, zip);
 			tempFile.setTempFile(zip);
 			return tempFile;
 		} catch (Exception e) {
@@ -201,7 +189,6 @@ public class PushCommand implements Runnable {
 	}
 
 	private TempFile encryptFile(TempFile tempFile) {
-		log(stopWatch.formatTime() + " - Encrypting");
 		try {
 			File file = tempFile.getTempFile();
 			File encryptedFile = addExtension(file, "enc");
@@ -213,10 +200,6 @@ public class PushCommand implements Runnable {
 			throw new RuntimeException(e);
 		}
 
-	}
-
-	private void log(String message) {
-//		System.out.println(message);
 	}
 
 }

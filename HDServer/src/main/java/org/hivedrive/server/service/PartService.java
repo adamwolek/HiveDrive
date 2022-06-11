@@ -78,8 +78,8 @@ public class PartService {
 	}
 	
 	public boolean doesExist(String fileHash) {
-		PartEntity part = partRepository.findPart(fileHash);
-		return part != null;
+		Long howMany = partRepository.howManyPartsExists(fileHash);
+		return howMany > 0;
 	}
 	
 	public List<PartTO> findAllParts(){

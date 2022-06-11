@@ -33,9 +33,9 @@ public interface PartRepository extends JpaRepository<PartEntity, Long> {
 			@Param("repository") String repository);
 	
 
-	@Query("FROM PartEntity part "
-			+ "WHERE part.fileHash = :fileHash")
-	PartEntity findPart(
+	@Query("SELECT count(part.id) FROM PartEntity part "
+			+ "WHERE part.fileHash LIKE :fileHash")
+	Long howManyPartsExists(
 			@Param("fileHash") String fileHash);
 
 	

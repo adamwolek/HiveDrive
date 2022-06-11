@@ -106,8 +106,10 @@ public class PartController {
 	}
 	
 	@GetMapping("/{fileHash}/exists")
-	ResponseEntity<Boolean> doesExists(@RequestParam(name= "fileHash") String fileHash) {
-		return new ResponseEntity<>(partService.doesExist(fileHash), HttpStatus.OK);
+	ResponseEntity<Boolean> doesExists(@PathVariable(name= "fileHash") String fileHash) {
+		boolean doesExist = partService.doesExist(fileHash);
+		logger.info("File with hash " + fileHash.substring(0, 15) + " does " + (doesExist ? "" : "NOT") + " exist");
+		return new ResponseEntity<>(doesExist, HttpStatus.OK);
 	}
 	
 	@GetMapping("/all")

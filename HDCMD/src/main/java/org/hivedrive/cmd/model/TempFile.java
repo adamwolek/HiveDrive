@@ -7,9 +7,9 @@ public class TempFile {
 	private File originFile;
 	private File tempFile;
 	
-	public TempFile(File sourceFile) {
-		this.originFile = sourceFile;
-		this.tempFile = sourceFile;
+	public TempFile(File originFile) {
+		this.originFile = originFile;
+//		this.tempFile = sourceFile;
 	}
 	
 	private TempFile(TempFile tempFile) {

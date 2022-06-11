@@ -41,12 +41,8 @@ public class InitCommand implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			config.setRepositoryDirectory(repositoryDirectory);
-			config.initConfig(key, repositoryName, repositoryDirectory);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		config.setRepositoryDirectory(repositoryDirectory);
+		config.initConfig(key, repositoryName, repositoryDirectory);
 	}
 
 }

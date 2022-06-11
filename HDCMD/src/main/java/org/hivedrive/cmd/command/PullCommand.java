@@ -8,11 +8,18 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.hivedrive.cmd.helper.LocalRepoOperationsHelper;
+import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.service.C2NConnectionService;
 import org.hivedrive.cmd.service.FileCompresssingService;
@@ -21,8 +28,11 @@ import org.hivedrive.cmd.service.RepositoryConfigService;
 import org.hivedrive.cmd.service.SymetricEncryptionService;
 import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.cmd.service.common.UserKeysService;
+import org.hivedrive.cmd.session.P2PSession;
+import org.hivedrive.cmd.to.PartTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -43,40 +53,58 @@ public class PullCommand implements Runnable {
 
 	private Logger logger = LoggerFactory.getLogger(PullCommand.class);
 
+	@Autowired
 	private C2NConnectionService connectionService;
+	
+	@Autowired
 	private SymetricEncryptionService encryptionService;
-	private FileSplittingService fileSplittingService; // TODO
+	
+	@Autowired
 	private FileCompresssingService fileComporessingService;
-	private SignatureService signatureService; // TODO
-	private UserKeysService userKeysService;
+	
+	@Autowired
 	private RepositoryConfigService repositoryConfigService;
-	private File workDirectory;
 
-	public PullCommand(C2NConnectionService connectionService,
-			SymetricEncryptionService encryptionService, FileSplittingService fileSplittingService,
-			FileCompresssingService fileComporessingService, SignatureService signatureService,
-			UserKeysService userKeysService, RepositoryConfigService repositoryConfigService) {
-		super();
-		this.connectionService = connectionService;
-		this.encryptionService = encryptionService;
-		this.fileSplittingService = fileSplittingService;
-		this.fileComporessingService = fileComporessingService;
-		this.signatureService = signatureService;
-		this.userKeysService = userKeysService;
-		this.repositoryConfigService = repositoryConfigService;
-	}
-
+	private Set<String> hashesInLocalRepo;
+	
 	@Override
 	public void run() {
+		repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
+		
+		hashesInLocalRepo = LocalRepoOperationsHelper.getAllFiles(repositoryDirectory).stream()
+		.map(LocalRepoOperationsHelper::fileHash)
+		.collect(Collectors.toSet());
+		
+		execInTempDirectory(workDirectory -> {
+			String repository = repositoryConfigService.getConfig().getRepositoryName();
+			File directoryForParts = new File(workDirectory, "/parts");
+			ImmutableListMultimap<String, PartInfo> groupedParts = connectionService
+					.getAllPartsForRepository(repository).stream()
+			.filter(this::validatePart)
+			.filter(this::notExistingInRepo)
+			.map(partTO -> connectionService.downloadPart(partTO, directoryForParts))
+			.collect(ImmutableListMultimap.toImmutableListMultimap(
+					part -> part.getFileMetadata().getFileId(), part -> part));
+			groupedParts.keySet().stream()
+					.map(fileId -> groupedParts.get(fileId))
+					.map(parts -> mergeIntoOneFile(parts, workDirectory))
+					.map(this::decryptFile)
+					.map(this::unpackFile)
+					.forEach(rawFile -> {
+						logger.info("File " + rawFile.getName() + " downloaded");
+					});
+		});
+		logger.info("Pulling finished");
+	}
+	
+	private void execInTempDirectory(Consumer<File> actionInTempDirectory) {
+		File workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
+		workDirectory.mkdir();
 		try {
-			repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
-			workDirectory = new File(repositoryConfigService.getRepositoryDirectory(), ".temp");
-			workDirectory.mkdir();
-			List<File> downloadedParts = downloadParts();
-			logger.info("Downloaded " + downloadedParts.size() + " files");
+			actionInTempDirectory.accept(workDirectory);
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {        
+		} finally {
 			try {
 				FileUtils.forceDelete(workDirectory);
 			} catch (IOException e) {
@@ -85,22 +113,11 @@ public class PullCommand implements Runnable {
 		}
 	}
 
-	private List<File> downloadParts() {
-		ImmutableListMultimap<String, PartInfo> groupedParts = Multimaps
-				.index(connectionService.downloadParts(workDirectory), part -> part.getFileMetadata().getFileId());
-//		for (String fileId : groupedParts.keys()) {
-//			ImmutableList<PartInfo> parts = groupedParts.get(fileId);
-//			File encryptedFile = mergeIntoOneFile(parts);
-//			File packedFile = decryptFile(encryptedFile);
-//			File rawFile = unpackFile(packedFile);
-//		}
-		return groupedParts.keys().stream().map(fileId -> groupedParts.get(fileId)).map(this::mergeIntoOneFile)
-				.map(this::decryptFile).map(this::unpackFile).collect(Collectors.toList());
-	}
 
 	private File unpackFile(File source) {
 		try {
-			File rawFile = changeDirectory(removeExtension(source), repositoryConfigService.getRepositoryDirectory());
+			File rawFile = changeDirectory(removeExtension(source), 
+					repositoryConfigService.getRepositoryDirectory());
 			fileComporessingService.uncompressFile(source, rawFile);
 			FileUtils.forceDelete(source);
 			return rawFile;
@@ -120,12 +137,9 @@ public class PullCommand implements Runnable {
 		}
 	}
 
-	private File mergeIntoOneFile(List<PartInfo> parts) {
+	private File mergeIntoOneFile(List<PartInfo> parts, File workDirectory) {
 		PartInfo anyPart = Iterables.getFirst(parts, null);
-//		if(true) {
-//			anyPart.getPart();
-//		}
-		File wholeFile = declareWholeFile(anyPart);
+		File wholeFile = declareWholeFile(anyPart, workDirectory);
 		try (FileOutputStream mergedFileOS = new FileOutputStream(wholeFile)) {
 			for (PartInfo part : parts) {
 				try (InputStream partIS = new FileInputStream(part.getPart())) {
@@ -134,12 +148,11 @@ public class PullCommand implements Runnable {
 			}
 			return wholeFile;
 		} catch (Exception e) {
-			logger.error("Error:", e);
-			return null;
+			throw new RuntimeException(e);
 		}
 	}
 
-	private File declareWholeFile(PartInfo anyPart) {
+	private File declareWholeFile(PartInfo anyPart, File workDirectory) {
 		File wholeFile = new File(workDirectory, anyPart.getFileMetadata().getFileId());
 		if (wholeFile.exists()) {
 			try {
@@ -149,6 +162,38 @@ public class PullCommand implements Runnable {
 			}
 		}
 		return wholeFile;
+	}
+
+	private boolean notExistingInRepo(PartTO part) {
+		return !hashesInLocalRepo.contains(part.getFileHash());
+	}
+
+	private boolean validatePart(PartTO part) {
+		if(areAllFieldsFilled(part)) {
+			return true;
+		} else {
+			logger.warn("W obiekcie PartTO brakuje części danych");
+			return false;
+		}
+	}
+	
+	private boolean areAllFieldsFilled(PartTO part) {
+		if(StringUtils.isBlank(part.getFileHash())) {
+			return false;
+		}
+		if(StringUtils.isBlank(part.getGlobalId())) {
+			return false;
+		}
+		if(StringUtils.isBlank(part.getRepository())) {
+			return false;
+		}
+		if(StringUtils.isBlank(part.getGroupId())) {
+			return false;
+		}
+		if(StringUtils.isBlank(part.getOwnerId())) {
+			return false;
+		}
+		return true;
 	}
 
 }

@@ -81,7 +81,7 @@ public class P2PSessionImpl implements P2PSession {
 		return uriBuilderFactory.builder().path("/part/all");
 	}
 	private UriBuilder doesFileExistEndpoint(String fileHash) {
-		return uriBuilderFactory.builder().path("/part/" + fileHash + "/exist");
+		return uriBuilderFactory.builder().path("/part/" + fileHash + "/exists");
 	}
 	private UriBuilder allNodeEndpoint() {
 		return uriBuilderFactory.builder().path("/node/all");
@@ -124,7 +124,7 @@ public class P2PSessionImpl implements P2PSession {
 
 	@Override
 	public boolean meetWithNode() {
-		logger.info("Meet with node at address " + address);
+		logger.debug("Meet with node at address " + address);
 		try {
 			NodeTO receivedNode = get(whoAreYouEndpoint().build(), new TypeReference<NodeTO>() {
 			});
@@ -175,7 +175,7 @@ public class P2PSessionImpl implements P2PSession {
 
 	@Override
 	public List<NodeTO> getAllNodes() {
-		logger.info("Get all known nodes from node at address " + address);
+		logger.debug("Get all known nodes from node at address " + address);
 		try {
 			TypeReference<List<NodeTO>> typeReference = new TypeReference<List<NodeTO>>() {
 			};
@@ -264,7 +264,7 @@ public class P2PSessionImpl implements P2PSession {
 	private <T> T get(URI uri, TypeReference<T> typeReference)
 			throws URISyntaxException, IOException, InterruptedException {
 		
-		logger.info("Sending get request: " + uri);
+		logger.debug("Sending get request: " + uri);
 		String publicKeyOfNode = getPublicKeyOfNode();
 		HttpRequest request = HttpRequest.newBuilder().uri(uri)
 				.timeout(Duration.ofSeconds(50))
@@ -306,7 +306,7 @@ public class P2PSessionImpl implements P2PSession {
 	
 	private boolean post(URI uri, Object object)
 			throws URISyntaxException, IOException, InterruptedException {
-		logger.info("Sending post request: " + uri);
+		logger.debug("Sending post request: " + uri);
 		String json = JSONUtils.mapper().writeValueAsString(object);
 		HttpRequest request = HttpRequest.newBuilder()
 				.uri(uri)
@@ -328,7 +328,7 @@ public class P2PSessionImpl implements P2PSession {
 	}
 	
 	private byte[] getMultipart(URI uri) throws URISyntaxException, IOException, InterruptedException {
-		logger.info("Sending get file request: " + uri);
+		logger.debug("Sending get file request: " + uri);
 		String publicKeyOfNode = getPublicKeyOfNode();
 		HttpRequest request = HttpRequest.newBuilder().uri(uri)
 				.timeout(Duration.ofSeconds(10))
@@ -346,7 +346,7 @@ public class P2PSessionImpl implements P2PSession {
 	
 	private boolean postMultipart(URI uri, File file)
 			throws IOException, URISyntaxException, InterruptedException {
-		logger.info("Sending post multipart request: " + uri);
+		logger.debug("Sending post multipart request: " + uri);
 		var publisher = MultipartBodyPublisher.newBuilder().filePart("part", file.toPath()).build();
 		byte[] content = FileUtils.readFileToByteArray(file);
 		var request = HttpRequest.newBuilder()
