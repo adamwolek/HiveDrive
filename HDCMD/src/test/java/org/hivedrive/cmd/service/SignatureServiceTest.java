@@ -1,6 +1,7 @@
 package org.hivedrive.cmd.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hivedrive.cmd.config.TestConfig;
@@ -33,7 +34,7 @@ class SignatureServiceTest {
 	
 	@Test
 	void checkSignature() {
-		String text = RandomStringUtils.random(10000);
+		String text = RandomStringUtils.randomAlphabetic(10000);
 		
 		String signature = signatureService.signStringUsingDefaultKeys(text);
 		
@@ -47,7 +48,7 @@ class SignatureServiceTest {
 	void checkSignatureWithWrongPublicKey() {
 		UserKeys firstPair = userKeysService.generateNewKeys();
 		UserKeys secondPair = userKeysService.generateNewKeys();
-		String text = RandomStringUtils.random(10000);
+		String text = RandomStringUtils.randomAlphabetic(10000);
 		
 		String signature = signatureService.signString(text, firstPair.getPrivateAsymetricKey());
 		

@@ -85,15 +85,6 @@ class NodeControllerTest {
 	    }
 	    
 	    @Test
-	    @DisplayName("get all")
-	    void getAllTest() throws Exception {
-	    	 mockMvc.perform(
-	    		        get("/node/all"))
-	    		        .andExpect(status().isOk())
-	    		        .andExpect(content().string(tosJson)); 
-	    }
-	    
-	    @Test
 	    @DisplayName("get existed")
 	    void getExistedTest() throws Exception {
 	    	//given

@@ -4,6 +4,8 @@ import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.fileHash;
 import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.getAllFiles;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hivedrive.cmd.config.TestConfig;
 import org.hivedrive.cmd.main.MainApplicationRunner;
@@ -23,19 +26,21 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.google.common.collect.Iterables;
+
 @ActiveProfiles("unitTests")
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfig.class)
 public class MainIntegrationTest {
 
 	@TempDir
-	public File tempFolder;
+	static File tempFolder;
 	
 	@Autowired
 	public MainApplicationRunner runner;
 	
 	@Test
-	public void test() throws IOException {
+	public void pushAndPull() throws IOException {
 		File keys = generateKeys(tempFolder);
 		File repoA = createRepoDir();
 		File repoB = createRepoDir();
@@ -45,17 +50,64 @@ public class MainIntegrationTest {
 		push(repoA);
 		pull(repoB);
 		assertContainsSameFiles(repoA, repoB);
-		
+	}
+	
+	@Test
+	public void cleanPush() throws IOException {
+		File keys = generateKeys(tempFolder);
+		File repoA = createRepoDir();
+		File repoB = createRepoDir();
+		init(keys, repoA);
+		init(keys, repoB);
+		List<File> filesInRepo = fillRepository(repoA);
+		push(repoA);
+		File removedFile = removeOneFile(filesInRepo);
+		cleanPush(repoA);
+		pull(repoB);
+		assertContainsSameFiles(repoA, repoB);
+		assertFalse(fileExists(repoB, removedFile));
+	}
+	
+	@Test
+	public void cleanPull() throws IOException {
+		File keys = generateKeys(tempFolder);
+		File repoA = createRepoDir();
+		File repoB = createRepoDir();
+		init(keys, repoA);
+		init(keys, repoB);
+		fillRepository(repoA);
+		push(repoA);
+		pull(repoB);
+		File newFile = newFileIn(repoB);
+		pull(repoB);
+		assertTrue(fileExists(repoB, newFile));
+		cleanPull(repoB);
+		assertFalse(fileExists(repoB, newFile));
+	}
+	
+	
+
+
+	private boolean fileExists(File repoB, File newFile) {
+		return getAllFiles(repoB).stream()
+		.filter(file -> file.getName().equals(newFile.getName()))
+		.anyMatch(file -> fileHash(file).equals(fileHash(newFile)));
+	}
+
+	private File removeOneFile(List<File> filesInRepo) throws IOException {
+		File file = Iterables.getFirst(filesInRepo, null);
+		FileUtils.forceDelete(file);
+		return file;
 	}
 
 	private File createRepoDir() {
-		File dir = new File(tempFolder, RandomStringUtils.randomAlphabetic(10));
+		File dir = new File(tempFolder, randString());
 		dir.mkdir();
 		return dir;
 	}
 
 	private File generateKeys(File tempFolder) {
-		File keys = new File(tempFolder, "keys");
+		File keys = new File(tempFolder, "keys" + randString());
 		runner.runCommand("generateKeys " + keys.getAbsolutePath());
 		return keys;
 	}
@@ -64,13 +116,15 @@ public class MainIntegrationTest {
 		Collection<File> filesFromA = getAllFiles(repoA);
 		Collection<File> filesFromB = getAllFiles(repoB);
 		assertEquals(filesFromA.size(), filesFromB.size());
-		
-		for (File fileA : filesFromA) {
+		for (File fileA : getAllFiles(repoA)) {
 			File fileB = findSameGlobalId(fileId(fileA, repoA), repoB);
 			assertNotNull(fileB);
 			assertEquals(fileHash(fileA), fileHash(fileB));
 		}
-		
+	}
+	
+	private String randString() {
+		return RandomStringUtils.randomAlphabetic(15);
 	}
 
 	private File findSameGlobalId(String globalId, File repo) {
@@ -91,9 +145,16 @@ public class MainIntegrationTest {
 		runner.runCommand("push --directory=" + repo.getAbsolutePath());
 	}
 	
+	private void cleanPush(File repo) {
+		runner.runCommand("push --directory=" + repo.getAbsolutePath() + " --clean");
+	}
+	
 	private void pull(File repo) {
 		runner.runCommand("pull --directory=" + repo.getAbsolutePath());
-		
+	}
+	
+	private void cleanPull(File repo) {
+		runner.runCommand("pull --directory=" + repo.getAbsolutePath() + " --clean");
 	}
 
 	private List<File> fillRepository(File repo) throws IOException {
@@ -101,7 +162,7 @@ public class MainIntegrationTest {
 	}
 
 	private File newFileIn(File repo) throws IOException {
-		File file = new File(repo, RandomStringUtils.randomAlphabetic(10));
+		File file = new File(repo, randString());
 		FileGenerator.createMediumFile(file);
 		return file;
 	}
