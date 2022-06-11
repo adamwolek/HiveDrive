@@ -6,9 +6,18 @@ public class LocalConfiguration {
 
 	private List<SpaceConfig> spaces;
 	private List<String> centralServers;
+	private boolean testMode;
+	
+	
+	
+	public boolean isTestMode() {
+		return testMode;
+	}
 
-	
-	
+	public void setTestMode(boolean testMode) {
+		this.testMode = testMode;
+	}
+
 	public List<String> getCentralServers() {
 		return centralServers;
 	}

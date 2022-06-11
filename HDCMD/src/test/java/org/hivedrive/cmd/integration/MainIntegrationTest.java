@@ -29,20 +29,16 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class MainIntegrationTest {
 
 	@TempDir
-	public File keysFolder;
-	
-	@TempDir
-	public File repoA;
-	
-	@TempDir
-	public File repoB;
+	public File tempFolder;
 	
 	@Autowired
 	public MainApplicationRunner runner;
 	
 	@Test
 	public void test() throws IOException {
-		File keys = generateKeys();
+		File keys = generateKeys(tempFolder);
+		File repoA = createRepoDir();
+		File repoB = createRepoDir();
 		init(keys, repoA);
 		init(keys, repoB);
 		fillRepository(repoA);
@@ -52,8 +48,14 @@ public class MainIntegrationTest {
 		
 	}
 
-	private File generateKeys() {
-		File keys = new File(keysFolder, "keys");
+	private File createRepoDir() {
+		File dir = new File(tempFolder, RandomStringUtils.randomAlphabetic(10));
+		dir.mkdir();
+		return dir;
+	}
+
+	private File generateKeys(File tempFolder) {
+		File keys = new File(tempFolder, "keys");
 		runner.runCommand("generateKeys " + keys.getAbsolutePath());
 		return keys;
 	}
@@ -94,13 +96,13 @@ public class MainIntegrationTest {
 		
 	}
 
-	private List<File> fillRepository(File repo) {
+	private List<File> fillRepository(File repo) throws IOException {
 		return Arrays.asList(newFileIn(repo), newFileIn(repo), newFileIn(repo));
 	}
 
-	private File newFileIn(File repo) {
-		File file = new File(repoA, RandomStringUtils.random(10));
-		FileGenerator.createBigFile(file);
+	private File newFileIn(File repo) throws IOException {
+		File file = new File(repo, RandomStringUtils.randomAlphabetic(10));
+		FileGenerator.createMediumFile(file);
 		return file;
 	}
 	

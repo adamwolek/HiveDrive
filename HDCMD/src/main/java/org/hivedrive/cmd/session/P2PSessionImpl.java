@@ -393,6 +393,9 @@ public class P2PSessionImpl implements P2PSession {
 	
 	
 	
+	public void setSenderType(String senderType) {
+		this.senderType = senderType;
+	}
 	private String signOf(byte[] content) {
 		return signatureService.signUsingDefaultKeys(content);
 	}

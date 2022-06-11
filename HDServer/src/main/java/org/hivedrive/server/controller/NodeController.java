@@ -1,7 +1,9 @@
 package org.hivedrive.server.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.server.entity.NodeEntity;
 import org.hivedrive.server.helpers.NodeJsonHelper;
@@ -71,7 +73,9 @@ public class NodeController {
 	 */
 	@GetMapping("/all")
 	public ResponseEntity<String> getAll() {
-		List<NodeTO> all = service.getAll();
+		List<NodeTO> all = service.getAll().stream()
+				.filter(node -> StringUtils.isNotBlank(node.getAddress()))
+				.collect(Collectors.toList());
 		return new ResponseEntity<>(NodeJsonHelper.toJson(all), HttpStatus.OK);
 	}
 

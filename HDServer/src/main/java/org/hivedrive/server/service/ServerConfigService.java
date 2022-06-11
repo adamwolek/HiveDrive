@@ -2,19 +2,14 @@ package org.hivedrive.server.service;
 
 import java.io.File;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.lang3.Streams;
-import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.server.config.LocalConfiguration;
-import org.hivedrive.server.config.SpaceConfig;
 import org.hivedrive.server.repository.PartRepository;
 import org.hivedrive.server.saving.SpaceForSave;
 import org.slf4j.Logger;
@@ -27,8 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.unit.DataSize;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.Files;
-import com.google.gson.Gson;
 
 @Service
 public class ServerConfigService {
@@ -130,6 +123,10 @@ public class ServerConfigService {
 
 	public List<String> getCentralServers() {
 		return localConfig.getCentralServers();
+	}
+
+	public boolean isTestMode() {
+		return localConfig.isTestMode();
 	}
 
 	
