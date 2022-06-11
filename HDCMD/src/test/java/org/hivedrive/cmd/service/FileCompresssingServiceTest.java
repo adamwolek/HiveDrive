@@ -1,7 +1,5 @@
 package org.hivedrive.cmd.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -32,7 +30,7 @@ public class FileCompresssingServiceTest {
 	public void compressFileTest() throws IOException {
 		
 		File bigSourceFile = new File(tempFolder.getAbsolutePath() + "/bigFile");
-		FileGenerator.createBigFile(bigSourceFile, tempFolder);
+		FileGenerator.createBigFile(bigSourceFile);
 		
 		File packedFile = new File(tempFolder.getAbsolutePath() + "/packedFile");
 		

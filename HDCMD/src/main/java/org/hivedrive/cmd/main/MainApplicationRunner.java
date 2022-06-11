@@ -2,10 +2,6 @@ package org.hivedrive.cmd.main;
 
 import java.util.Arrays;
 
-import java.util.Map;
-
-import org.hivedrive.cmd.command.HiveDriveCommand;
-import org.hivedrive.cmd.service.SymetricEncryptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
@@ -13,7 +9,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.IFactory;
 
 @Component
@@ -27,6 +22,13 @@ public class MainApplicationRunner implements CommandLineRunner, ExitCodeGenerat
 	
 	private int exitCode;
 
+	public void runCommand(String command) {
+		try {
+			this.run(command.split("\\s+"));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 	
 	@Override
 	public void run(String... args) throws Exception {
@@ -39,20 +41,6 @@ public class MainApplicationRunner implements CommandLineRunner, ExitCodeGenerat
 		}
 	}
 	
-//    @Override
-//    public void run(String... args) throws Exception {
-//    	Map<String,Object> beans = context.getBeansWithAnnotation(Command.class);
-//    	for (Object command : beans.values()) {
-//    		Command commandAnnotation = command.getClass().getAnnotation(Command.class);
-//    		if(commandAnnotation.name().equals(args[0])) {
-//    			String[] argsWithoutFirst = Arrays.copyOfRange(args, 1, args.length);
-//    			exitCode = new CommandLine(command, factory).execute(argsWithoutFirst);
-//    			return;
-//    		}
-//		}
-//    	System.out.println("Cannot find required Command");
-//    }
-
     @Override
     public int getExitCode() {
         return exitCode;

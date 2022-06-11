@@ -3,13 +3,12 @@ package org.hivedrive.server.service;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hivedrive.cmd.to.PartTO;
+import org.hivedrive.server.controller.SenderInfo;
 import org.hivedrive.server.entity.PartEntity;
 import org.hivedrive.server.exception.NotEnaughSpaceException;
 import org.hivedrive.server.mappers.PartMapper;
@@ -49,13 +48,18 @@ public class PartService {
 			return existingPart;
 		}
 	}
+	
+	public boolean isAbleToDelete(PartEntity part, SenderInfo senderInfo) {
+		return part.getNode().getPublicKey().equals(senderInfo.getSenderPublicKey());
+	}
 
-	public boolean isAbleToAdd(PartTO part) {
+	public boolean isAbleToAdd(PartTO part, SenderInfo senderInfo) {
+		//TODO: Just implement;
 		return true;
 	}
 
-	public boolean isAbleToUpdate(PartTO part) {
-		return true;
+	public boolean isAbleToUpdate(PartTO part, SenderInfo senderInfo) {
+		return part.getOwnerId().equals(senderInfo.getSenderPublicKey());
 	}
 	
 	public PartTO get(Long partId) {
@@ -133,5 +137,11 @@ public class PartService {
 		Collection<PartEntity> parts = partRepository.findPart(senderPublicKey, repository);
 		return mapper.mapToTOs(parts);
 	}
+
+	public boolean delete(Long partId) {
+		partRepository.deleteById(partId);
+		return true;
+	}
+
 
 }

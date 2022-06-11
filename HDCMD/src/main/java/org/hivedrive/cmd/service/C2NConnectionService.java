@@ -1,7 +1,8 @@
 package org.hivedrive.cmd.service;
 
-import java.io.File;
+import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.fileHash;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -21,7 +22,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
 import org.hivedrive.cmd.exception.ReadDataFromMetadataServerException;
-import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.*;
 import org.hivedrive.cmd.mapper.PartInfoToTOMapper;
 import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.NodeEntity;
@@ -38,9 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ListMultimap;
@@ -266,6 +264,11 @@ public class C2NConnectionService {
 	
 	private PartTO randomElement(List<PartTO> elements) {
 		return elements.get(new Random().nextInt(elements.size()));
+	}
+
+	public boolean deletePartWithContent(PartTO part) {
+		P2PSession session = newSession(part.getNodeWhichContainsPart().getAddress());
+		return session.deletePart(part);
 	}
 
 }

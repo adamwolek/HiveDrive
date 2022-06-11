@@ -19,11 +19,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.helper.StatusCode;
 import org.hivedrive.cmd.model.PartInfo;
-import org.hivedrive.cmd.model.UserKeys;
 import org.hivedrive.cmd.service.common.AddressService;
 import org.hivedrive.cmd.service.common.KeysService;
 import org.hivedrive.cmd.service.common.SignatureService;
-import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.NodeSummary;
 import org.hivedrive.cmd.to.NodeTO;
@@ -250,6 +248,17 @@ public class P2PSessionImpl implements P2PSession {
 	}
 	
 	@Override
+	public boolean deletePart(PartTO part) {
+		try {
+			return delete(partEndpoint().path("/" + part.getId()).build());
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			logger.error(ERROR, e);
+			return false;
+		}
+		
+	}
+	
+	@Override
 	public NodeSummary getSummary() {
 		try {
 			TypeReference<NodeSummary> typeReference = new TypeReference<NodeSummary>() {
@@ -318,6 +327,23 @@ public class P2PSessionImpl implements P2PSession {
 				.header(SENDER_ADDRESS_HEADER_PARAM, this.senderAddress)
 				.header("Content-Type", "application/json")
 				.POST(BodyPublishers.ofString(json)).build();
+		HttpResponse<String> response = HttpClient.newBuilder().build()
+				.send(request, BodyHandlers.ofString());
+		return response.statusCode() == StatusCode.ACCEPTED;
+	}
+	
+	private boolean delete(URI uri)
+			throws URISyntaxException, IOException, InterruptedException {
+		logger.debug("Sending delete request: " + uri);
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(uri)
+				.timeout(timeoutForRequests())
+				.header(SENDER_TYPE_HEADER_PARAM, this.senderType)
+				.header(SENDER_ID_HEADER_PARAM,
+						userKeysService.getKeys().getPublicAsymetricKeyAsString())
+				.header(SENDER_ADDRESS_HEADER_PARAM, this.senderAddress)
+				.header("Content-Type", "application/json")
+				.DELETE().build();
 		HttpResponse<String> response = HttpClient.newBuilder().build()
 				.send(request, BodyHandlers.ofString());
 		return response.statusCode() == StatusCode.ACCEPTED;

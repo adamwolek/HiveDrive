@@ -1,19 +1,15 @@
 package org.hivedrive.cmd.command;
 
 import static org.hivedrive.cmd.helper.FileNameHelper.addExtension;
-
 import static org.hivedrive.cmd.helper.FileNameHelper.changeDirectory;
 import static org.hivedrive.cmd.helper.FileNameHelper.changeExtension;
+import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.fileHash;
+import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.getAllFiles;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -21,8 +17,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.lang3.time.StopWatch;
 import org.hivedrive.cmd.helper.LocalRepoOperationsHelper;
 import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.PartInfo;
@@ -39,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.util.DigestUtils;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -52,6 +45,9 @@ public class PushCommand implements Runnable {
 	@Option(names = { "-dir", "--directory" }, description = "")
 	private File repositoryDirectory = new File(System.getProperty("user.dir"));
 
+	@Option(names = { "-c", "--clean" }, description = "")
+	private boolean clean;
+	
 	private Logger logger = LoggerFactory.getLogger(PushCommand.class);
 
 	@Autowired
@@ -79,28 +75,56 @@ public class PushCommand implements Runnable {
 	public void run() {
 		repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
 		execInTempDirectory(workDirectory -> {
-			AtomicLong howManyOriginFilesSent = new AtomicLong();
-			
-			LocalRepoOperationsHelper
-					.getAllFiles(this.repositoryDirectory).stream()
-			.filter(file -> !connectionService.isFilePushedAlready(file))
-			.map(TempFile::new)
-			.map(file -> this.packFile(file, workDirectory))
-			.map(this::encryptFile)
-			.flatMap(encryptedFile -> { 
-				howManyOriginFilesSent.incrementAndGet();
-				return splitFileToDirectory(encryptedFile, new File(workDirectory, "/parts"));
-			})
-			.map(file -> createPartsObjectsFromFile(
-					file.getTempFile(), fileId(file), getHash(file.getOriginFile())))
-			.forEach(connectionService::sendPart);
-			
-			if(howManyOriginFilesSent.get() == 0) {
-				logger.info("All files in network are up-to-date");
-			} else {
-				logger.info("Sent " + howManyOriginFilesSent.get() + " files");
+			int howManyFilesDeleted = clean ? deleteRemoteFilesNonExistingLocally() : 0;
+			int howManyOriginFilesSent = sendFilesFromRepository(workDirectory);
+			log(howManyFilesDeleted, howManyOriginFilesSent);
+		});
+	}
+
+	private void log(int howManyFilesDeleted, int howManyOriginFilesSent) {
+		if(howManyFilesDeleted > 0) {
+			logger.info("Deleted " + howManyFilesDeleted + " files");
+		}
+		if(howManyOriginFilesSent > 0) {
+			logger.info("Sent " + howManyOriginFilesSent + " files");
+		}
+		if(howManyFilesDeleted == 0 && howManyOriginFilesSent == 0) {
+			logger.info("All files in network are up-to-date");
+		}
+	}
+
+	private int sendFilesFromRepository(File workDirectory) {
+		AtomicLong howManyOriginFilesSent = new AtomicLong();
+		LocalRepoOperationsHelper.getAllFiles(this.repositoryDirectory).stream()
+		.filter(file -> !connectionService.isFilePushedAlready(file))
+		.map(TempFile::new)
+		.map(file -> this.packFile(file, workDirectory))
+		.map(this::encryptFile)
+		.flatMap(encryptedFile -> { 
+			howManyOriginFilesSent.incrementAndGet();
+			return splitFileToDirectory(encryptedFile, new File(workDirectory, "/parts"));
+		})
+		.map(file -> createPartsObjectsFromFile(
+				file.getTempFile(), fileId(file), fileHash(file.getOriginFile())))
+		.forEach(connectionService::sendPart);
+		return howManyOriginFilesSent.intValue();
+	}
+
+	private int deleteRemoteFilesNonExistingLocally() {
+		Set<String> deletedFiles = new HashSet<>();
+		Set<String> localRepoHashes = getAllFiles(this.repositoryDirectory).stream()
+		.map(LocalRepoOperationsHelper::fileHash)
+		.collect(Collectors.toSet());
+		
+		String repository = repositoryConfigService.getConfig().getRepositoryName();
+		connectionService.getAllPartsForRepository(repository).stream()
+		.filter(part -> !localRepoHashes.contains(part.getFileHash()))
+		.forEach(part -> {
+			if(connectionService.deletePartWithContent(part)) {
+				deletedFiles.add(part.getFileHash());
 			}
 		});
+		return deletedFiles.size();
 	}
 	
 	private void execInTempDirectory(Consumer<File> actionInTempDirectory) {
@@ -140,14 +164,6 @@ public class PushCommand implements Runnable {
 		String encrypedFileMetadata = encryptionService.encrypt(metadata.toJSON());
 		partInfo.setEncryptedFileMetadata(encrypedFileMetadata);
 		return partInfo;
-	}
-
-	private String getHash(File file) {
-		try {
-			return DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	private FileMetadata createFileMetadata(String fileId, File file) {

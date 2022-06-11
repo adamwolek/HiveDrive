@@ -9,7 +9,6 @@ import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.to.NodeSummary;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
-import org.springframework.web.util.DefaultUriBuilderFactory;
 
 public interface P2PSession {
 
@@ -45,5 +44,7 @@ public interface P2PSession {
 	boolean isAccepted(PartTO part);
 
 	NodeSummary getSummary();
+
+	boolean deletePart(PartTO part);
 
 }

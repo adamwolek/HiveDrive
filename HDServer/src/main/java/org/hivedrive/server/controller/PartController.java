@@ -1,16 +1,14 @@
 package org.hivedrive.server.controller;
 
 import java.io.File;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.Collection;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
-import org.hivedrive.cmd.service.C2NConnectionService;
 import org.hivedrive.cmd.status.PartStatus;
 import org.hivedrive.cmd.to.PartTO;
 import org.hivedrive.server.entity.NodeEntity;
@@ -26,6 +24,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,7 +65,7 @@ public class PartController {
 		NodeEntity senderNode = nodeRepository.findByPublicKey(senderInfo.getSenderPublicKey());
 		if(senderNode == null) {
 			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		} else if (!partService.isAbleToAdd(part)) {
+		} else if (!partService.isAbleToAdd(part, senderInfo)) {
 			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
 		//docelowo
@@ -78,10 +77,25 @@ public class PartController {
 		}
 		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
+	
+	@DeleteMapping("/{partId}")
+	public ResponseEntity<Void> delete(@PathVariable(name= "partId") Long partId) throws IOException {
+		logger.debug("Delete part: " + partId);
+		PartEntity part = partRepository.getById(partId);
+		if (!partService.isAbleToDelete(part, senderInfo)) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+		FileUtils.forceDelete(new File(part.getPathToPart()));
+		if (partService.delete(partId)) {
+			return new ResponseEntity<>(HttpStatus.ACCEPTED);
+		}
+		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
 
 	@PutMapping
 	public ResponseEntity<Void> put(@RequestBody PartTO part) {
-		if (partService.isAbleToUpdate(part)) {
+		if (partService.isAbleToUpdate(part, senderInfo)) {
 			PartEntity entity = partService.saveOrUpdate(part);
 			if (entity != null) {
 				return new ResponseEntity<>(HttpStatus.OK);
