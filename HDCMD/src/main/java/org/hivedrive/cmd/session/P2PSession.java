@@ -35,7 +35,7 @@ public interface P2PSession {
 	
 	boolean meetWithNode();
 	
-	boolean doesFileExistGet(String hashFile);
+	boolean doesFileExistGet(String globalFileId);
 	
 	P2PSession fromClientToAddress(String address);
 

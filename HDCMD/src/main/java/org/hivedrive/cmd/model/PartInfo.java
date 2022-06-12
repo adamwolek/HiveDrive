@@ -16,21 +16,17 @@ public class PartInfo {
 	
 	private String encryptedFileMetadata;
 	
-	
-	/**
-	 * MD5 z pliku źródłowego
-	 */
-	private String fileHash;
+	private String fileId;
 	
 	private File part;
 	
 	
 	
-	public String getFileHash() {
-		return fileHash;
+	public String getFileId() {
+		return fileId;
 	}
-	public void setFileHash(String fileHash) {
-		this.fileHash = fileHash;
+	public void setFileId(String fileId) {
+		this.fileId = fileId;
 	}
 	public String getOwnerPublicKey() {
 		return ownerPublicKey;

@@ -1,7 +1,7 @@
 package org.hivedrive.cmd.integration;
 
-import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.fileHash;
-import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.getAllFiles;
+
+import static org.hivedrive.cmd.helper.RepoOperationsHelper.getAllFiles;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -9,13 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hivedrive.cmd.config.TestConfig;
+import org.hivedrive.cmd.helper.RepoOperationsHelper;
 import org.hivedrive.cmd.main.MainApplicationRunner;
 import org.hivedrive.cmd.tool.FileGenerator;
 import org.junit.jupiter.api.Test;
@@ -39,6 +38,9 @@ public class MainIntegrationTest {
 	@Autowired
 	public MainApplicationRunner runner;
 	
+	@Autowired
+	public RepoOperationsHelper repoOperationsHelper;
+	
 	@Test
 	public void pushAndPull() throws IOException {
 		File keys = generateKeys(tempFolder);
@@ -59,7 +61,7 @@ public class MainIntegrationTest {
 		File repoB = createRepoDir();
 		init(keys, repoA);
 		init(keys, repoB);
-		List<File> filesInRepo = fillRepository(repoA);
+		Collection<File> filesInRepo = fillRepository(repoA);
 		push(repoA);
 		File removedFile = removeOneFile(filesInRepo);
 		cleanPush(repoA);
@@ -78,7 +80,7 @@ public class MainIntegrationTest {
 		fillRepository(repoA);
 		push(repoA);
 		pull(repoB);
-		File newFile = newFileIn(repoB);
+		File newFile = newSmallFileIn(repoB);
 		pull(repoB);
 		assertTrue(fileExists(repoB, newFile));
 		cleanPull(repoB);
@@ -91,23 +93,24 @@ public class MainIntegrationTest {
 	private boolean fileExists(File repoB, File newFile) {
 		return getAllFiles(repoB).stream()
 		.filter(file -> file.getName().equals(newFile.getName()))
-		.anyMatch(file -> fileHash(file).equals(fileHash(newFile)));
+		.anyMatch(file -> repoOperationsHelper.fileId(file)
+				.equals(repoOperationsHelper.fileId(newFile)));
 	}
 
-	private File removeOneFile(List<File> filesInRepo) throws IOException {
+	private File removeOneFile(Collection<File> filesInRepo) throws IOException {
 		File file = Iterables.getFirst(filesInRepo, null);
 		FileUtils.forceDelete(file);
 		return file;
 	}
 
 	private File createRepoDir() {
-		File dir = new File(tempFolder, randString());
+		File dir = new File(tempFolder, "repo_" + randString());
 		dir.mkdir();
 		return dir;
 	}
 
 	private File generateKeys(File tempFolder) {
-		File keys = new File(tempFolder, "keys" + randString());
+		File keys = new File(tempFolder, "keys_" + randString());
 		runner.runCommand("generateKeys " + keys.getAbsolutePath());
 		return keys;
 	}
@@ -119,7 +122,8 @@ public class MainIntegrationTest {
 		for (File fileA : getAllFiles(repoA)) {
 			File fileB = findSameGlobalId(fileId(fileA, repoA), repoB);
 			assertNotNull(fileB);
-			assertEquals(fileHash(fileA), fileHash(fileB));
+			assertEquals(repoOperationsHelper.fileId(fileA),
+					repoOperationsHelper.fileId(fileB));
 		}
 	}
 	
@@ -157,13 +161,40 @@ public class MainIntegrationTest {
 		runner.runCommand("pull --directory=" + repo.getAbsolutePath() + " --clean");
 	}
 
-	private List<File> fillRepository(File repo) throws IOException {
-		return Arrays.asList(newFileIn(repo), newFileIn(repo), newFileIn(repo));
+	private Collection<File> fillRepository(File repo) throws IOException {
+		newSmallFileIn(repo);
+		newMediumFileIn(repo);
+		
+		File dir1 = newDirIn(repo);
+		newSmallFileIn(dir1);
+		newMediumFileIn(dir1);
+		
+		File dir2 = newDirIn(repo);
+		newSmallFileIn(dir2);
+		newMediumFileIn(dir2);
+		
+		File dir21 = newDirIn(dir2);
+		newSmallFileIn(dir21);
+		newMediumFileIn(dir21);
+		
+		return getAllFiles(repo);
 	}
 
-	private File newFileIn(File repo) throws IOException {
-		File file = new File(repo, randString());
+	private File newMediumFileIn(File repo) throws IOException {
+		File file = new File(repo, randString() + ".file");
 		FileGenerator.createMediumFile(file);
+		return file;
+	}
+	
+	private File newSmallFileIn(File repo) throws IOException {
+		File file = new File(repo, randString() + ".file");
+		FileGenerator.createSmallFile(file);
+		return file;
+	}
+	
+	private File newDirIn(File repo) throws IOException {
+		File file = new File(repo, "dir_" + randString());
+		file.mkdir();
 		return file;
 	}
 	

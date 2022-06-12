@@ -6,7 +6,6 @@ import java.util.List;
 import org.hivedrive.server.entity.PartEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 public interface PartRepository extends JpaRepository<PartEntity, Long> {
@@ -34,9 +33,9 @@ public interface PartRepository extends JpaRepository<PartEntity, Long> {
 	
 
 	@Query("SELECT count(part.id) FROM PartEntity part "
-			+ "WHERE part.fileHash LIKE :fileHash")
+			+ "WHERE part.fileId LIKE :fileId")
 	Long howManyPartsExists(
-			@Param("fileHash") String fileHash);
+			@Param("fileId") String fileId);
 
 	
 	@Query("SELECT SUM(part.size) FROM PartEntity part "

@@ -81,8 +81,8 @@ public class PartService {
 		return mapper.map(part);
 	}
 	
-	public boolean doesExist(String fileHash) {
-		Long howMany = partRepository.howManyPartsExists(fileHash);
+	public boolean doesExist(String fileId) {
+		Long howMany = partRepository.howManyPartsExists(fileId);
 		return howMany > 0;
 	}
 	
@@ -100,7 +100,7 @@ public class PartService {
 				part.setSize(0);
 			}
 			SpaceForSave bestSpace = findLocationForNewPart(DataSize.ofBytes(bytes.length));
-			File partFile = new File(bestSpace.getDirectory(), part.getId() + "-" + part.getGlobalId());
+			File partFile = new File(bestSpace.getDirectory(), part.getId() + "-" + part.getFileId());
 			FileUtils.writeByteArrayToFile(partFile, bytes);
 			part.setPathToPart(partFile.getAbsolutePath());
 			part.setSpaceId(bestSpace.getDirectory().getAbsolutePath());

@@ -25,5 +25,10 @@ public class FileGenerator {
     	FileUtils.writeByteArrayToFile(file, bytes);
         return file;
 	}
+
+	public static File createSmallFile(File file) throws IOException {
+		return createFile(file, (int)Math.round(0.001 * EXAMPLE_FILES_SIZE_IN_BYTES));
+		
+	}
 	
 }

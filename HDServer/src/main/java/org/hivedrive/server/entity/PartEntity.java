@@ -1,7 +1,5 @@
 package org.hivedrive.server.entity;
 
-import java.io.File;
-
 import java.time.LocalDateTime;
 
 import javax.persistence.Entity;
@@ -11,11 +9,6 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
 import org.hivedrive.cmd.status.PartStatus;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 
 @Entity
@@ -39,11 +32,9 @@ public class PartEntity {
 	private LocalDateTime createDate;
 	
 	private PartStatus status;
-	private String globalId;
-	/**
-	 * File hash before encryption and compression
-	 */
-	private String fileHash;
+	
+	
+	private String fileId;
 	/**
 	 * Name of repository created by repository owner
 	 */
@@ -119,12 +110,14 @@ public class PartEntity {
 		this.status = status;
 	}
 
-	public String getGlobalId() {
-		return globalId;
+	
+
+	public String getFileId() {
+		return fileId;
 	}
 
-	public void setGlobalId(String globalId) {
-		this.globalId = globalId;
+	public void setFileId(String fileId) {
+		this.fileId = fileId;
 	}
 
 	public String getRepository() {
@@ -158,14 +151,6 @@ public class PartEntity {
 
 	public void setOrderInGroup(Integer orderInGroup) {
 		this.orderInGroup = orderInGroup;
-	}
-
-	public String getHash() {
-		return fileHash;
-	}
-
-	public void setHash(String hash) {
-		this.fileHash = hash;
 	}
 
 }

@@ -1,7 +1,5 @@
 package org.hivedrive.cmd.service;
 
-import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.fileHash;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -22,6 +20,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.hivedrive.cmd.config.ConfigurationService;
 import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
 import org.hivedrive.cmd.exception.ReadDataFromMetadataServerException;
+import org.hivedrive.cmd.helper.RepoOperationsHelper;
 import org.hivedrive.cmd.mapper.PartInfoToTOMapper;
 import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.NodeEntity;
@@ -50,24 +49,23 @@ public class C2NConnectionService {
 
 	private Logger logger = LoggerFactory.getLogger(C2NConnectionService.class);
 	
-	private ApplicationContext appContext;
-	private ConfigurationService config;
-	private UserKeysService userKeysService;
-	private NodeRepository nodeRepository;
-	private SymetricEncryptionService encryptionService;
-
 	@Autowired
-	public C2NConnectionService(ConfigurationService config, UserKeysService userKeysService,
-			 NodeRepository nodeRepository, ApplicationContext appContext,
-			RepositoryConfigService repositoryConfigService, 
-			SymetricEncryptionService encryptionService) {
-		super();
-		this.config = config;
-		this.userKeysService = userKeysService;
-		this.nodeRepository = nodeRepository;
-		this.appContext = appContext;
-		this.encryptionService = encryptionService;
-	}
+	private ApplicationContext appContext;
+	
+	@Autowired
+	private ConfigurationService config;
+	
+	@Autowired
+	private UserKeysService userKeysService;
+	
+	@Autowired
+	private NodeRepository nodeRepository;
+	
+	@Autowired
+	private SymetricEncryptionService encryptionService;
+	
+	@Autowired
+	private RepoOperationsHelper repoOperationsHelper;
 
 	@PostConstruct
 	public void init() throws URISyntaxException, IOException, InterruptedException {
@@ -226,7 +224,7 @@ public class C2NConnectionService {
 		.map(address -> appContext.getBean(P2PSession.class)
 					.fromClientToAddress(address))
 		.filter(P2PSession::meetWithNode)
-		.anyMatch(p2pSession -> p2pSession.doesFileExistGet(fileHash(file)));
+		.anyMatch(p2pSession -> p2pSession.doesFileExistGet(repoOperationsHelper.fileId(file)));
 	}
 
 	public List<PartTO> getAllPartsForRepository(String repository) {
@@ -237,7 +235,7 @@ public class C2NConnectionService {
 		.filter(P2PSession::meetWithNode)
 		.flatMap(session -> session.findPartsByRepository(repository).stream())
 		.collect(Collectors.toList());
-		ListMultimap<String, PartTO> groupedParts = Multimaps.index(duplicatedParts, PartTO::getGlobalId);
+		ListMultimap<String, PartTO> groupedParts = Multimaps.index(duplicatedParts, PartTO::getFileId);
 		return groupedParts.keys().stream()
 				.map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
 				.collect(Collectors.toList());
@@ -254,7 +252,6 @@ public class C2NConnectionService {
 			throw new RuntimeException(e);
 		}
 		PartInfo partInfo = new PartInfo();
-		partInfo.setFileHash(part.getFileHash());
 		partInfo.setPart(contentFile);
 		partInfo.setEncryptedFileMetadata(part.getEncryptedFileMetadata());
 		partInfo.setFileMetadata(

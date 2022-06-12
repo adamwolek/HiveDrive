@@ -1,9 +1,6 @@
 package org.hivedrive.cmd.command;
 
-import static org.hivedrive.cmd.helper.FileNameHelper.changeDirectory;
-import static org.hivedrive.cmd.helper.FileNameHelper.removeExtension;
-import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.fileHash;
-import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.getAllFiles;
+import static org.hivedrive.cmd.helper.RepoOperationsHelper.getAllFiles;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,7 +14,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.hivedrive.cmd.helper.RepoOperationsHelper;
 import org.hivedrive.cmd.model.PartInfo;
+import org.hivedrive.cmd.model.TempFile;
 import org.hivedrive.cmd.service.C2NConnectionService;
 import org.hivedrive.cmd.service.FileCompresssingService;
 import org.hivedrive.cmd.service.RepositoryConfigService;
@@ -59,8 +58,11 @@ public class PullCommand implements Runnable {
 	
 	@Autowired
 	private RepositoryConfigService repositoryConfigService;
+	
+	@Autowired
+	private RepoOperationsHelper repoOperationsHelper;
 
-	private Set<String> hashesInLocalRepo;
+	private Set<String> filesInLocalRepo;
 
 	private List<PartTO> allRemoteParts;
 	
@@ -81,8 +83,8 @@ public class PullCommand implements Runnable {
 	}
 
 	private void downloadMissingFiles(File workDirectory) {
-		hashesInLocalRepo = getAllFiles(repositoryDirectory).stream()
-				.map(file -> fileHash(file))
+		filesInLocalRepo = getAllFiles(repositoryDirectory).stream()
+				.map(repoOperationsHelper::fileId)
 				.collect(Collectors.toSet());
 		File directoryForParts = new File(workDirectory, "/parts");
 		ImmutableListMultimap<String, PartInfo> groupedParts = allRemoteParts.stream()
@@ -90,7 +92,7 @@ public class PullCommand implements Runnable {
 		.filter(this::notExistingInRepo)
 		.map(partTO -> connectionService.downloadPart(partTO, directoryForParts))
 		.collect(ImmutableListMultimap.toImmutableListMultimap(
-				part -> part.getFileMetadata().getFileId(), part -> part));
+				part -> part.getFileId(), part -> part));
 		groupedParts.keySet().stream()
 				.map(fileId -> groupedParts.get(fileId))
 				.map(parts -> mergeIntoOneFile(parts, workDirectory))
@@ -102,11 +104,11 @@ public class PullCommand implements Runnable {
 	}
 
 	private void deleteLocalFilesNonExistingInRemoteRepo() {
-		Set<String> hashesInRemoteRepo = allRemoteParts.stream()
-		.map(PartTO::getFileHash)
+		Set<String> filesInRemoteRepo = allRemoteParts.stream()
+		.map(PartTO::getFileId)
 		.collect(Collectors.toSet());
 		getAllFiles(repositoryDirectory).stream()
-		.filter(file -> !hashesInRemoteRepo.contains(fileHash(file)))
+		.filter(file -> !filesInRemoteRepo.contains(repoOperationsHelper.fileId(file)))
 		.forEach(file -> {
 			deleteFile(file);
 		});
@@ -133,30 +135,35 @@ public class PullCommand implements Runnable {
 	}
 
 
-	private File unpackFile(File source) {
+	private File unpackFile(TempFile tempFile) {
 		try {
-			File rawFile = changeDirectory(removeExtension(source), 
-					repositoryConfigService.getRepositoryDirectory());
-			fileComporessingService.uncompressFile(source, rawFile);
-			deleteFile(source);
+			File rawFile = new File(repositoryConfigService.getRepositoryDirectory(), 
+					tempFile.getPartInfo().getFileMetadata().getFilePath());
+			rawFile.getParentFile().mkdirs();
+//			File rawFile = changeDirectory(removeExtension(source), 
+//					repositoryConfigService.getRepositoryDirectory());
+			fileComporessingService.uncompressFile(tempFile.getTempFile(), rawFile);
+			deleteFile(tempFile.getTempFile());
 			return rawFile;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private File decryptFile(File source) {
+	private TempFile decryptFile(TempFile tempFile) {
+		File file = tempFile.getTempFile();
 		try {
-			File decryptedFile = new File(source.getParentFile(), source.getName() + ".zip");
-			encryptionService.decrypt(source, decryptedFile);
-			deleteFile(source);
-			return decryptedFile;
+			File decryptedFile = new File(file.getParentFile(), file.getName() + ".zip");
+			encryptionService.decrypt(file, decryptedFile);
+			deleteFile(file);
+			tempFile.setTempFile(decryptedFile);
+			return tempFile;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private File mergeIntoOneFile(List<PartInfo> parts, File workDirectory) {
+	private TempFile mergeIntoOneFile(List<PartInfo> parts, File workDirectory) {
 		PartInfo anyPart = Iterables.getFirst(parts, null);
 		File wholeFile = declareWholeFile(anyPart, workDirectory);
 		try (FileOutputStream mergedFileOS = new FileOutputStream(wholeFile)) {
@@ -165,14 +172,14 @@ public class PullCommand implements Runnable {
 					IOUtils.copy(partIS, mergedFileOS);
 				}
 			}
-			return wholeFile;
+			return new TempFile(wholeFile, anyPart);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private File declareWholeFile(PartInfo anyPart, File workDirectory) {
-		File wholeFile = new File(workDirectory, anyPart.getFileMetadata().getFileId());
+		File wholeFile = new File(workDirectory, anyPart.getFileId());
 		if (wholeFile.exists()) {
 			deleteFile(wholeFile);
 		}
@@ -180,7 +187,7 @@ public class PullCommand implements Runnable {
 	}
 
 	private boolean notExistingInRepo(PartTO part) {
-		return !hashesInLocalRepo.contains(part.getFileHash());
+		return !filesInLocalRepo.contains(part.getFileId());
 	}
 
 	private boolean validatePart(PartTO part) {
@@ -193,10 +200,7 @@ public class PullCommand implements Runnable {
 	}
 	
 	private boolean areAllFieldsFilled(PartTO part) {
-		if(StringUtils.isBlank(part.getFileHash())) {
-			return false;
-		}
-		if(StringUtils.isBlank(part.getGlobalId())) {
+		if(StringUtils.isBlank(part.getFileId())) {
 			return false;
 		}
 		if(StringUtils.isBlank(part.getRepository())) {

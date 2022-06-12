@@ -11,12 +11,11 @@ public class PartInfoToTOMapper {
 
 	public PartTO map(PartInfo part) {
 		PartTO to = new PartTO();
-		to.setGroupId(part.getFileMetadata().getFileId());
+		to.setGroupId(part.getFileId());
 		to.setOrderInGroup(part.getFileMetadata().getPartIndex());
 		to.setRepository(part.getFileMetadata().getRepository());
 		to.setOwnerId(part.getOwnerPublicKey());
 		to.setEncryptedFileMetadata(part.getEncryptedFileMetadata());
-		to.setFileHash(part.getFileHash());
 		return to;
 	}
 	

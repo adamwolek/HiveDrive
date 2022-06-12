@@ -3,8 +3,7 @@ package org.hivedrive.cmd.command;
 import static org.hivedrive.cmd.helper.FileNameHelper.addExtension;
 import static org.hivedrive.cmd.helper.FileNameHelper.changeDirectory;
 import static org.hivedrive.cmd.helper.FileNameHelper.changeExtension;
-import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.fileHash;
-import static org.hivedrive.cmd.helper.LocalRepoOperationsHelper.getAllFiles;
+import static org.hivedrive.cmd.helper.RepoOperationsHelper.getAllFiles;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +16,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.hivedrive.cmd.helper.LocalRepoOperationsHelper;
+import org.hivedrive.cmd.helper.RepoOperationsHelper;
 import org.hivedrive.cmd.model.FileMetadata;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.TempFile;
@@ -70,6 +69,9 @@ public class PushCommand implements Runnable {
 	
 	@Autowired
 	private RepositoryConfigService repositoryConfigService;
+	
+	@Autowired
+	private RepoOperationsHelper repoOperationsHelper;
 
 	@Override
 	public void run() {
@@ -95,7 +97,7 @@ public class PushCommand implements Runnable {
 
 	private int sendFilesFromRepository(File workDirectory) {
 		AtomicLong howManyOriginFilesSent = new AtomicLong();
-		LocalRepoOperationsHelper.getAllFiles(this.repositoryDirectory).stream()
+		RepoOperationsHelper.getAllFiles(this.repositoryDirectory).stream()
 		.filter(file -> !connectionService.isFilePushedAlready(file))
 		.map(TempFile::new)
 		.map(file -> this.packFile(file, workDirectory))
@@ -104,24 +106,23 @@ public class PushCommand implements Runnable {
 			howManyOriginFilesSent.incrementAndGet();
 			return splitFileToDirectory(encryptedFile, new File(workDirectory, "/parts"));
 		})
-		.map(file -> createPartsObjectsFromFile(
-				file.getTempFile(), fileId(file), fileHash(file.getOriginFile())))
+		.map(file -> createPartsObjectsFromFile(file))
 		.forEach(connectionService::sendPart);
 		return howManyOriginFilesSent.intValue();
 	}
 
 	private int deleteRemoteFilesNonExistingLocally() {
 		Set<String> deletedFiles = new HashSet<>();
-		Set<String> localRepoHashes = getAllFiles(this.repositoryDirectory).stream()
-		.map(LocalRepoOperationsHelper::fileHash)
+		Set<String> localRepoFiles = getAllFiles(this.repositoryDirectory).stream()
+		.map(repoOperationsHelper::fileId)
 		.collect(Collectors.toSet());
 		
 		String repository = repositoryConfigService.getConfig().getRepositoryName();
 		connectionService.getAllPartsForRepository(repository).stream()
-		.filter(part -> !localRepoHashes.contains(part.getFileHash()))
+		.filter(part -> !localRepoFiles.contains(part.getFileId()))
 		.forEach(part -> {
 			if(connectionService.deletePartWithContent(part)) {
-				deletedFiles.add(part.getFileHash());
+				deletedFiles.add(part.getFileId());
 			}
 		});
 		return deletedFiles.size();
@@ -143,34 +144,27 @@ public class PushCommand implements Runnable {
 		}
 	}
 
-	private String fileId(TempFile file) {
-		String fileId = repositoryConfigService.getRepositoryDirectory()
-				.toURI().relativize(file.getOriginFile().toURI()).getPath();
-		return fileId;
-	}
-
-	private PartInfo createPartsObjectsFromFile(File partOfFile, String fileId, String hash) {
+	private PartInfo createPartsObjectsFromFile(TempFile tempFile) {
 		PartInfo partInfo = new PartInfo();
-		partInfo.setPart(partOfFile);
+		partInfo.setPart(tempFile.getTempFile());
 		partInfo.setOwnerPublicKey(userKeysService.getKeys().getPublicAsymetricKeyAsString());
 
-		String fileSign = signatureService.signFileUsingDefaultKeys(partOfFile);
+		String fileSign = signatureService.signFileUsingDefaultKeys(tempFile.getOriginFile());
 		partInfo.setFileSign(fileSign);
 		
-		partInfo.setFileHash(hash);
-		
-		FileMetadata metadata = createFileMetadata(fileId, partOfFile);
+		FileMetadata metadata = createFileMetadata(tempFile);
 		partInfo.setFileMetadata(metadata);
 		String encrypedFileMetadata = encryptionService.encrypt(metadata.toJSON());
 		partInfo.setEncryptedFileMetadata(encrypedFileMetadata);
+		partInfo.setFileId(repoOperationsHelper.fileId(tempFile.getOriginFile()));
 		return partInfo;
 	}
 
-	private FileMetadata createFileMetadata(String fileId, File file) {
+	private FileMetadata createFileMetadata(TempFile tempFile) {
 		FileMetadata metadata = new FileMetadata();
 		metadata.setRepository(repositoryConfigService.getConfig().getRepositoryName());
-		metadata.setFileId(fileId);
-		Integer partIndex = Integer.valueOf(FilenameUtils.getExtension(file.getName()));
+		metadata.setFilePath(repoOperationsHelper.filePath(tempFile.getOriginFile()));
+		Integer partIndex = Integer.valueOf(FilenameUtils.getExtension(tempFile.getTempFile().getName()));
 		metadata.setPartIndex(partIndex);
 		return metadata;
 	}

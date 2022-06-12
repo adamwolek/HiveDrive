@@ -2,7 +2,6 @@ package org.hivedrive.server.part;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +48,7 @@ class PartMapperTest {
         to = new PartTO();
 //        to.setStatus("test status");
         to.setCreateDate(date);
-        to.setGlobalId("qwert");
+        to.setFileId("qwert");
         to.setGroupId("yuiop");
         to.setOrderInGroup(1);
         to.setOwnerId("qwertyuiopasdfgjkl");
@@ -65,7 +64,7 @@ class PartMapperTest {
         entity.setSpaceId("C:/User/Test/Documents");
 //        entity.setStatus("test status");
         entity.setCreateDate(date);
-        entity.setGlobalId("qwert");
+        entity.setFileId("qwert");
         entity.setGroupId("yuiop");
         entity.setOrderInGroup(1);
         entity.setNode(nodeEntity);
@@ -74,7 +73,7 @@ class PartMapperTest {
         to2 = new PartTO();
 //        to2.setStatus("test status 2");
         to2.setCreateDate(date);
-        to2.setGlobalId("trewq");
+        to2.setFileId("trewq");
         to2.setGroupId("poiuy");
         to2.setOrderInGroup(1);
         to2.setOwnerId("qwertyuiopasdfgjkl");
@@ -85,7 +84,7 @@ class PartMapperTest {
         entity2.setSpaceId("C:/User/Test/Documents");
 //        entity2.setStatus("test status 2");
         entity2.setCreateDate(date);
-        entity2.setGlobalId("trewq");
+        entity2.setFileId("trewq");
         entity2.setGroupId("poiuy");
         entity2.setOrderInGroup(1);
         entity2.setNode(nodeEntity);
@@ -131,7 +130,7 @@ class PartMapperTest {
         
         assertEquals(to.getStatus(), result.get(0).getStatus());
         assertEquals(to.getCreateDate(), result.get(0).getCreateDate());
-        assertEquals(to.getGlobalId(), result.get(0).getGlobalId());
+        assertEquals(to.getFileId(), result.get(0).getFileId());
         assertEquals(to.getGroupId(), result.get(0).getGroupId());
         assertEquals(to.getOrderInGroup(), result.get(0).getOrderInGroup());
         assertEquals(to.getOwnerId(), result.get(0).getOwnerId());
@@ -139,7 +138,7 @@ class PartMapperTest {
         
         assertEquals(to2.getStatus(), result.get(1).getStatus());
         assertEquals(to2.getCreateDate(), result.get(1).getCreateDate());
-        assertEquals(to2.getGlobalId(), result.get(1).getGlobalId());
+        assertEquals(to2.getFileId(), result.get(1).getFileId());
         assertEquals(to2.getGroupId(), result.get(1).getGroupId());
         assertEquals(to2.getOrderInGroup(), result.get(1).getOrderInGroup());
         assertEquals(to2.getOwnerId(), result.get(1).getOwnerId());

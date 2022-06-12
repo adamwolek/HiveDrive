@@ -119,10 +119,10 @@ public class PartController {
 		}
 	}
 	
-	@GetMapping("/{fileHash}/exists")
-	ResponseEntity<Boolean> doesExists(@PathVariable(name= "fileHash") String fileHash) {
-		boolean doesExist = partService.doesExist(fileHash);
-		logger.info("File with hash " + fileHash.substring(0, 15) + " does " + (doesExist ? "" : "NOT") + " exist");
+	@GetMapping("/{fileId}/exists")
+	ResponseEntity<Boolean> doesExists(@PathVariable(name= "fileId") String fileId) {
+		boolean doesExist = partService.doesExist(fileId);
+		logger.info("File globalId " + fileId + " does " + (doesExist ? "" : "NOT") + " exist");
 		return new ResponseEntity<>(doesExist, HttpStatus.OK);
 	}
 	

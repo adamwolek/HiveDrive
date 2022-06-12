@@ -18,11 +18,8 @@ public class PartTO {
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
 	private LocalDateTime createDate;
 	private PartStatus status;
-	private String globalId;
-	/**
-	 * File hash before encryption and compression of file
-	 */
-	private String fileHash;
+	
+	private String fileId;
 	/**
 	 * Name of repository created by repository owner
 	 */
@@ -74,7 +71,7 @@ public class PartTO {
 	}
 
 	private void refreshGlobalId() {
-		this.globalId = DigestUtils.md5Hex(ownerId != null ? ownerId : "empty") + "-" + repository + "-" + groupId + "-"
+		this.fileId = DigestUtils.md5Hex(ownerId != null ? ownerId : "empty") + "-" + repository + "-" + groupId + "-"
 				+ orderInGroup;
 	}
 
@@ -90,12 +87,12 @@ public class PartTO {
 		this.status = status;
 	}
 
-	public String getGlobalId() {
-		return globalId;
+	public String getFileId() {
+		return fileId;
 	}
 
-	public void setGlobalId(String globalId) {
-		this.globalId = globalId;
+	public void setFileId(String fileId) {
+		this.fileId = fileId;
 	}
 
 	public String getRepository() {
@@ -132,13 +129,5 @@ public class PartTO {
 	public void setOwnerId(String ownerId) {
 		this.ownerId = ownerId;
 		refreshGlobalId();
-	}
-
-	public String getFileHash() {
-		return fileHash;
-	}
-	
-	public void setFileHash(String fileHash) {
-		this.fileHash = fileHash;
 	}
 }

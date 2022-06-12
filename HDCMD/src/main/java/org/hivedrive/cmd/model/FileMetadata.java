@@ -13,8 +13,8 @@ public class FileMetadata {
 	private static Logger logger = LoggerFactory.getLogger(FileMetadata.class);
 	
 	private String repository;
-	private String fileId;
 	private int partIndex;
+	private String filePath;
 	
 	public String getRepository() {
 		return repository;
@@ -22,21 +22,18 @@ public class FileMetadata {
 	public void setRepository(String repository) {
 		this.repository = repository;
 	}
-	public String getFileId() {
-		return fileId;
-	}
-	public void setFileId(String fileId) {
-		this.fileId = fileId;
-	}
 	public int getPartIndex() {
 		return partIndex;
 	}
 	public void setPartIndex(int partIndex) {
 		this.partIndex = partIndex;
 	}
-
-
-
+	public String getFilePath() {
+		return filePath;
+	}
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
+	}
 	public String toJSON() {
 		try {
 			return JSONUtils.createWrtier().writeValueAsString(this);

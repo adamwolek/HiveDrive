@@ -78,8 +78,8 @@ public class P2PSessionImpl implements P2PSession {
 	private UriBuilder allPartEndpoint() {
 		return uriBuilderFactory.builder().path("/part/all");
 	}
-	private UriBuilder doesFileExistEndpoint(String fileHash) {
-		return uriBuilderFactory.builder().path("/part/" + fileHash + "/exists");
+	private UriBuilder doesFileExistEndpoint(String globalId) {
+		return uriBuilderFactory.builder().path("/part/" + globalId + "/exists");
 	}
 	private UriBuilder allNodeEndpoint() {
 		return uriBuilderFactory.builder().path("/node/all");
@@ -136,11 +136,11 @@ public class P2PSessionImpl implements P2PSession {
 	}
 	
 	@Override
-	public boolean doesFileExistGet(String hashFile) {
+	public boolean doesFileExistGet(String globalId) {
 		TypeReference<Boolean> typeReference = new TypeReference<Boolean>() {
 		};
 		try {
-			return get(doesFileExistEndpoint(hashFile).build(), typeReference);
+			return get(doesFileExistEndpoint(globalId).build(), typeReference);
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -202,7 +202,7 @@ public class P2PSessionImpl implements P2PSession {
 			Collection<PartTO> parts = get(
 					partEndpoint()
 					.queryParam("repository", part.getFileMetadata().getRepository())
-					.queryParam("groupId", part.getFileMetadata().getFileId())
+					.queryParam("groupId", part.getFileId())
 					.queryParam("orderInGroup", part.getFileMetadata().getPartIndex())
 					.build(), 
 					new TypeReference<Collection<PartTO>>() {
