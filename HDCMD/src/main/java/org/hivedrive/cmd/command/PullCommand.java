@@ -39,10 +39,10 @@ import picocli.CommandLine.Option;
 @Command(name = "pull", mixinStandardHelpOptions = true, version = "0.1", description = "Prints the checksum (MD5 by default) of a file to STDOUT.")
 public class PullCommand implements Runnable {
 
-	@Option(names = { "-dir", "--directory" }, description = "")
+	@Option(names = { "-dir", "--directory" }, description = "It downloads files from the cloud.")
 	private File repositoryDirectory = new File(System.getProperty("user.dir"));
 
-	@Option(names = { "-c", "--clean" }, description = "")
+	@Option(names = { "-c", "--clean" }, description = "It downloads files from cloud and removes local files whoch aren't in the cloud.")
 	private boolean clean;
 	
 	private Logger logger = LoggerFactory.getLogger(PullCommand.class);
