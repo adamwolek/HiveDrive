@@ -34,18 +34,12 @@ public class PartService {
 	private ServerConfigService serverConfigService;
 
 	public PartEntity saveOrUpdate(PartTO to) {
-		PartEntity existingPart = partRepository.findPart(
-				to.getOwnerId(), 
-				to.getRepository(), 
-				to.getGroupId(), 
-				to.getOrderInGroup());
-		if(existingPart == null) {
+		if(to.getId() == null) {
 			PartEntity entity = mapper.map(to);
 			entity.setCreateDate(LocalDateTime.now());
 			return partRepository.save(entity);
 		} else {
-			//tutaj raczej powinien być rzucony wyjątek że obiekt już istnieje
-			return existingPart;
+			throw new RuntimeException("Not implemented exception");
 		}
 	}
 	
@@ -70,10 +64,9 @@ public class PartService {
 	}
 
 	public PartTO get(String ownerId, String repository, String groupId, Integer orderInGroup) {
-		PartEntity part = partRepository.findPart(ownerId, repository, groupId, orderInGroup);
+		PartEntity part = partRepository.findPart(ownerId, repository, orderInGroup);
 		System.out.println("ownerId: " + ownerId + "\n" +
 				"repository: " + repository + "\n" +
-				"groupId: " + groupId + "\n" +
 				"orderInGroup: " + orderInGroup);
 		if(part == null) {
 			return null;
@@ -133,6 +126,10 @@ public class PartService {
 		return new File(path);
 	}
 
+	public PartTO getById(Long id) {
+		return mapper.map(partRepository.findById(id).get());
+	}
+	
 	public List<PartTO> get(String senderPublicKey, String repository) {
 		Collection<PartEntity> parts = partRepository.findPart(senderPublicKey, repository);
 		return mapper.mapToTOs(parts);

@@ -36,8 +36,6 @@ public class RepoOperationsHelper {
 		return allFiles;
 	}
 	
-	
-	
 	private static String fileHash(File file) {
 		String fileHash = null;
 		try {
@@ -53,13 +51,23 @@ public class RepoOperationsHelper {
 	}
 	
 	public String fileId(File file) {
-		String filePathAndHash = filePath(file) + "-" + fileHash(file);
-		return DigestUtils.md5DigestAsHex(filePathAndHash.getBytes());
+		String fileId = repositoryConfigService.getConfig().getRepositoryName() + "-"
+				+ filePath(file) + "-" + fileHash(file);
+		return DigestUtils.md5DigestAsHex(fileId.getBytes());
 	}
 	
 	public String filePath(File file) {
-		return repositoryConfigService.getRepositoryDirectory()
-				.toURI().relativize(file.toURI()).getPath();
+		return filePath(file, repositoryConfigService.getRepositoryDirectory());
+	}
+
+	public static String fileId(File file, File repoDir, String repoName) {
+		String fileId = repoName + "-"
+				+ filePath(file, repoDir) + "-" + fileHash(file);
+		return DigestUtils.md5DigestAsHex(fileId.getBytes());
+	}
+
+	private static String filePath(File file, File repoDir) {
+		return repoDir.toURI().relativize(file.toURI()).getPath();
 	}
 	
 }

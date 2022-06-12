@@ -49,7 +49,6 @@ class PartMapperTest {
 //        to.setStatus("test status");
         to.setCreateDate(date);
         to.setFileId("qwert");
-        to.setGroupId("yuiop");
         to.setOrderInGroup(1);
         to.setOwnerId("qwertyuiopasdfgjkl");
         to.setRepository("asdf");
@@ -65,7 +64,6 @@ class PartMapperTest {
 //        entity.setStatus("test status");
         entity.setCreateDate(date);
         entity.setFileId("qwert");
-        entity.setGroupId("yuiop");
         entity.setOrderInGroup(1);
         entity.setNode(nodeEntity);
         entity.setRepository("asdf");
@@ -74,7 +72,6 @@ class PartMapperTest {
 //        to2.setStatus("test status 2");
         to2.setCreateDate(date);
         to2.setFileId("trewq");
-        to2.setGroupId("poiuy");
         to2.setOrderInGroup(1);
         to2.setOwnerId("qwertyuiopasdfgjkl");
         to2.setRepository("asdf");
@@ -85,7 +82,6 @@ class PartMapperTest {
 //        entity2.setStatus("test status 2");
         entity2.setCreateDate(date);
         entity2.setFileId("trewq");
-        entity2.setGroupId("poiuy");
         entity2.setOrderInGroup(1);
         entity2.setNode(nodeEntity);
         entity2.setRepository("asdf");
@@ -131,7 +127,6 @@ class PartMapperTest {
         assertEquals(to.getStatus(), result.get(0).getStatus());
         assertEquals(to.getCreateDate(), result.get(0).getCreateDate());
         assertEquals(to.getFileId(), result.get(0).getFileId());
-        assertEquals(to.getGroupId(), result.get(0).getGroupId());
         assertEquals(to.getOrderInGroup(), result.get(0).getOrderInGroup());
         assertEquals(to.getOwnerId(), result.get(0).getOwnerId());
         assertEquals(to.getRepository(), result.get(0).getRepository());
@@ -139,7 +134,6 @@ class PartMapperTest {
         assertEquals(to2.getStatus(), result.get(1).getStatus());
         assertEquals(to2.getCreateDate(), result.get(1).getCreateDate());
         assertEquals(to2.getFileId(), result.get(1).getFileId());
-        assertEquals(to2.getGroupId(), result.get(1).getGroupId());
         assertEquals(to2.getOrderInGroup(), result.get(1).getOrderInGroup());
         assertEquals(to2.getOwnerId(), result.get(1).getOwnerId());
         assertEquals(to2.getRepository(), result.get(1).getRepository());

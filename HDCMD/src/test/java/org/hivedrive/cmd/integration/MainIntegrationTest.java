@@ -37,17 +37,20 @@ public class MainIntegrationTest {
 	
 	@Autowired
 	public MainApplicationRunner runner;
+
+	private String repoName;
 	
-	@Autowired
-	public RepoOperationsHelper repoOperationsHelper;
+//	@Autowired
+//	public RepoOperationsHelper repoOperationsHelper;
 	
 	@Test
 	public void pushAndPull() throws IOException {
 		File keys = generateKeys(tempFolder);
+		repoName = "myRepo_" + randString();
 		File repoA = createRepoDir();
 		File repoB = createRepoDir();
-		init(keys, repoA);
-		init(keys, repoB);
+		init(keys, repoA, repoName);
+		init(keys, repoB, repoName);
 		fillRepository(repoA);
 		push(repoA);
 		pull(repoB);
@@ -57,10 +60,11 @@ public class MainIntegrationTest {
 	@Test
 	public void cleanPush() throws IOException {
 		File keys = generateKeys(tempFolder);
+		repoName = "myRepo_" + randString();
 		File repoA = createRepoDir();
 		File repoB = createRepoDir();
-		init(keys, repoA);
-		init(keys, repoB);
+		init(keys, repoA, repoName);
+		init(keys, repoB, repoName);
 		Collection<File> filesInRepo = fillRepository(repoA);
 		push(repoA);
 		File removedFile = removeOneFile(filesInRepo);
@@ -73,10 +77,11 @@ public class MainIntegrationTest {
 	@Test
 	public void cleanPull() throws IOException {
 		File keys = generateKeys(tempFolder);
+		repoName = "myRepo_" + randString();
 		File repoA = createRepoDir();
 		File repoB = createRepoDir();
-		init(keys, repoA);
-		init(keys, repoB);
+		init(keys, repoA, repoName);
+		init(keys, repoB, repoName);
 		fillRepository(repoA);
 		push(repoA);
 		pull(repoB);
@@ -93,8 +98,7 @@ public class MainIntegrationTest {
 	private boolean fileExists(File repoB, File newFile) {
 		return getAllFiles(repoB).stream()
 		.filter(file -> file.getName().equals(newFile.getName()))
-		.anyMatch(file -> repoOperationsHelper.fileId(file)
-				.equals(repoOperationsHelper.fileId(newFile)));
+		.anyMatch(file -> fileId(file, repoB).equals(fileId(newFile, repoB)));
 	}
 
 	private File removeOneFile(Collection<File> filesInRepo) throws IOException {
@@ -122,8 +126,7 @@ public class MainIntegrationTest {
 		for (File fileA : getAllFiles(repoA)) {
 			File fileB = findSameGlobalId(fileId(fileA, repoA), repoB);
 			assertNotNull(fileB);
-			assertEquals(repoOperationsHelper.fileId(fileA),
-					repoOperationsHelper.fileId(fileB));
+			assertEquals(fileId(fileA, repoA), fileId(fileB, repoB));
 		}
 	}
 	
@@ -140,9 +143,9 @@ public class MainIntegrationTest {
 		return null;
 	}
 
-	private void init(File keys, File repo) {
-		runner.runCommand(String.format("init --key=%s --directory=%s", 
-				keys.getAbsolutePath(), repo.getAbsolutePath()));
+	private void init(File keys, File repo, String repoName) {
+		runner.runCommand(String.format("init --key=%s --directory=%s --name=%s", 
+				keys.getAbsolutePath(), repo.getAbsolutePath(), repoName));
 	}
 	
 	private void push(File repo) {
@@ -198,8 +201,8 @@ public class MainIntegrationTest {
 		return file;
 	}
 	
-	private String fileId(File file, File repo) {
-		return repo.toURI().relativize(file.toURI()).getPath();
+	private String fileId(File file, File repoDir) {
+		return RepoOperationsHelper.fileId(file, repoDir, this.repoName);
 	}
 	
 }

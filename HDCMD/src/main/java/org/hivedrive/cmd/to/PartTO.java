@@ -2,7 +2,6 @@ package org.hivedrive.cmd.to;
 
 import java.time.LocalDateTime;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.hivedrive.cmd.status.PartStatus;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -24,10 +23,6 @@ public class PartTO {
 	 * Name of repository created by repository owner
 	 */
 	private String repository;
-	/**
-	 * Encrypted name of the file from which the part was extracted
-	 */
-	private String groupId;
 	/**
 	 * Number of part in group
 	 */
@@ -70,11 +65,6 @@ public class PartTO {
 		return createDate;
 	}
 
-	private void refreshGlobalId() {
-		this.fileId = DigestUtils.md5Hex(ownerId != null ? ownerId : "empty") + "-" + repository + "-" + groupId + "-"
-				+ orderInGroup;
-	}
-
 	public void setCreateDate(LocalDateTime createDate) {
 		this.createDate = createDate;
 	}
@@ -101,16 +91,6 @@ public class PartTO {
 
 	public void setRepository(String repository) {
 		this.repository = repository;
-		refreshGlobalId();
-	}
-
-	public String getGroupId() {
-		return groupId;
-	}
-
-	public void setGroupId(String groupId) {
-		this.groupId = groupId;
-		refreshGlobalId();
 	}
 
 	public int getOrderInGroup() {
@@ -119,7 +99,6 @@ public class PartTO {
 
 	public void setOrderInGroup(int orderInGroup) {
 		this.orderInGroup = orderInGroup;
-		refreshGlobalId();
 	}
 
 	public String getOwnerId() {
@@ -128,6 +107,5 @@ public class PartTO {
 
 	public void setOwnerId(String ownerId) {
 		this.ownerId = ownerId;
-		refreshGlobalId();
 	}
 }

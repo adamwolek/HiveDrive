@@ -18,7 +18,6 @@ import javax.annotation.PostConstruct;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hivedrive.cmd.helper.StatusCode;
-import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.service.common.AddressService;
 import org.hivedrive.cmd.service.common.KeysService;
 import org.hivedrive.cmd.service.common.SignatureService;
@@ -148,12 +147,12 @@ public class P2PSessionImpl implements P2PSession {
 	}
 
 	@Override
-	public boolean send(PartTO part) {
+	public Long send(PartTO part) {
 		try {
 			return post(partEndpoint().build(), part);
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			logger.error(ERROR, e);
-			return false;
+			return null;
 		}
 	}
 
@@ -197,13 +196,11 @@ public class P2PSessionImpl implements P2PSession {
 	}
 
 	@Override
-	public PartTO downloadPart(PartInfo part) {
+	public PartTO downloadPart(Long partRemoteId) {
 		try {
 			Collection<PartTO> parts = get(
 					partEndpoint()
-					.queryParam("repository", part.getFileMetadata().getRepository())
-					.queryParam("groupId", part.getFileId())
-					.queryParam("orderInGroup", part.getFileMetadata().getPartIndex())
+					.queryParam("id", partRemoteId)
 					.build(), 
 					new TypeReference<Collection<PartTO>>() {
 			});
@@ -313,7 +310,7 @@ public class P2PSessionImpl implements P2PSession {
 		}
 	}
 	
-	private boolean post(URI uri, Object object)
+	private Long post(URI uri, Object object)
 			throws URISyntaxException, IOException, InterruptedException {
 		logger.debug("Sending post request: " + uri);
 		String json = JSONUtils.mapper().writeValueAsString(object);
@@ -329,7 +326,11 @@ public class P2PSessionImpl implements P2PSession {
 				.POST(BodyPublishers.ofString(json)).build();
 		HttpResponse<String> response = HttpClient.newBuilder().build()
 				.send(request, BodyHandlers.ofString());
-		return response.statusCode() == StatusCode.ACCEPTED;
+		if(response.statusCode() != StatusCode.ACCEPTED) {
+			return null;
+		}
+		String body = response.body();
+		return Long.valueOf(body);
 	}
 	
 	private boolean delete(URI uri)

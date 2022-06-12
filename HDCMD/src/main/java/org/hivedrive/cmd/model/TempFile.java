@@ -12,9 +12,7 @@ public class TempFile {
 		this.originFile = originFile;
 	}
 	
-	public TempFile(File originFile, PartInfo partInfo) {
-		this(originFile);
-		this.partInfo = partInfo;
+	public TempFile() {
 	}
 	
 	private TempFile(TempFile tempFile) {

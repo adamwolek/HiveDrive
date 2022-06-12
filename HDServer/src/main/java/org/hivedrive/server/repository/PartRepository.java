@@ -16,12 +16,10 @@ public interface PartRepository extends JpaRepository<PartEntity, Long> {
 	@Query("FROM PartEntity part "
 			+ "WHERE part.node.publicKey = :ownerId "
 			+ "AND part.repository = :repository "
-			+ "AND part.groupId = :groupId "
 			+ "AND part.orderInGroup = :orderInGroup ")
 	PartEntity findPart(
 			@Param("ownerId") String ownerId, 
 			@Param("repository") String repository, 
-			@Param("groupId") String groupId, 
 			@Param("orderInGroup") Integer orderInGroup);
 
 	@Query("FROM PartEntity part "

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -164,15 +165,22 @@ public class PullCommand implements Runnable {
 	}
 
 	private TempFile mergeIntoOneFile(List<PartInfo> parts, File workDirectory) {
-		PartInfo anyPart = Iterables.getFirst(parts, null);
+		List<PartInfo> sortedParts = new ArrayList<>(parts);
+		sortedParts.sort((p1, p2) -> Integer.compare(
+					p1.getFileMetadata().getPartIndex(), 
+					p2.getFileMetadata().getPartIndex()));
+		PartInfo anyPart = Iterables.getFirst(sortedParts, null);
 		File wholeFile = declareWholeFile(anyPart, workDirectory);
 		try (FileOutputStream mergedFileOS = new FileOutputStream(wholeFile)) {
-			for (PartInfo part : parts) {
+			for (PartInfo part : sortedParts) {
 				try (InputStream partIS = new FileInputStream(part.getPart())) {
 					IOUtils.copy(partIS, mergedFileOS);
 				}
 			}
-			return new TempFile(wholeFile, anyPart);
+			TempFile tempFile = new TempFile();
+			tempFile.setPartInfo(anyPart);
+			tempFile.setTempFile(wholeFile);
+			return tempFile;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -204,9 +212,6 @@ public class PullCommand implements Runnable {
 			return false;
 		}
 		if(StringUtils.isBlank(part.getRepository())) {
-			return false;
-		}
-		if(StringUtils.isBlank(part.getGroupId())) {
 			return false;
 		}
 		if(StringUtils.isBlank(part.getOwnerId())) {

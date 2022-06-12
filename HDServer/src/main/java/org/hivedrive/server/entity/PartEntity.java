@@ -40,10 +40,6 @@ public class PartEntity {
 	 */
 	private String repository;
 	/**
-	 * Encrypted name of the file from which the part was extracted
-	 */
-	private String groupId;
-	/**
 	 * Number of part in group
 	 */
 	private Integer orderInGroup;
@@ -126,14 +122,6 @@ public class PartEntity {
 
 	public void setRepository(String repository) {
 		this.repository = repository;
-	}
-
-	public String getGroupId() {
-		return groupId;
-	}
-
-	public void setGroupId(String groupId) {
-		this.groupId = groupId;
 	}
 
 	public Long getId() {

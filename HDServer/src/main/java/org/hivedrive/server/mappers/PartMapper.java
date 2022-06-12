@@ -34,7 +34,6 @@ public class PartMapper {
 		entity.setId(to.getId());
 		entity.setStatus(to.getStatus());
 		entity.setCreateDate(to.getCreateDate());
-		entity.setGroupId(to.getGroupId());
 		entity.setOrderInGroup(to.getOrderInGroup());
 		entity.setRepository(to.getRepository());
 		entity.setFileId(to.getFileId());
@@ -54,7 +53,6 @@ public class PartMapper {
 		to.setStatus(entity.getStatus());
 		to.setCreateDate(entity.getCreateDate());
 		to.setFileId(entity.getFileId());
-		to.setGroupId(entity.getGroupId());
 		to.setOrderInGroup(entity.getOrderInGroup());
 		to.setRepository(entity.getRepository());
 		to.setOwnerId(entity.getNode().getPublicKey());

@@ -60,7 +60,8 @@ public class PartController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Void> post(@RequestBody PartTO part) {
+	public ResponseEntity<Long> post(@RequestBody PartTO part) {
+		System.out.println("Order: " + part.getOrderInGroup());
 		part.setOwnerId(senderInfo.getSenderPublicKey());
 		NodeEntity senderNode = nodeRepository.findByPublicKey(senderInfo.getSenderPublicKey());
 		if(senderNode == null) {
@@ -73,7 +74,7 @@ public class PartController {
 		part.setStatus(PartStatus.ACCEPTED);
 		PartEntity entity = partService.saveOrUpdate(part);
 		if (entity != null) {
-			return new ResponseEntity<>(HttpStatus.ACCEPTED);
+			return new ResponseEntity<>(entity.getId(), HttpStatus.ACCEPTED);
 		}
 		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
@@ -107,14 +108,16 @@ public class PartController {
 
 	@GetMapping
 	ResponseEntity<Collection<PartTO>> get(
-			@RequestParam(name = "repository") String repository, 
-			@RequestParam(name = "groupId", required = false) String groupId,
-			@RequestParam(name = "orderInGroup", required = false) Integer orderInGroup) {
-		if(groupId == null && orderInGroup == null) {
+			@RequestParam(name = "id", required = false) Long id, 
+			@RequestParam(name = "repository", required = false) String repository) {
+		if(id == null) {
 			Collection<PartTO> parts = partService.get(senderInfo.getSenderPublicKey(), repository);
 			return new ResponseEntity<>(parts, HttpStatus.OK);
 		} else {
-			PartTO part = partService.get(senderInfo.getSenderPublicKey(), repository, groupId, orderInGroup);
+			PartTO part = partService.getById(id);
+			if(!part.getOwnerId().equals(senderInfo.getSenderPublicKey())) {
+				return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+			}
 			return new ResponseEntity<>(Lists.newArrayList(part), HttpStatus.OK);
 		}
 	}

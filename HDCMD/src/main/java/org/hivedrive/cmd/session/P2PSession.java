@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.to.NodeSummary;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.to.PartTO;
@@ -21,13 +20,13 @@ public interface P2PSession {
 	
 	List<PartTO> findPartsByRepository(String repository);
 	
-	PartTO downloadPart(PartInfo part);
+	PartTO downloadPart(Long partId);
 	
 	List<PartTO> getAllParts() throws URISyntaxException, IOException, InterruptedException;
 	
 	List<NodeTO> getAllNodes();
 	
-	boolean send(PartTO part);
+	Long send(PartTO part);
 	
 	void sendContent(Long partId, File part);
 	

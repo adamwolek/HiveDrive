@@ -156,9 +156,9 @@ public class C2NConnectionService {
 			NodeEntity node = nodes.poll();
 			P2PSession sessionManager = newSession(node.getAddress());
 			PartTO partTO = PartInfoToTOMapper.create().map(part);
-			boolean requestSent = sessionManager.send(partTO);
-			if (requestSent) {
-				Long partId = waitForAcceptance(part, sessionManager);
+			Long partId = sessionManager.send(partTO);
+			if(partId != null) {
+				waitForAcceptance(partId, sessionManager);
 				sessionManager.sendContent(partId, part.getPart());
 				copiesOfPart++;
 			}
@@ -166,14 +166,13 @@ public class C2NConnectionService {
 		return copiesOfPart;
 	}
 	
-	private Long waitForAcceptance(PartInfo part, P2PSession sessionManager) {
+	private void waitForAcceptance(Long partRemoteId, P2PSession sessionManager) {
 		int triesCount = 0;
 		PartTO downloadedPart = null;
 		do {
 			delay();
-			downloadedPart = sessionManager.downloadPart(part);
+			downloadedPart = sessionManager.downloadPart(partRemoteId);
 		} while (!sessionManager.isAccepted(downloadedPart) & triesCount < 5);
-		return downloadedPart.getId();
 	}
 
 	private void delay() {
@@ -235,8 +234,9 @@ public class C2NConnectionService {
 		.filter(P2PSession::meetWithNode)
 		.flatMap(session -> session.findPartsByRepository(repository).stream())
 		.collect(Collectors.toList());
-		ListMultimap<String, PartTO> groupedParts = Multimaps.index(duplicatedParts, PartTO::getFileId);
-		return groupedParts.keys().stream()
+		ListMultimap<String, PartTO> groupedParts = Multimaps
+				.index(duplicatedParts, part -> part.getFileId() + part.getOrderInGroup());
+		return groupedParts.keySet().stream()
 				.map(partGlobalId -> randomElement(groupedParts.get(partGlobalId)))
 				.collect(Collectors.toList());
 	}
@@ -244,7 +244,7 @@ public class C2NConnectionService {
 	public PartInfo downloadPart(PartTO part, File directoryForParts) {
 		P2PSession session = newSession(part.getNodeWhichContainsPart().getAddress());
 		File contentFile = new File(directoryForParts,
-				"part-" + part.getGroupId() + "-" + part.getOrderInGroup());
+				"part-" + part.getFileId() + "-" + part.getOrderInGroup());
 		byte[] data = session.getContent(part);
 		try {
 			FileUtils.writeByteArrayToFile(contentFile, data);
@@ -252,6 +252,7 @@ public class C2NConnectionService {
 			throw new RuntimeException(e);
 		}
 		PartInfo partInfo = new PartInfo();
+		partInfo.setFileId(part.getFileId());
 		partInfo.setPart(contentFile);
 		partInfo.setEncryptedFileMetadata(part.getEncryptedFileMetadata());
 		partInfo.setFileMetadata(
