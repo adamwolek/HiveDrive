@@ -1,18 +1,15 @@
 package org.hivedrive.server.controller;
 
 import java.util.ArrayList;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.hivedrive.cmd.service.common.AddressService;
 import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
 import org.hivedrive.cmd.to.NodeSummary;
 import org.hivedrive.cmd.to.SpaceTO;
-import org.hivedrive.cmd.to.SpaceUsageTO;
-import org.hivedrive.server.entity.NodeEntity;
-import org.hivedrive.server.repository.NodeRepository;
 import org.hivedrive.server.repository.PartRepository;
 import org.hivedrive.server.service.NodeService;
 import org.hivedrive.server.service.ServerConfigService;
@@ -43,6 +40,9 @@ public class SpaceController {
 	private ServerConfigService serverConfigService;
 	
 	@Autowired
+	private AddressService addressService;
+	
+	@Autowired
 	private UserKeysService userKeysService;
 	
 	@Autowired
@@ -63,6 +63,7 @@ public class SpaceController {
 	private NodeSummary mySummary() {
 		NodeSummary node = new NodeSummary();
 		node.setId(userKeysService.getKeys().getPublicAsymetricKeyAsString());
+		node.setAddress(addressService.getMyAddress());
 		node.setSpaces(partRepository.getUsageOfSpaces().stream()
 		.map(row -> {
 			SpaceTO space = new SpaceTO();
@@ -86,9 +87,10 @@ public class SpaceController {
 	public ResponseEntity<List<NodeSummary>> summaryForAllNodes() {
 		List<NodeSummary> allNodes = new ArrayList<>();
 		allNodes.add(this.mySummary());
-		nodeService.findAllWithoutMe().stream()
+		allNodes.addAll(nodeService.findAllWithoutMe().stream()
 		.map(node -> appContext.getBean(P2PSession.class).fromNodeToAddress(node.getAddress()))
-		.map(session -> session.getSummary());
+		.map(session -> session.getSummary())
+		.collect(Collectors.toList()));
 		
 		return new ResponseEntity<>(allNodes, HttpStatus.ACCEPTED);
 	}

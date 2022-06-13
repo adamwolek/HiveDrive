@@ -8,11 +8,11 @@ import static org.hivedrive.cmd.helper.RepoOperationsHelper.getAllFiles;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -27,6 +27,7 @@ import org.hivedrive.cmd.service.RepositoryConfigService;
 import org.hivedrive.cmd.service.SymetricEncryptionService;
 import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.cmd.service.common.UserKeysService;
+import org.hivedrive.cmd.statistics.PushStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,45 +74,56 @@ public class PushCommand implements Runnable {
 	@Autowired
 	private RepoOperationsHelper repoOperationsHelper;
 
+	private PushStatistics statistics = new PushStatistics();
+	
+	
 	@Override
 	public void run() {
 		repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
 		execInTempDirectory(workDirectory -> {
-			int howManyFilesDeleted = clean ? deleteRemoteFilesNonExistingLocally() : 0;
-			int howManyOriginFilesSent = sendFilesFromRepository(workDirectory);
-			log(howManyFilesDeleted, howManyOriginFilesSent);
+			if(clean) {
+				deleteRemoteFilesNonExistingLocally();
+			}
+			sendFilesFromRepository(workDirectory);
 		});
+		log(statistics);
 	}
 
-	private void log(int howManyFilesDeleted, int howManyOriginFilesSent) {
-		if(howManyFilesDeleted > 0) {
-			logger.info("Deleted " + howManyFilesDeleted + " files");
+	private void log(PushStatistics statistics) {
+		logger.info("Command execution took " 
+				+ statistics.getStopwatch().getTime(TimeUnit.SECONDS) + " seconds");
+		if(statistics.howManyPartsCreated() > 0) {
+			logger.info("Created " + statistics.howManyPartsCreated() + " parts");
 		}
-		if(howManyOriginFilesSent > 0) {
-			logger.info("Sent " + howManyOriginFilesSent + " files");
+		if(statistics.howManyFilesDeleted() > 0) {
+			logger.info("Deleted " + statistics.howManyFilesDeleted() + " files");
 		}
-		if(howManyFilesDeleted == 0 && howManyOriginFilesSent == 0) {
+		if(statistics.howManyOriginFilesSent() > 0) {
+			logger.info("Sent " + statistics.howManyOriginFilesSent() + " files");
+		}
+		if(statistics.howManyFilesDeleted() == 0 && statistics.howManyOriginFilesSent() == 0) {
 			logger.info("All files in network are up-to-date");
 		}
+		
 	}
 
-	private int sendFilesFromRepository(File workDirectory) {
-		AtomicLong howManyOriginFilesSent = new AtomicLong();
+	private void sendFilesFromRepository(File workDirectory) {
 		RepoOperationsHelper.getAllFiles(this.repositoryDirectory).stream()
 		.filter(file -> !connectionService.isFilePushedAlready(file))
 		.map(TempFile::new)
 		.map(file -> this.packFile(file, workDirectory))
 		.map(this::encryptFile)
 		.flatMap(encryptedFile -> { 
-			howManyOriginFilesSent.incrementAndGet();
-			return splitFileToDirectory(encryptedFile, new File(workDirectory, "/parts"));
+			statistics.fileSent();
+			List<TempFile> parts = splitFileToDirectory(encryptedFile, new File(workDirectory, "/parts"));
+			statistics.partsCreated(parts.size());
+			return parts.stream();
 		})
 		.map(file -> createPartsObjectsFromFile(file))
 		.forEach(connectionService::sendPart);
-		return howManyOriginFilesSent.intValue();
 	}
 
-	private int deleteRemoteFilesNonExistingLocally() {
+	private void deleteRemoteFilesNonExistingLocally() {
 		Set<String> deletedFiles = new HashSet<>();
 		Set<String> localRepoFiles = getAllFiles(this.repositoryDirectory).stream()
 		.map(repoOperationsHelper::fileId)
@@ -125,7 +137,7 @@ public class PushCommand implements Runnable {
 				deletedFiles.add(part.getFileId());
 			}
 		});
-		return deletedFiles.size();
+		statistics.filesDeleted(deletedFiles.size());
 	}
 	
 	private void execInTempDirectory(Consumer<File> actionInTempDirectory) {
@@ -169,16 +181,16 @@ public class PushCommand implements Runnable {
 		return metadata;
 	}
 
-	private Stream<TempFile> splitFileToDirectory(TempFile encryptedFile, File directoryToSplit) {
+	private List<TempFile> splitFileToDirectory(TempFile encryptedFile, File directoryToSplit) {
 		try {
 			directoryToSplit.mkdir();
-			Stream<TempFile> spliitedFile = fileSplittingService
+			List<TempFile> spliitedFile = fileSplittingService
 					.splitFileIntoDirectory(encryptedFile.getTempFile(), directoryToSplit).stream()
 					.map(part -> {
 						TempFile partFile = encryptedFile.clone();
 						partFile.setTempFile(part);
 						return partFile;
-					});
+					}).collect(Collectors.toList());
 			FileUtils.forceDelete(encryptedFile.getTempFile());
 			return spliitedFile;
 		} catch (Exception e) {

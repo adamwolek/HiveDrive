@@ -7,5 +7,5 @@ fi
 
 curl 192.168.0.122/hivedrive.tar.gz --output hivedrive.tar.gz
 tar xvzf hivedrive.tar.gz
-cp /home/cc/hd_install/install_resources/HDServer.jar /usr/share/hivedrive
+cp -r /home/cc/hivedrive/hd_install/install_resources/* /usr/share/hivedrive
 systemctl restart hivedrive.service

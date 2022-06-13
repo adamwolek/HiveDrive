@@ -17,6 +17,8 @@ import org.hivedrive.server.exception.NodeIsNotRegisteredException;
 import org.hivedrive.server.repository.ClientRepository;
 import org.hivedrive.server.service.NodeService;
 import org.hivedrive.server.service.ServerConfigService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Component;
 @Order(2)
 public class MeetFriendsFilter implements Filter {
 
+	private Logger logger = LoggerFactory.getLogger(MeetFriendsFilter.class);
 	
 	@Autowired
 	private NodeService nodeService;
@@ -48,6 +51,7 @@ public class MeetFriendsFilter implements Filter {
 			String senderType = httpRequest.getHeader(P2PSession.SENDER_TYPE_HEADER_PARAM);
 			String addressOfSender = getAddressOfSender(httpRequest);
 			if(senderType.equals("node")) {
+				logger.info("I met a new node: " + addressOfSender);
 				NodeEntity entity = new NodeEntity();
 				entity.setPublicKey(senderId);
 				entity.setAddress(addressOfSender);

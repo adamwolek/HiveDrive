@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 public class ConfigurationService {
 	
 	private URL urlToCentralMetadata;
-	private int bestNumberOfCopies = 6;
+	private int bestNumberOfCopies = 1;
 	
 	@PostConstruct
 	void init() throws MalformedURLException {

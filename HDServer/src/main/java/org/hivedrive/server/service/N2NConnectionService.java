@@ -7,23 +7,17 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hivedrive.cmd.exception.ConnectToCentralMetadataServerException;
 import org.hivedrive.cmd.exception.ReadDataFromMetadataServerException;
-import org.hivedrive.cmd.service.C2NConnectionService;
 import org.hivedrive.cmd.service.common.AddressService;
-import org.hivedrive.cmd.service.common.SignatureService;
 import org.hivedrive.cmd.service.common.UserKeysService;
 import org.hivedrive.cmd.session.P2PSession;
 import org.hivedrive.cmd.to.CentralServerMetadata;
 import org.hivedrive.cmd.to.NodeTO;
 import org.hivedrive.cmd.tool.JSONUtils;
-import org.hivedrive.server.config.LocalConfiguration;
 import org.hivedrive.server.entity.NodeEntity;
-import org.hivedrive.server.repository.NodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +25,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.Iterables;
 
 @Service
 public class N2NConnectionService {
@@ -54,8 +47,7 @@ public class N2NConnectionService {
 	private ApplicationContext appContext;
 
 	public void manualInit() throws URISyntaxException, IOException, InterruptedException {
-		
-		
+		logger.info("Initialization of N2NConnectionService");
 		List<CentralServerMetadata> centralServersMetadata = serverConfigService.getCentralServers().stream()
 		.map(this::createUrl)
 		.map(this::downloadMetadata)
