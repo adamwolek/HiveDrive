@@ -133,7 +133,7 @@ public class PushCommand implements Runnable {
 		connectionService.getAllPartsForRepository(repository).stream()
 		.filter(part -> !localRepoFiles.contains(part.getFileId()))
 		.forEach(part -> {
-			if(connectionService.deletePartWithContent(part)) {
+			if (connectionService.deletePartWithContent(part)) {
 				deletedFiles.add(part.getFileId());
 			}
 		});

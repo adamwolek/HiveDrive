@@ -20,8 +20,6 @@ public class PartInfo {
 	
 	private File part;
 	
-	
-	
 	public String getFileId() {
 		return fileId;
 	}
