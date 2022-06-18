@@ -211,7 +211,7 @@ public class C2NConnectionService {
 	private Comparator<? super NodeEntity> getComparatorByGeneralRate() {
 		return (n1, n2) -> {
 			Long space1 = n1.getFreeSpace();
-			Long space2 = n1.getFreeSpace();
+			Long space2 = n2.getFreeSpace();
 			return ObjectUtils.compare(space1, space2);
 		};
 	}
