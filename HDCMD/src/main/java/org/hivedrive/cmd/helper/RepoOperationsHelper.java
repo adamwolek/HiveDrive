@@ -3,6 +3,8 @@ package org.hivedrive.cmd.helper;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -17,6 +19,8 @@ public class RepoOperationsHelper {
 
 	@Autowired
 	private RepositoryConfigService repositoryConfigService;
+	
+	private Map<String, String> hashByFilePath = new HashMap<>();
 	
 	public static Collection<File> getAllFiles(File repositoryDirectory) {
 		IOFileFilter filter = new IOFileFilter() {
@@ -36,14 +40,17 @@ public class RepoOperationsHelper {
 		return allFiles;
 	}
 	
-	private static String fileHash(File file) {
-		String fileHash = null;
-		try {
-			fileHash = DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file));
-		} catch (IOException e) {
-			e.printStackTrace();
+	public String fileHash(File file) {
+		if(!hashByFilePath.containsKey(file.getAbsolutePath())) {
+			String fileHash = null;
+			try {
+				fileHash = DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(file));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			hashByFilePath.put(file.getAbsolutePath(), fileHash);
 		}
-		return fileHash;
+		return hashByFilePath.get(file.getAbsolutePath());
 	}
 	
 	public String fileId(TempFile file) {
@@ -60,7 +67,7 @@ public class RepoOperationsHelper {
 		return filePath(file, repositoryConfigService.getRepositoryDirectory());
 	}
 
-	public static String fileId(File file, File repoDir, String repoName) {
+	public String fileId(File file, File repoDir, String repoName) {
 		String fileId = repoName + "-"
 				+ filePath(file, repoDir) + "-" + fileHash(file);
 		return DigestUtils.md5DigestAsHex(fileId.getBytes());

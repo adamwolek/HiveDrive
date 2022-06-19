@@ -9,12 +9,14 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.hivedrive.cmd.helper.RepoOperationsHelper;
 import org.hivedrive.cmd.model.PartInfo;
 import org.hivedrive.cmd.model.TempFile;
@@ -69,6 +71,7 @@ public class PullCommand implements Runnable {
 	
 	@Override
 	public void run() {
+		StopWatch stopwatch = StopWatch.createStarted();
 		repositoryConfigService.setRepositoryDirectory(repositoryDirectory);
 		execInTempDirectory(workDirectory -> {
 			
@@ -80,7 +83,7 @@ public class PullCommand implements Runnable {
 			}
 			downloadMissingFiles(workDirectory);
 		});
-		logger.info("Pulling finished");
+		logger.info("Pulling finished in " + stopwatch.getTime(TimeUnit.MILLISECONDS) + "millis");
 	}
 
 	private void downloadMissingFiles(File workDirectory) {
@@ -91,6 +94,7 @@ public class PullCommand implements Runnable {
 		ImmutableListMultimap<String, PartInfo> groupedParts = allRemoteParts.stream()
 		.filter(this::validatePart)
 		.filter(this::notExistingInRepo)
+		.parallel()
 		.map(partTO -> connectionService.downloadPart(partTO, directoryForParts))
 		.collect(ImmutableListMultimap.toImmutableListMultimap(
 				part -> part.getFileId(), part -> part));
@@ -100,7 +104,7 @@ public class PullCommand implements Runnable {
 				.map(this::decryptFile)
 				.map(this::unpackFile)
 				.forEach(rawFile -> {
-					logger.info("File " + rawFile.getName() + " downloaded");
+					logger.info("File " + rawFile.getTempFile().getName() + " downloaded");
 				});
 	}
 
@@ -136,16 +140,15 @@ public class PullCommand implements Runnable {
 	}
 
 
-	private File unpackFile(TempFile tempFile) {
+	private TempFile unpackFile(TempFile tempFile) {
 		try {
 			File rawFile = new File(repositoryConfigService.getRepositoryDirectory(), 
 					tempFile.getPartInfo().getFileMetadata().getFilePath());
 			rawFile.getParentFile().mkdirs();
-//			File rawFile = changeDirectory(removeExtension(source), 
-//					repositoryConfigService.getRepositoryDirectory());
 			fileComporessingService.uncompressFile(tempFile.getTempFile(), rawFile);
 			deleteFile(tempFile.getTempFile());
-			return rawFile;
+			tempFile.setTempFile(rawFile);
+			return tempFile;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

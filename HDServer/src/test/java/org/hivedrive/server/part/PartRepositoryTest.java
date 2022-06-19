@@ -2,8 +2,6 @@ package org.hivedrive.server.part;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.File;
-import java.util.Iterator;
 import java.util.Random;
 
 import org.hivedrive.server.entity.PartEntity;

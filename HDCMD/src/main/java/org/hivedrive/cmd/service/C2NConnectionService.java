@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -204,7 +205,8 @@ public class C2NConnectionService {
 
 	private Queue<NodeEntity> getBestNodes(PartInfo part) {
 		LinkedList<NodeEntity> allNodes = new LinkedList<>(nodeRepository.getAllNodes());
-		allNodes.sort(getComparatorByGeneralRate());
+		Collections.shuffle(allNodes);
+//		allNodes.sort(getComparatorByGeneralRate());
 		return allNodes;
 	}
 

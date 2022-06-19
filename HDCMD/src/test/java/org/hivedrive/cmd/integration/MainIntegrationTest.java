@@ -40,8 +40,8 @@ public class MainIntegrationTest {
 
 	private String repoName;
 	
-//	@Autowired
-//	public RepoOperationsHelper repoOperationsHelper;
+	@Autowired
+	public RepoOperationsHelper repoOperationsHelper;
 	
 	@Test
 	public void pushAndPull() throws IOException {
@@ -202,7 +202,7 @@ public class MainIntegrationTest {
 	}
 	
 	private String fileId(File file, File repoDir) {
-		return RepoOperationsHelper.fileId(file, repoDir, this.repoName);
+		return repoOperationsHelper.fileId(file, repoDir, this.repoName);
 	}
 	
 }

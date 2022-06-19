@@ -46,8 +46,6 @@ import com.google.common.collect.Iterables;
 @Scope("prototype")
 public class P2PSessionImpl implements P2PSession {
 
-	private static final String ERROR = "Error: ";
-	
 	private Logger logger = LoggerFactory.getLogger(P2PSession.class);
 	private NodeTO correspondingNode;
 	
@@ -90,6 +88,10 @@ public class P2PSessionImpl implements P2PSession {
 		return uriBuilderFactory.builder().path("/space/summary");
 	} 
 	
+	private String errorMessage() {
+		return "Error connection to address: " + address + " ";
+	}
+	
 	@Override
 	public P2PSession fromClientToAddress(String address) {
 		this.address = address;
@@ -129,7 +131,8 @@ public class P2PSessionImpl implements P2PSession {
 			this.correspondingNode = receivedNode;
 			return true;
 		} catch (Exception e) {
-			logger.error(ERROR, e);
+			
+			logger.error(errorMessage(), e);
 			return false;
 		}
 	}
@@ -151,7 +154,7 @@ public class P2PSessionImpl implements P2PSession {
 		try {
 			return post(partEndpoint().build(), part);
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 			return null;
 		}
 	}
@@ -164,7 +167,7 @@ public class P2PSessionImpl implements P2PSession {
 					.path("/" + partId).build(), 
 					part);
 		} catch (IOException | URISyntaxException | InterruptedException e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 		}
 	}
 
@@ -178,7 +181,7 @@ public class P2PSessionImpl implements P2PSession {
 			};
 			return get(allNodeEndpoint().build(), typeReference);
 		} catch (Exception e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 			return null;
 		}
 	}
@@ -190,7 +193,7 @@ public class P2PSessionImpl implements P2PSession {
 			};
 			return get(allPartEndpoint().build(), typeReference);
 		} catch (Exception e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 			return null;
 		}
 	}
@@ -206,7 +209,7 @@ public class P2PSessionImpl implements P2PSession {
 			});
 			return Iterables.getFirst(parts, null);
 		} catch (Exception e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 			return null;
 		}
 	}
@@ -226,7 +229,7 @@ public class P2PSessionImpl implements P2PSession {
 					.build(), 
 					typeReference);
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 			return null;
 		}
 	}
@@ -238,7 +241,7 @@ public class P2PSessionImpl implements P2PSession {
 					.path("/" + part.getId()).build());
 			return fileData;
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 			return null;
 		}
 		
@@ -249,7 +252,7 @@ public class P2PSessionImpl implements P2PSession {
 		try {
 			return delete(partEndpoint().path("/" + part.getId()).build());
 		} catch (URISyntaxException | IOException | InterruptedException e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 			return false;
 		}
 		
@@ -262,7 +265,7 @@ public class P2PSessionImpl implements P2PSession {
 			};
 			return get(nodeSummaryEndpoint().build(), typeReference);
 		} catch (Exception e) {
-			logger.error(ERROR, e);
+			logger.error(errorMessage(), e);
 			return null;
 		}
 	}

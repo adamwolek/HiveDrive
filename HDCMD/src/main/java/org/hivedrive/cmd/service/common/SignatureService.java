@@ -5,8 +5,11 @@ import java.io.FileInputStream;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hivedrive.cmd.helper.RepoOperationsHelper;
 import org.hivedrive.cmd.model.UserKeys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -18,13 +21,23 @@ public class SignatureService {
 
 	@Autowired
 	private KeysService userKeysService;
+	
+	@Autowired
+	private RepoOperationsHelper repoOperationsHelper;
 
+	private Map<String, String> signByHash = new HashMap<>();
+	
 	public String signStringUsingDefaultKeys(String textToSign) {
 		return signString(textToSign, userKeysService.getKeys().getPrivateAsymetricKey());
 	}
 
 	public String signFileUsingDefaultKeys(File file) {
-		return signFile(file, userKeysService.getKeys().getPrivateAsymetricKey());
+		String hash = repoOperationsHelper.fileHash(file);
+		if(!signByHash.containsKey(hash)) {
+			String sign = signFile(file, userKeysService.getKeys().getPrivateAsymetricKey());
+			signByHash.put(hash, sign);
+		}
+		return signByHash.get(hash);
 	}
 
 	public String signFile(File file, PrivateKey privateAsymetricKey) {

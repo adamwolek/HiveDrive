@@ -91,7 +91,7 @@ public class PushCommand implements Runnable {
 
 	private void log(PushStatistics statistics) {
 		logger.info("Command execution took " 
-				+ statistics.getStopwatch().getTime(TimeUnit.SECONDS) + " seconds");
+				+ statistics.getStopwatch().getTime(TimeUnit.MILLISECONDS) + " miliseconds");
 		if(statistics.howManyPartsCreated() > 0) {
 			logger.info("Created " + statistics.howManyPartsCreated() + " parts");
 		}
@@ -104,7 +104,6 @@ public class PushCommand implements Runnable {
 		if(statistics.howManyFilesDeleted() == 0 && statistics.howManyOriginFilesSent() == 0) {
 			logger.info("All files in network are up-to-date");
 		}
-		
 	}
 
 	private void sendFilesFromRepository(File workDirectory) {
@@ -120,6 +119,7 @@ public class PushCommand implements Runnable {
 			return parts.stream();
 		})
 		.map(file -> createPartsObjectsFromFile(file))
+		.parallel()
 		.forEach(connectionService::sendPart);
 	}
 
@@ -215,7 +215,10 @@ public class PushCommand implements Runnable {
 			File file = tempFile.getTempFile();
 			File encryptedFile = addExtension(file, "enc");
 			encryptionService.encrypt(file, encryptedFile);
-			FileUtils.forceDelete(file);
+			if(!tempFile.getOriginFile().equals(tempFile.getTempFile())) {
+				
+				FileUtils.forceDelete(file);
+			}
 			tempFile.setTempFile(encryptedFile);
 			return tempFile;
 		} catch (Exception e) {
